@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as ExcelJS from 'exceljs';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { AnalyticsRecord } from './analytics-record.entity.js';
 import { SystemConfig } from './system-config.entity.js';
 import { UpdateAnalyticsConfigDto } from './dto/update-analytics-config.dto.js';
@@ -183,6 +184,7 @@ export class AnalyticsService implements OnModuleInit {
     private readonly attendanceRepository: Repository<Attendance>,
     private readonly mlrService: MlrService,
     private readonly auditLogService: AuditLogService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async onModuleInit() {
@@ -1673,5 +1675,28 @@ export class AnalyticsService implements OnModuleInit {
     record.teacherObjectiveScore = dto.x3;
 
     await this.analyticsRecordRepository.save(record);
+  }
+
+  @OnEvent('auth.login.success')
+  async handleUserLogin(user: User) {
+    if (user.role !== Role.USER) return;
+    
+    try {
+      const analytics = await this.getMyAnalytics(user);
+      if (analytics.riskLevel === 'MEDIUM' || analytics.riskLevel === 'HIGH') {
+        this.eventEmitter.emit('intervention.alert', {
+          user,
+          predictionData: {
+            riskLevel: analytics.riskLevel,
+            predictedScore: analytics.predictedScore,
+            prescriptions: [
+              { action: 'Recommendation', module: analytics.recommendation }
+            ]
+          }
+        });
+      }
+    } catch (e) {
+      Logger.error(`Error processing login analytics for user ${user.userId}: ${e}`);
+    }
   }
 }

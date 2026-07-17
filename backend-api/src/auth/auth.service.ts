@@ -6,6 +6,8 @@ import { Role } from '../users/role.enum.js';
 import { User } from '../users/user.entity.js';
 import { AuditLogService } from '../audit-log/audit-log.service.js';
 
+import { EventEmitter2 } from '@nestjs/event-emitter';
+
 /**
  * AuthService
  * -------------------------------------------------
@@ -26,6 +28,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
     private readonly auditLogService: AuditLogService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /**
@@ -136,6 +139,8 @@ export class AuthService {
       ipAddress: requestMetadata?.ipAddress ?? null,
       userAgent: requestMetadata?.userAgent ?? null,
     });
+
+    this.eventEmitter.emit('auth.login.success', user);
 
     return this.generateAccessToken(user);
   }

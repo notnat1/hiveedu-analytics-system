@@ -1,17 +1,13 @@
-Act as a Senior Frontend Engineer. We are currently testing the Light Mode UI across the entire dashboard and found several visual bugs and one React console warning. Please systematically scan the codebase and execute these exact fixes:
+Act as a Senior Backend Engineer. Our current WhatsApp notification is failing to deliver because the payload structure sent to Fonnte API is not correctly formatted for interactive messages.
 
-Task 1 Fix Dark Dropdowns in Light Mode
-In components across Academic Records, Attendance, User Management, and Audit Logs (especially standard HTML select elements or custom dropdown menus), the opened option lists are rendering in hardcoded dark backgrounds (black or zinc-900). 
-Scan all select and option tags across the dashboard pages and update their classNames so that option elements render cleanly in light mode: use bg-white dark:bg-[#09090b] and text-zinc-900 dark:text-zinc-100. Remove any hardcoded bg-black or text-white on select inputs.
+Please modify the sendWhatsAppAlert function in notifications.service.ts to strictly adhere to the Fonnte API specification for interactive messages.
 
-Task 2 Fix Add New Account Modal Styling
-In frontend-web/src/app/dashboard/users/page.tsx (or the AddNewAccountModal component), the popup modal is still hardcoded to dark mode. Update the modal container to use theme-responsive classes: bg-white dark:bg-[#09090b], text-zinc-900 dark:text-zinc-100, and border-zinc-200 dark:border-zinc-800. Ensure all internal labels and input fields adapt cleanly to both light and dark modes.
+Correct the payload structure: Ensure the request body is a properly formatted object (not just a stringified JSON) that includes the token, phone, message, footer, and buttons array as top-level properties.
 
-Task 3 Fix React Key Warning in User Management
-In frontend-web/src/app/dashboard/users/page.tsx around line 580, there is a React console warning: "Each child in a list should have a unique key prop". This occurs inside the teachers.map() function where the option tag uses key={teacher.id}. Change this to key={teacher.userId} (or the correct new primary key property) to clear the error.
+Fix the button syntax: Use the correct Fonnte parameter names (display_text for buttons, id for reply buttons, and url for link buttons).
 
-Task 4 Fix Contrast for Attendance Logic and Audit Logs
-In frontend-web/src/app/dashboard/attendance/page.tsx, check the X1 Attendance Logic "SELECTED USER X1" box displaying "N/A" and ensure the container and text have proper light/dark contrast (e.g., bg-zinc-50 dark:bg-zinc-900/50, text-zinc-900 dark:text-white). 
-In frontend-web/src/app/dashboard/audit-logs/page.tsx, ensure the "METADATA" code blocks render with readable font colors in light mode (e.g., text-zinc-700 dark:text-zinc-300 in a light bg-zinc-100 dark:bg-zinc-900 container).
+Implement robust error handling: Add proper logging to capture the response from Fonnte API when a message fails to send, so we can see the exact error returned by their server.
 
-Execute these changes carefully and confirm when done. Do not use markdown headers or bolding in your response to save tokens.
+Payload validation: Ensure the phone number uses the international format (starting with '62') before the API call is executed.
+
+After applying these changes, we need to verify that the terminal shows a successful response from Fonnte API. Do not add any other features; focus solely on making the interactive notification delivery 100% reliable.
