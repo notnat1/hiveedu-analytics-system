@@ -1,0 +1,369 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { AlertCircle, RefreshCcw, ShieldCheck } from "lucide-react";
+import { jwtDecode } from "jwt-decode";
+
+interface DecodedToken {
+  sub: string;
+  username: string;
+  role: string;
+}
+
+interface AuditLogItem {
+  id: string;
+  action: string;
+  actorId: string | null;
+  actorRole: string | null;
+  targetType: string | null;
+  targetId: string | null;
+  description: string;
+  metadata: Record<string, unknown> | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  createdAt: string;
+}
+
+const blockedMetadataKeys = new Set([
+  "password",
+  "passwordhash",
+  "hash",
+  "token",
+  "accesstoken",
+  "refreshtoken",
+  "authorization",
+]);
+
+const inputClassName =
+  "w-full rounded-xl bg-[#09090b] border border-white/10 px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50";
+
+function sanitizeMetadataValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.slice(0, 10).map((item) => sanitizeMetadataValue(item));
+  }
+
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>)
+      .filter(([key]) => !blockedMetadataKeys.has(key.toLowerCase()))
+      .map(([key, nestedValue]) => [key, sanitizeMetadataValue(nestedValue)]);
+
+    return Object.fromEntries(entries);
+  }
+
+  if (typeof value === "string") {
+    return value.length > 120 ? `${value.slice(0, 117)}...` : value;
+  }
+
+  return value;
+}
+
+function buildMetadataPreview(metadata: Record<string, unknown> | null): string {
+  if (!metadata) {
+    return "N/A";
+  }
+
+  const sanitizedMetadata = sanitizeMetadataValue(metadata);
+  const serialized = JSON.stringify(sanitizedMetadata, null, 2);
+
+  if (!serialized) {
+    return "N/A";
+  }
+
+  return serialized.length > 240 ? `${serialized.slice(0, 237)}...` : serialized;
+}
+
+export default function AuditLogsPage() {
+  const [currentUser, setCurrentUser] = useState<DecodedToken | null>(null);
+  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pageError, setPageError] = useState("");
+  const [actionFilter, setActionFilter] = useState("");
+  const [targetTypeFilter, setTargetTypeFilter] = useState("");
+  const [limitFilter, setLimitFilter] = useState("100");
+
+  const isAdmin = currentUser?.role === "ADMIN";
+
+  const fetchAuditLogs = async (isManualRefresh = false) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setPageError("Authentication token not found.");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      if (isManualRefresh) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+
+      setPageError("");
+
+      const params = new URLSearchParams();
+      if (actionFilter.trim()) {
+        params.set("action", actionFilter.trim());
+      }
+      if (targetTypeFilter.trim()) {
+        params.set("targetType", targetTypeFilter.trim());
+      }
+      if (limitFilter.trim()) {
+        params.set("limit", limitFilter.trim());
+      }
+
+      const response = await fetch(
+        `http://localhost:3000/audit-logs${params.toString() ? `?${params.toString()}` : ""}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch audit logs.");
+      }
+
+      const data = (await response.json()) as AuditLogItem[];
+      setAuditLogs(data);
+    } catch (error) {
+      console.error("Error fetching audit logs:", error);
+      setAuditLogs([]);
+      setPageError("Unable to load audit logs right now.");
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setPageError("Authentication token not found.");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const decoded = jwtDecode<DecodedToken>(token);
+      setCurrentUser(decoded);
+
+      if (decoded.role === "ADMIN") {
+        void fetchAuditLogs();
+      } else {
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error("Error decoding token:", error);
+      setPageError("Unable to identify the current session.");
+      setIsLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const actionOptions = useMemo(() => {
+    const actions = new Set(auditLogs.map((log) => log.action).filter(Boolean));
+    return Array.from(actions).sort();
+  }, [auditLogs]);
+
+  const targetTypeOptions = useMemo(() => {
+    const targetTypes = new Set(
+      auditLogs
+        .map((log) => log.targetType)
+        .filter((value): value is string => typeof value === "string" && value.length > 0),
+    );
+    return Array.from(targetTypes).sort();
+  }, [auditLogs]);
+
+  return (
+    <div className="flex flex-col gap-8">
+      <header className="space-y-2">
+        <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">Audit Logs</h1>
+        <p className="text-sm text-zinc-500">
+          Review important backend activity for accountability and enterprise traceability.
+        </p>
+      </header>
+
+      {!isAdmin ? (
+        <div className="rounded-[2rem] border border-white/[0.04] bg-white/[0.01] px-8 py-10 backdrop-blur-3xl text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-red-500/20 bg-red-500/10 text-red-400">
+            <ShieldCheck size={24} />
+          </div>
+          <p className="mt-5 text-lg font-semibold text-zinc-100">Access denied</p>
+          <p className="mt-3 text-sm leading-7 text-zinc-500">
+            Audit log review is available to ADMIN accounts only.
+          </p>
+        </div>
+      ) : (
+        <>
+          {pageError && (
+            <div className="rounded-2xl border border-red-500/10 bg-red-500/5 px-5 py-4 text-sm text-red-300">
+              {pageError}
+            </div>
+          )}
+
+          <section className="rounded-[2rem] border border-white/[0.04] bg-white/[0.01] p-6 md:p-8 backdrop-blur-3xl">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+              <select
+                value={actionFilter}
+                onChange={(event) => setActionFilter(event.target.value)}
+                className={inputClassName}
+              >
+                <option value="" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
+                  All Actions
+                </option>
+                {actionOptions.map((action) => (
+                  <option key={action} value={action} className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
+                    {action}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={targetTypeFilter}
+                onChange={(event) => setTargetTypeFilter(event.target.value)}
+                className={inputClassName}
+              >
+                <option value="" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
+                  All Target Types
+                </option>
+                {targetTypeOptions.map((targetType) => (
+                  <option
+                    key={targetType}
+                    value={targetType}
+                    className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100"
+                  >
+                    {targetType}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={limitFilter}
+                onChange={(event) => setLimitFilter(event.target.value)}
+                className={inputClassName}
+              >
+                <option value="25" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
+                  25 rows
+                </option>
+                <option value="50" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
+                  50 rows
+                </option>
+                <option value="100" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
+                  100 rows
+                </option>
+                <option value="200" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
+                  200 rows
+                </option>
+              </select>
+
+              <button
+                type="button"
+                onClick={() => void fetchAuditLogs(true)}
+                disabled={isRefreshing}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 text-sm font-semibold text-zinc-200 transition-all hover:border-white/20 hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <RefreshCcw size={16} className={isRefreshing ? "animate-spin" : ""} />
+                {isRefreshing ? "Refreshing..." : "Refresh"}
+              </button>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => void fetchAuditLogs(true)}
+                disabled={isRefreshing}
+                className="rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:from-blue-500 hover:to-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Apply Filters
+              </button>
+            </div>
+          </section>
+
+          <section className="rounded-[2rem] border border-white/[0.04] bg-white/[0.01] p-6 md:p-8 backdrop-blur-3xl">
+            {isLoading ? (
+              <div className="rounded-2xl border border-white/5 bg-[#09090b] px-6 py-10 text-center text-sm text-zinc-400">
+                Loading audit logs...
+              </div>
+            ) : auditLogs.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-white/[0.05]">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-4 text-left text-xs font-medium uppercase tracking-[0.2em] text-zinc-500 border-b border-white/[0.05]">
+                        Created At
+                      </th>
+                      <th className="px-4 py-4 text-left text-xs font-medium uppercase tracking-[0.2em] text-zinc-500 border-b border-white/[0.05]">
+                        Action
+                      </th>
+                      <th className="px-4 py-4 text-left text-xs font-medium uppercase tracking-[0.2em] text-zinc-500 border-b border-white/[0.05]">
+                        Actor Role
+                      </th>
+                      <th className="px-4 py-4 text-left text-xs font-medium uppercase tracking-[0.2em] text-zinc-500 border-b border-white/[0.05]">
+                        Actor ID
+                      </th>
+                      <th className="px-4 py-4 text-left text-xs font-medium uppercase tracking-[0.2em] text-zinc-500 border-b border-white/[0.05]">
+                        Target Type
+                      </th>
+                      <th className="px-4 py-4 text-left text-xs font-medium uppercase tracking-[0.2em] text-zinc-500 border-b border-white/[0.05]">
+                        Target ID
+                      </th>
+                      <th className="px-4 py-4 text-left text-xs font-medium uppercase tracking-[0.2em] text-zinc-500 border-b border-white/[0.05]">
+                        Description
+                      </th>
+                      <th className="px-4 py-4 text-left text-xs font-medium uppercase tracking-[0.2em] text-zinc-500 border-b border-white/[0.05]">
+                        Metadata Summary
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.02]">
+                    {auditLogs.map((log, index) => (
+                      <tr key={log.id || `audit-log-${index}`} className="align-top hover:bg-white/[0.02] transition-colors">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300">
+                          {log.createdAt
+                            ? new Date(log.createdAt).toLocaleString()
+                            : "N/A"}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-zinc-200">
+                          {log.action || "N/A"}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300">
+                          {log.actorRole || "N/A"}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-400">
+                          {log.actorId || "N/A"}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300">
+                          {log.targetType || "N/A"}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-400">
+                          {log.targetId || "N/A"}
+                        </td>
+                        <td className="px-4 py-4 text-sm leading-7 text-zinc-300">
+                          {log.description || "N/A"}
+                        </td>
+                        <td className="px-4 py-4">
+                          <pre className="max-w-[320px] overflow-hidden whitespace-pre-wrap break-words rounded-xl border border-zinc-200 dark:border-white/5 bg-zinc-100 dark:bg-[#09090b] px-4 py-3 text-xs leading-6 text-zinc-700 dark:text-zinc-400">
+                            {buildMetadataPreview(log.metadata)}
+                          </pre>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-white/5 bg-[#09090b] px-6 py-10 text-center">
+                <p className="text-sm font-medium text-zinc-200">No audit logs found.</p>
+                <p className="mt-3 text-sm leading-7 text-zinc-500">
+                  Adjust your filters or refresh the feed when new system activity is expected.
+                </p>
+              </div>
+            )}
+          </section>
+        </>
+      )}
+    </div>
+  );
+}

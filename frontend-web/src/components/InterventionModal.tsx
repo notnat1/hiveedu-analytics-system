@@ -1,0 +1,203 @@
+import React, { useState, useEffect } from 'react';
+import { X, CheckCircle2, AlertCircle } from 'lucide-react';
+
+interface InterventionNote {
+  id: string;
+  userId: string;
+  riskLevel: string;
+  predictedScore: number | null;
+  note: string;
+  actionPlan: string | null;
+  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED';
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface InterventionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  userId: string;
+  userName: string;
+  riskLevel: string;
+  predictedScore: number | null;
+  onSuccess: () => void;
+}
+
+export default function InterventionModal({
+  isOpen,
+  onClose,
+  userId,
+  userName,
+  riskLevel,
+  predictedScore,
+  onSuccess,
+}: InterventionModalProps) {
+  const [note, setNote] = useState('');
+  const [actionPlan, setActionPlan] = useState('');
+  const [status, setStatus] = useState<'OPEN' | 'IN_PROGRESS' | 'RESOLVED'>('OPEN');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [existingId, setExistingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchExistingIntervention();
+    } else {
+      setNote('');
+      setActionPlan('');
+      setStatus('OPEN');
+      setExistingId(null);
+      setError('');
+    }
+  }, [isOpen, userId]);
+
+  const fetchExistingIntervention = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:3000/interventions/user/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data: InterventionNote[] = await res.json();
+        if (data && data.length > 0) {
+          const latest = data[0]; // Assuming ordered by createdAt DESC
+          setNote(latest.note);
+          setActionPlan(latest.actionPlan || '');
+          setStatus(latest.status);
+          setExistingId(latest.id);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch existing intervention:', err);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!note.trim()) {
+      setError('Note field is required.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setError('');
+      const token = localStorage.getItem('token');
+      
+      const payload = {
+        userId,
+        riskLevel,
+        predictedScore,
+        note,
+        actionPlan,
+        status,
+      };
+
+      const url = existingId 
+        ? `http://localhost:3000/interventions/${existingId}`
+        : `http://localhost:3000/interventions`;
+        
+      const method = existingId ? 'PATCH' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save intervention');
+      }
+
+      onSuccess();
+      onClose();
+    } catch (err) {
+      console.error('Error saving intervention:', err);
+      setError('Unable to save intervention right now.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/80 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-2xl border border-zinc-200 dark:border-white/[0.05] bg-white dark:bg-[#09090b] p-8 shadow-2xl backdrop-blur-3xl">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Intervention Follow-up</h2>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">User Account: {userName}</p>
+          </div>
+          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            <AlertCircle size={16} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Follow-up Note</label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Record observation, meeting details, or reason for warning..."
+              rows={3}
+              className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 px-4 py-3 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-600 focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Action Plan (Optional)</label>
+            <textarea
+              value={actionPlan}
+              onChange={(e) => setActionPlan(e.target.value)}
+              placeholder="What steps will be taken to help this user?"
+              rows={2}
+              className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 px-4 py-3 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-600 focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Status</label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as any)}
+              className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 px-4 py-3 text-sm text-zinc-900 dark:text-white focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+            >
+              <option value="OPEN" className="bg-white dark:bg-[#09090b]">OPEN</option>
+              <option value="IN_PROGRESS" className="bg-white dark:bg-[#09090b]">IN_PROGRESS</option>
+              <option value="RESOLVED" className="bg-white dark:bg-[#09090b]">RESOLVED</option>
+            </select>
+          </div>
+
+          <div className="mt-8 flex justify-end gap-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 px-5 py-2 text-sm font-semibold text-white shadow-lg transition-all hover:from-blue-700 hover:to-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSubmitting ? 'Saving...' : existingId ? 'Update Follow-up' : 'Save Follow-up'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
