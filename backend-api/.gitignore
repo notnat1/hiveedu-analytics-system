@@ -1,0 +1,29 @@
+# Dependency Directories
+node_modules/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Build & Production Outputs
+dist/
+build/
+.next/
+out/
+
+# Environment Variables & Secrets (SANGAT KRUSIAL!)
+.env
+.env.*
+!.env.example
+
+# Logs & Debugging
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+backend-dev.out.log
+backend-dev.err.log
+
+# OS & Editor Files
+.DS_Store
+.vscode/
+.idea/
