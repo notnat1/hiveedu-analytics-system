@@ -12,6 +12,7 @@ import { UsersModule } from '../users/users.module.js';
 import { RecordEntity } from '../records/record.entity.js';
 import { Attendance } from '../attendance/attendance.entity.js';
 import { AuditLogModule } from '../audit-log/audit-log.module.js';
+import { XaiModule } from '../xai/xai.module.js';
 
 /**
  * AnalyticsModule
@@ -40,6 +41,7 @@ import { AuditLogModule } from '../audit-log/audit-log.module.js';
     ]),
     UsersModule,
     AuditLogModule,
+    XaiModule,
   ],
   controllers: [AnalyticsController],
   providers: [AnalyticsService, ParentMailerService, MlrService],

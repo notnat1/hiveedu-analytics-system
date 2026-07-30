@@ -13,7 +13,9 @@ import {
   UseGuards,
   UsePipes,
   ValidationPipe,
+  UseInterceptors,
 } from '@nestjs/common';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import type { Response } from 'express';
 import { AnalyticsService } from './analytics.service.js';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
@@ -86,6 +88,7 @@ export class AnalyticsController {
   @UseGuards(JwtAuthGuard)
   @Get('global')
   @Roles(Role.ADMIN)
+  @UseInterceptors(CacheInterceptor)
   getGlobalAnalytics(@Req() req: any) {
     return this.analyticsService.getGlobalAnalytics(req.user);
   }
@@ -155,6 +158,7 @@ export class AnalyticsController {
   @UseGuards(JwtAuthGuard)
   @Get('dashboard')
   @Roles(Role.ADMIN, Role.USER)
+  @UseInterceptors(CacheInterceptor)
   async getDashboardData(@Req() req: any) {
     return this.analyticsService.getDashboardData(req.user);
   }

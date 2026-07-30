@@ -169,6 +169,7 @@ interface UserRecordResponse {
   createdAt?: string;
   actualExamScore?: number | null;
   teacherFeedback?: string | null;
+  xaiExplanation?: string | null;
 }
 
 interface UserPredictionRow {
@@ -756,6 +757,13 @@ export default function DashboardPage() {
   }
 
   const fetchAdminDashboardData = async (token: string) => {
+    // Automatically trigger MLR generation by requesting the dashboard analytics first
+    await fetch("http://localhost:3000/analytics/dashboard", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }).catch(console.error);
+
     const [usersResponse, runHistoryResponse] = await Promise.all([
       fetch("http://localhost:3000/users", {
         headers: {
@@ -954,7 +962,11 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
-      showToast("Unable to load dashboard analytics right now.", "error");
+      showToast("Sesi kedaluwarsa atau pengguna tidak ditemukan. Mengalihkan ke login...", "error");
+      setTimeout(() => {
+        localStorage.removeItem("hiveedu_token");
+        window.location.href = "/login";
+      }, 2000);
     } finally {
       setIsLoading(false);
     }
@@ -1495,6 +1507,35 @@ export default function DashboardPage() {
                     </div>
                   )}
                 </div>
+
+                {getLatestUserRecord()?.xaiExplanation && (
+                  <div className="md:col-span-2 xl:col-span-4 bg-[#09090b] border border-blue-500/20 backdrop-blur-3xl shadow-[0_0_50px_-12px_rgba(59,130,246,0.25)] rounded-3xl p-8 md:p-10 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-8 opacity-20 pointer-events-none">
+                      <Sparkles className="w-32 h-32 text-blue-500 blur-xl" />
+                    </div>
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-3">
+                          <Sparkles className="w-6 h-6 text-blue-400 animate-pulse" />
+                        </div>
+                        <div className="space-y-1">
+                          <h3 className="text-2xl font-medium text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-violet-400 tracking-tight">
+                            Llama-3 Academic Counselor
+                          </h3>
+                          <p className="text-xs uppercase tracking-widest text-blue-500/60 font-bold">
+                            Dynamic Personalized Insight
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="rounded-[1.5rem] border border-blue-500/10 bg-blue-500/[0.02] p-8 backdrop-blur-md shadow-inner">
+                        <p className="text-lg leading-relaxed text-zinc-200 font-light italic">
+                          "{getLatestUserRecord()?.xaiExplanation}"
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="md:col-span-2 xl:col-span-4 bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl rounded-3xl p-8 md:p-10">
                   <div className="space-y-2 mb-8">

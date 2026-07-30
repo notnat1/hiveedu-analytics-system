@@ -5,6 +5,7 @@ import { RecordEntity } from './record.entity.js';
 import { RecordsController } from './records.controller.js';
 import { RecordsService } from './records.service.js';
 import { AuditLogModule } from '../audit-log/audit-log.module.js';
+import { XaiModule } from '../xai/xai.module.js';
 
 /**
  * RecordsModule
@@ -13,7 +14,7 @@ import { AuditLogModule } from '../audit-log/audit-log.module.js';
  * in the USER role.
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([RecordEntity, User]), AuditLogModule],
+  imports: [TypeOrmModule.forFeature([RecordEntity, User]), AuditLogModule, XaiModule],
   controllers: [RecordsController],
   providers: [RecordsService],
   exports: [RecordsService],

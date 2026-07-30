@@ -12,6 +12,7 @@ import { UpdateRecordDto } from './dto/update-record.dto.js';
 import { User } from '../users/user.entity.js';
 import { Role } from '../users/role.enum.js';
 import { AuditLogService } from '../audit-log/audit-log.service.js';
+import { XaiService } from '../xai/xai.service.js';
 
 /**
  * RecordsService
@@ -27,6 +28,7 @@ export class RecordsService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly auditLogService: AuditLogService,
+    private readonly xaiService: XaiService,
   ) {}
 
   private async findTargetUser(userId: string): Promise<User> {
@@ -305,14 +307,47 @@ export class RecordsService {
   async findByUserId(
     userId: string,
     actor: { actorId?: string | null; actorRole?: string | null },
-  ): Promise<RecordEntity[]> {
+  ): Promise<(RecordEntity & { xaiExplanation: string | null })[]> {
     const user = await this.findTargetUser(userId);
     this.assertCanReadUserRecords(actor, user);
 
-    return this.recordRepository.find({
+    const records = await this.recordRepository.find({
       where: { userId },
       order: { createdAt: 'DESC' },
     });
+
+    const results: (RecordEntity & { xaiExplanation: string | null })[] = [];
+    for (let i = 0; i < records.length; i++) {
+      const record = records[i];
+      let explanation: string | null;
+
+      // Fitur Enterprise: Hanya gunakan AI untuk 2 riwayat terbaru guna menghemat kuota API (Rate Limit 15 RPM)
+      // dan mempercepat waktu muat (Load Time). Riwayat yang lebih lama menggunakan logika statis.
+      // Admin tidak memerlukan xaiExplanation saat batch fetch, hindari rate limit.
+      const shouldGenerateDynamic = i < 2 && actor.actorRole === 'USER';
+      if (shouldGenerateDynamic) {
+        explanation = await this.xaiService.generateDynamicExamScoreExplanationAsync(
+          record.mathScore,
+          record.logicScore,
+          record.englishScore,
+          record.actualExamScore,
+        );
+      } else {
+        explanation = this.xaiService.generateExamScoreExplanation(
+          record.mathScore,
+          record.logicScore,
+          record.englishScore,
+          record.actualExamScore,
+        );
+      }
+
+      results.push({
+        ...record,
+        xaiExplanation: explanation,
+      });
+    }
+
+    return results;
   }
 
   async findValidTrainingRecordsByUserId(userId: string): Promise<RecordEntity[]> {

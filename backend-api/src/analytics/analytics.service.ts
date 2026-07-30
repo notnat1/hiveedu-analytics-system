@@ -15,6 +15,7 @@ import { CoefficientMode } from './coefficient-mode.enum.js';
 import { MlrRunHistory } from './mlr-run-history.entity.js';
 import { AttendanceStatus } from '../attendance/attendance-status.enum.js';
 import { AuditLogService } from '../audit-log/audit-log.service.js';
+import { XaiService } from '../xai/xai.service.js';
 
 type UserMlrSnapshot = {
   x1: number;
@@ -119,6 +120,7 @@ type TutorUserPrediction = {
   suggestedIntervention: string;
   feedbackCompleted: boolean;
   explanation: PredictionExplanation;
+  xaiExplanation: string | null;
 };
 
 type TutorAnalyticsResponseRow = {
@@ -151,6 +153,7 @@ type SelfAnalyticsResponse = {
   formula: 'Y = a + b1X1 + b2X2 + b3X3';
   coefficientMode: CoefficientMode;
   explanation: PredictionExplanation | null;
+  xaiExplanation: string | null;
 };
 
 type AnalyticsActor = {
@@ -183,6 +186,7 @@ export class AnalyticsService implements OnModuleInit {
     @InjectRepository(Attendance)
     private readonly attendanceRepository: Repository<Attendance>,
     private readonly mlrService: MlrService,
+    private readonly xaiService: XaiService,
     private readonly auditLogService: AuditLogService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
@@ -664,6 +668,7 @@ export class AnalyticsService implements OnModuleInit {
         suggestedIntervention: 'Personal analytics are available for user accounts.',
         recommendation: 'Personal analytics are available for user accounts.',
         explanation: null,
+        xaiExplanation: null,
         ...baseResponse,
       };
     }
@@ -725,6 +730,9 @@ export class AnalyticsService implements OnModuleInit {
       formula: baseResponse.formula,
       coefficientMode: batchRunDataset.summary.coefficientMode,
       explanation,
+      xaiExplanation: context?.isEligible === true && predictedScore !== null
+        ? await this.xaiService.generateDynamicExplanationAsync(attendancePercentage, averageTryoutScore, teacherObjectiveScore, predictedScore)
+        : null,
     };
   }
 
@@ -843,6 +851,12 @@ export class AnalyticsService implements OnModuleInit {
         context.x1,
         context.x2,
         context.x3,
+      ),
+      xaiExplanation: this.xaiService.generateExplanation(
+        this.roundMetric(context.x1),
+        this.roundMetric(context.x2),
+        this.roundMetric(context.x3),
+        predictedScore
       ),
     };
   }
@@ -1698,5 +1712,29 @@ export class AnalyticsService implements OnModuleInit {
     } catch (e) {
       Logger.error(`Error processing login analytics for user ${user.userId}: ${e}`);
     }
+  }
+
+  async getAtRiskUsers(): Promise<{ user: User; predictedScore: number }[]> {
+    const batchRunDataset = await this.buildBatchRunDataset();
+    const eligibleContexts = batchRunDataset.contexts.filter((c) => c.isEligible);
+    
+    const atRiskUsers = [];
+    for (const context of eligibleContexts) {
+      const predictedScore = this.mlrService.calculatePredictedScore({
+        intercept: batchRunDataset.summary.effectiveCoefficients.intercept,
+        b1: batchRunDataset.summary.effectiveCoefficients.attendanceCoefficient,
+        b2: batchRunDataset.summary.effectiveCoefficients.tryoutCoefficient,
+        b3: batchRunDataset.summary.effectiveCoefficients.teacherObjectiveCoefficient,
+        x1: context.x1,
+        x2: context.x2,
+        x3: context.x3,
+      }).predictedScore;
+      
+      if (predictedScore < 70) {
+        atRiskUsers.push({ user: context.user, predictedScore: this.roundMetric(predictedScore) });
+      }
+    }
+    
+    return atRiskUsers;
   }
 }
