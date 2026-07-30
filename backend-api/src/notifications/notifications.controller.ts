@@ -1,11 +1,18 @@
-import { Controller, Post, Body, Logger, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Logger, HttpCode, HttpStatus, UseGuards, Req } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
+import { NotificationsGateway } from './notifications.gateway';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '../users/role.enum.js';
 
 @Controller('notifications')
 export class NotificationsController {
   private readonly logger = new Logger(NotificationsController.name);
 
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly notificationsGateway: NotificationsGateway
+  ) {}
 
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
@@ -28,5 +35,16 @@ export class NotificationsController {
     
     // Always return 200 OK so Fonnte knows the webhook was received
     return { status: 'success' };
+  }
+  @Post('send')
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.ADMIN, Role.TEACHER)
+  async sendNotification(@Body() payload: { userId: string, title: string, message: string, type: string }) {
+    this.notificationsGateway.sendToUser(payload.userId, 'notification', {
+      title: payload.title,
+      message: payload.message,
+      type: payload.type || 'info',
+    });
+    return { success: true, message: 'Notification sent' };
   }
 }

@@ -18,6 +18,7 @@ import { pdf } from '@react-pdf/renderer';
 import ReportDocument from "@/components/ReportDocument";
 import InterventionModal from "@/components/InterventionModal";
 import InterventionBadge from "@/components/InterventionBadge";
+import WhatIfSimulator from "@/components/WhatIfSimulator";
 import {
   AreaChart,
   Area,
@@ -1536,6 +1537,14 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 )}
+
+                <WhatIfSimulator
+                  initialX1={userAnalytics.x1}
+                  initialX2={userAnalytics.x2}
+                  initialX3={getSafeNumber(userAnalytics.x3 ?? userAnalytics.teacherObjectiveScore) ?? 0}
+                  tryoutCount={userAnalytics.tryoutCount}
+                  token={localStorage.getItem("token") || ""}
+                />
 
                 <div className="md:col-span-2 xl:col-span-4 bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl rounded-3xl p-8 md:p-10">
                   <div className="space-y-2 mb-8">

@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { LayoutDashboard, LineChart, Settings, LogOut, UserCircle, Users, BookOpen, History, CalendarDays, BarChart3, ShieldCheck, Sun, Moon, Menu, X } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
+import RealtimeNotifications from "@/components/RealtimeNotifications";
 
 interface DecodedToken {
   sub: string;
@@ -23,6 +24,7 @@ export default function DashboardLayout({
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [token, setToken] = useState<string>("");
   const router = useRouter();
   const pathname = usePathname();
 
@@ -32,12 +34,13 @@ export default function DashboardLayout({
 
   useEffect(() => {
     let frameId: number | null = null;
-    const token = localStorage.getItem("token");
-    if (!token) {
+    const currentToken = localStorage.getItem("token");
+    if (!currentToken) {
       router.push("/login");
     } else {
+      setToken(currentToken);
       try {
-        const decoded = jwtDecode<DecodedToken>(token);
+        const decoded = jwtDecode<DecodedToken>(currentToken);
         frameId = window.requestAnimationFrame(() => {
           setUserRole(decoded.role);
           setUsername(decoded.username);
@@ -121,6 +124,7 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-100 flex flex-col md:flex-row font-sans selection:bg-blue-500/30 overflow-hidden">
+      {token && <RealtimeNotifications token={token} />}
       
       {/* Premium Full-Screen Loading Overlay */}
       {!isAuthenticated && (

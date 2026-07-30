@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertCircle, RefreshCcw, ShieldCheck } from "lucide-react";
+import { AlertCircle, RefreshCcw, ShieldCheck, Download, Activity, AlertTriangle, Fingerprint, Database } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 
 interface DecodedToken {
@@ -35,7 +35,7 @@ const blockedMetadataKeys = new Set([
 ]);
 
 const inputClassName =
-  "w-full rounded-xl bg-[#09090b] border border-white/10 px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50";
+  "w-full rounded-xl bg-white dark:bg-[#09090b] border border-zinc-200 dark:border-white/10 px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50";
 
 function sanitizeMetadataValue(value: unknown): unknown {
   if (Array.isArray(value)) {
@@ -176,13 +176,77 @@ export default function AuditLogsPage() {
     return Array.from(targetTypes).sort();
   }, [auditLogs]);
 
+  const stats = useMemo(() => {
+    const total = auditLogs.length;
+    const suspicious = auditLogs.filter(
+      (log) => log.action?.includes("FAILED") || log.action?.includes("UNAUTHORIZED")
+    ).length;
+    
+    const actionCounts: Record<string, number> = {};
+    let topAction = "None";
+    let maxCount = 0;
+    
+    auditLogs.forEach(log => {
+      if (log.action) {
+        actionCounts[log.action] = (actionCounts[log.action] || 0) + 1;
+        if (actionCounts[log.action] > maxCount) {
+          maxCount = actionCounts[log.action];
+          topAction = log.action;
+        }
+      }
+    });
+
+    return { total, suspicious, topAction };
+  }, [auditLogs]);
+
+  const exportToCSV = () => {
+    if (auditLogs.length === 0) return;
+    
+    const headers = ["Timestamp", "Action", "Actor Role", "Actor ID", "Target Type", "Target ID", "Description"];
+    const csvContent = [
+      headers.join(","),
+      ...auditLogs.map(log => {
+        return [
+          `"${new Date(log.createdAt).toLocaleString()}"`,
+          `"${log.action || ""}"`,
+          `"${log.actorRole || ""}"`,
+          `"${log.actorId || ""}"`,
+          `"${log.targetType || ""}"`,
+          `"${log.targetId || ""}"`,
+          `"${log.description?.replace(/"/g, '""') || ""}"`
+        ].join(",");
+      })
+    ].join("\\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `audit-logs-${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="flex flex-col gap-8">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">Audit Logs</h1>
-        <p className="text-sm text-zinc-500">
-          Review important backend activity for accountability and enterprise traceability.
-        </p>
+      <header className="space-y-2 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">Audit Logs</h1>
+          <p className="text-sm text-zinc-500">
+            Review important backend activity for accountability and enterprise traceability.
+          </p>
+        </div>
+        {isAdmin && (
+          <button
+            onClick={exportToCSV}
+            disabled={auditLogs.length === 0}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 px-4 py-2.5 text-sm font-semibold transition-all hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download size={16} />
+            Export CSV
+          </button>
+        )}
       </header>
 
       {!isAdmin ? (
@@ -198,12 +262,55 @@ export default function AuditLogsPage() {
       ) : (
         <>
           {pageError && (
-            <div className="rounded-2xl border border-red-500/10 bg-red-500/5 px-5 py-4 text-sm text-red-300">
+            <div className="rounded-2xl border border-red-500/10 bg-red-500/5 px-5 py-4 text-sm text-red-600 dark:text-red-300">
               {pageError}
             </div>
           )}
 
-          <section className="rounded-[2rem] border border-white/[0.04] bg-white/[0.01] p-6 md:p-8 backdrop-blur-3xl">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="rounded-[1.5rem] border border-zinc-200 dark:border-white/[0.04] bg-white dark:bg-white/[0.01] p-5 flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                <Database size={24} />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Total Logs</p>
+                <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stats.total}</p>
+              </div>
+            </div>
+            
+            <div className="rounded-[1.5rem] border border-zinc-200 dark:border-white/[0.04] bg-white dark:bg-white/[0.01] p-5 flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400">
+                <AlertTriangle size={24} />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Suspicious</p>
+                <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stats.suspicious}</p>
+              </div>
+            </div>
+
+            <div className="rounded-[1.5rem] border border-zinc-200 dark:border-white/[0.04] bg-white dark:bg-white/[0.01] p-5 flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <Activity size={24} />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Top Action</p>
+                <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100 truncate w-32">{stats.topAction}</p>
+              </div>
+            </div>
+
+            <div className="rounded-[1.5rem] border border-zinc-200 dark:border-white/[0.04] bg-white dark:bg-white/[0.01] p-5 flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                <Fingerprint size={24} />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Audit Traces</p>
+                <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Secured</p>
+              </div>
+            </div>
+          </div>
+
+          <section className="rounded-[2rem] border border-zinc-200 dark:border-white/[0.04] bg-white dark:bg-white/[0.01] p-6 md:p-8 backdrop-blur-3xl">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
               <select
                 value={actionFilter}
@@ -262,7 +369,7 @@ export default function AuditLogsPage() {
                 type="button"
                 onClick={() => void fetchAuditLogs(true)}
                 disabled={isRefreshing}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 text-sm font-semibold text-zinc-200 transition-all hover:border-white/20 hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.02] px-4 py-3 text-sm font-semibold text-zinc-900 dark:text-zinc-200 transition-all hover:bg-zinc-100 dark:hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <RefreshCcw size={16} className={isRefreshing ? "animate-spin" : ""} />
                 {isRefreshing ? "Refreshing..." : "Refresh"}
@@ -281,14 +388,14 @@ export default function AuditLogsPage() {
             </div>
           </section>
 
-          <section className="rounded-[2rem] border border-white/[0.04] bg-white/[0.01] p-6 md:p-8 backdrop-blur-3xl">
+          <section className="rounded-[2rem] border border-zinc-200 dark:border-white/[0.04] bg-white dark:bg-white/[0.01] p-6 md:p-8 backdrop-blur-3xl overflow-hidden">
             {isLoading ? (
-              <div className="rounded-2xl border border-white/5 bg-[#09090b] px-6 py-10 text-center text-sm text-zinc-400">
+              <div className="rounded-2xl border border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-[#09090b] px-6 py-10 text-center text-sm text-zinc-500 dark:text-zinc-400">
                 Loading audit logs...
               </div>
             ) : auditLogs.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-white/[0.05]">
+                <table className="min-w-full divide-y divide-zinc-200 dark:divide-white/[0.05]">
                   <thead>
                     <tr>
                       <th className="px-4 py-4 text-left text-xs font-medium uppercase tracking-[0.2em] text-zinc-500 border-b border-white/[0.05]">
@@ -320,27 +427,27 @@ export default function AuditLogsPage() {
                   <tbody className="divide-y divide-white/[0.02]">
                     {auditLogs.map((log, index) => (
                       <tr key={log.id || `audit-log-${index}`} className="align-top hover:bg-white/[0.02] transition-colors">
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-600 dark:text-zinc-300">
                           {log.createdAt
                             ? new Date(log.createdAt).toLocaleString()
                             : "N/A"}
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-zinc-200">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-zinc-900 dark:text-zinc-200">
                           {log.action || "N/A"}
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-600 dark:text-zinc-300">
                           {log.actorRole || "N/A"}
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-400">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
                           {log.actorId || "N/A"}
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-600 dark:text-zinc-300">
                           {log.targetType || "N/A"}
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-400">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
                           {log.targetId || "N/A"}
                         </td>
-                        <td className="px-4 py-4 text-sm leading-7 text-zinc-300">
+                        <td className="px-4 py-4 text-sm leading-7 text-zinc-600 dark:text-zinc-300">
                           {log.description || "N/A"}
                         </td>
                         <td className="px-4 py-4">
@@ -354,8 +461,8 @@ export default function AuditLogsPage() {
                 </table>
               </div>
             ) : (
-              <div className="rounded-2xl border border-white/5 bg-[#09090b] px-6 py-10 text-center">
-                <p className="text-sm font-medium text-zinc-200">No audit logs found.</p>
+              <div className="rounded-2xl border border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-[#09090b] px-6 py-10 text-center">
+                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-200">No audit logs found.</p>
                 <p className="mt-3 text-sm leading-7 text-zinc-500">
                   Adjust your filters or refresh the feed when new system activity is expected.
                 </p>

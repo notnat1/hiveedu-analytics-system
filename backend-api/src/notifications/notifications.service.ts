@@ -1,19 +1,31 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { HttpService } from '@nestjs/axios';
 import { catchError, firstValueFrom } from 'rxjs';
+import { NotificationsGateway } from './notifications.gateway';
 
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
 
-  constructor(private readonly httpService: HttpService) { }
+  constructor(
+    private readonly httpService: HttpService,
+    @Inject(forwardRef(() => NotificationsGateway))
+    private readonly notificationsGateway: NotificationsGateway
+  ) { }
 
   @OnEvent('intervention.alert')
   async handleInterventionAlertEvent(payload: { user: any; predictionData: any }) {
     const { user } = payload;
 
-    // Logika teks manual dihapus karena sistem menggunakan Template Meta
+    // Send Real-time WebSocket Notification
+    this.notificationsGateway.sendToUser(user.id, 'notification', {
+      title: '⚠️ Peringatan Akademik',
+      message: 'Sistem mendeteksi tren penurunan pada performa belajarmu. Segera periksa saran Llama-3 AI di dashboard!',
+      type: 'intervention'
+    });
+
+    // WhatsApp Alert
     await this.sendWhatsAppAlert(user);
   }
 

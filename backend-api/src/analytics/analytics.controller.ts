@@ -38,7 +38,7 @@ export class AnalyticsController {
 
   @UseGuards(JwtAuthGuard)
   @Post('predict-performance')
-  @Roles(Role.ADMIN, Role.TEACHER)
+  @Roles(Role.ADMIN, Role.TEACHER, Role.USER)
   @UsePipes(
     new ValidationPipe({
       transform: true,
