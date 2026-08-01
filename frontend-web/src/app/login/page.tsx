@@ -154,12 +154,70 @@ export default function LoginPage() {
   return (
     <div className="login-container relative min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 overflow-hidden transition-colors duration-300">
 
-      {/* Background Grid Pattern */}
-      <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#e4e4e7_1px,transparent_1px),linear-gradient(to_bottom,#e4e4e7_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#27272a_1px,transparent_1px),linear-gradient(to_bottom,#27272a_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none transition-colors duration-300"></div>
+      {/* Animated Precision Radar & Data Streams Background */}
+      <style>{`
+        @keyframes radar-spin {
+          from { transform: translate(-50%, -50%) rotate(0deg); }
+          to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        @keyframes data-stream-y {
+          0% { transform: translateY(-100vh); opacity: 0; }
+          20% { opacity: 1; }
+          80% { opacity: 1; }
+          100% { transform: translateY(100vh); opacity: 0; }
+        }
+        @keyframes data-stream-x {
+          0% { transform: translateX(-100vw); opacity: 0; }
+          20% { opacity: 1; }
+          80% { opacity: 1; }
+          100% { transform: translateX(100vw); opacity: 0; }
+        }
+      `}</style>
+      
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none transition-colors duration-500">
+        
+        {/* Base Faint Crosshair Grid (Always visible, very dim) */}
+        <div 
+          className="absolute inset-0 opacity-20 dark:opacity-30"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 22v16m-8-8h16' stroke='%239ca3af' stroke-width='1' stroke-linecap='round'/%3E%3C/svg%3E")`,
+            backgroundSize: '60px 60px'
+          }}
+        ></div>
 
-      {/* Ambient Glowing Orbs */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-[120%] -translate-y-[100%] w-72 h-72 bg-blue-400/20 rounded-full blur-[100px] z-10 pointer-events-none"></div>
-      <div className="absolute top-1/2 left-1/2 translate-x-[20%] translate-y-[0%] w-72 h-72 bg-violet-400/20 rounded-full blur-[100px] z-10 pointer-events-none"></div>
+        {/* The Animated Radar & Data Streams (Masked by Crosshairs) */}
+        <div 
+          className="absolute inset-0 z-0 opacity-100 mix-blend-multiply dark:mix-blend-screen"
+          style={{
+            maskImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 22v16m-8-8h16' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")`,
+            WebkitMaskImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 22v16m-8-8h16' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")`,
+            maskSize: '60px 60px',
+            WebkitMaskSize: '60px 60px'
+          }}
+        >
+          {/* Sweeping Radar Beam */}
+          <div 
+            className="absolute top-1/2 left-1/2 w-[200vw] h-[200vw] sm:w-[150vw] sm:h-[150vw] rounded-full opacity-100"
+            style={{ 
+              background: 'conic-gradient(from 0deg, transparent 70%, rgba(59, 130, 246, 0.6) 90%, rgba(6, 182, 212, 1) 100%)',
+              animation: 'radar-spin 8s linear infinite'
+            }}
+          ></div>
+
+          {/* Shooting Data Streams (Lasers) */}
+          <div className="absolute left-[30%] top-0 w-[10px] h-[40vh] bg-gradient-to-b from-transparent to-blue-500 blur-[2px]" style={{ animation: 'data-stream-y 6s linear infinite' }}></div>
+          <div className="absolute left-[70%] top-0 w-[10px] h-[50vh] bg-gradient-to-b from-transparent to-cyan-400 blur-[2px]" style={{ animation: 'data-stream-y 9s linear infinite 2s' }}></div>
+          <div className="absolute top-[40%] left-0 w-[40vw] h-[10px] bg-gradient-to-r from-transparent to-indigo-500 blur-[2px]" style={{ animation: 'data-stream-x 7s linear infinite 1s' }}></div>
+          <div className="absolute top-[80%] left-0 w-[50vw] h-[10px] bg-gradient-to-r from-transparent to-blue-400 blur-[2px]" style={{ animation: 'data-stream-x 11s linear infinite 4s' }}></div>
+        </div>
+
+        {/* Ambient Glowing Core (Behind login card) */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] max-w-[600px] max-h-[600px] bg-blue-500/10 dark:bg-blue-600/10 rounded-full blur-[100px]"></div>
+
+        {/* Soft Vignette Mask */}
+        <div className="absolute inset-0 bg-zinc-50/40 dark:bg-zinc-950/60"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(9,9,11,0.2)_100%)] dark:bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(9,9,11,0.7)_100%)]"></div>
+      </div>
 
       {/* Login Card */}
       <div className="login-card relative z-20 w-full max-w-md mx-4 sm:mx-0 p-8 sm:p-10 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200/60 dark:border-zinc-800/60 rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] transition-colors duration-300">
@@ -212,7 +270,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full mt-6 py-4 px-4 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white font-semibold rounded-xl shadow-[0_8px_20px_rgba(37,99,235,0.25)] transition-all duration-300 hover:shadow-[0_10px_25px_rgba(37,99,235,0.35)] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center overflow-hidden"
+            className="w-full mt-6 py-4 px-4 bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-500 dark:to-cyan-400 hover:from-blue-500 hover:to-cyan-400 dark:hover:from-blue-400 dark:hover:to-cyan-300 text-white font-bold tracking-wide rounded-xl shadow-[0_8px_20px_rgba(14,165,233,0.3)] dark:shadow-[0_8px_20px_rgba(14,165,233,0.2)] transition-all duration-300 hover:shadow-[0_10px_25px_rgba(14,165,233,0.4)] dark:hover:shadow-[0_10px_25px_rgba(14,165,233,0.3)] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center overflow-hidden"
           >
             {isLoading ? (
               <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
