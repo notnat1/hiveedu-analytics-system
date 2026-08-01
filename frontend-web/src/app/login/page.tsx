@@ -154,69 +154,69 @@ export default function LoginPage() {
   return (
     <div className="login-container relative min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 overflow-hidden transition-colors duration-300">
 
-      {/* Animated Precision Radar & Data Streams Background */}
+      {/* Animated Quantum Wave (3D Ribbon) Background - REFINED FOR LIGHT MODE */}
       <style>{`
-        @keyframes radar-spin {
-          from { transform: translate(-50%, -50%) rotate(0deg); }
-          to { transform: translate(-50%, -50%) rotate(360deg); }
+        @keyframes wave-spin {
+          0% { transform: translate(-50%, -50%) rotate(0deg); }
+          100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
-        @keyframes data-stream-y {
-          0% { transform: translateY(-100vh); opacity: 0; }
-          20% { opacity: 1; }
-          80% { opacity: 1; }
-          100% { transform: translateY(100vh); opacity: 0; }
-        }
-        @keyframes data-stream-x {
-          0% { transform: translateX(-100vw); opacity: 0; }
-          20% { opacity: 1; }
-          80% { opacity: 1; }
-          100% { transform: translateX(100vw); opacity: 0; }
+        @keyframes wave-spin-reverse {
+          0% { transform: translate(-50%, -50%) rotate(360deg); }
+          100% { transform: translate(-50%, -50%) rotate(0deg); }
         }
       `}</style>
       
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none transition-colors duration-500">
         
-        {/* Base Faint Crosshair Grid (Always visible, very dim) */}
-        <div 
-          className="absolute inset-0 opacity-20 dark:opacity-30"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 22v16m-8-8h16' stroke='%239ca3af' stroke-width='1' stroke-linecap='round'/%3E%3C/svg%3E")`,
-            backgroundSize: '60px 60px'
-          }}
-        ></div>
+        {/* Subtle background glow from the top */}
+        <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[80vw] h-[50vh] bg-blue-500/10 dark:bg-blue-600/10 rounded-[100%] blur-[120px]"></div>
 
-        {/* The Animated Radar & Data Streams (Masked by Crosshairs) */}
-        <div 
-          className="absolute inset-0 z-0 opacity-100 mix-blend-multiply dark:mix-blend-screen"
-          style={{
-            maskImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 22v16m-8-8h16' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")`,
-            WebkitMaskImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 22v16m-8-8h16' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")`,
-            maskSize: '60px 60px',
-            WebkitMaskSize: '60px 60px'
-          }}
-        >
-          {/* Sweeping Radar Beam */}
+        {/* The Quantum Waves (Giant wobbly rotating blobs placed below the screen) */}
+        {/* By placing them far down, only their top crests are visible, creating a smooth fluid horizon line */}
+        <div className="absolute bottom-[-150vw] sm:bottom-[-90vw] left-1/2 w-[250vw] h-[250vw] sm:w-[150vw] sm:h-[150vw] opacity-90 dark:opacity-80 mix-blend-multiply dark:mix-blend-screen">
+          
+          {/* Wave 1 - Deep Blue/Cyan Base (Stronger, deeper colors for Light Mode) */}
           <div 
-            className="absolute top-1/2 left-1/2 w-[200vw] h-[200vw] sm:w-[150vw] sm:h-[150vw] rounded-full opacity-100"
-            style={{ 
-              background: 'conic-gradient(from 0deg, transparent 70%, rgba(59, 130, 246, 0.6) 90%, rgba(6, 182, 212, 1) 100%)',
-              animation: 'radar-spin 8s linear infinite'
+            className="absolute top-1/2 left-1/2 w-full h-full bg-gradient-to-tr from-blue-600 to-cyan-500 dark:from-blue-700 dark:to-cyan-400 opacity-80 dark:opacity-60"
+            style={{
+              transformOrigin: '48% 50%',
+              borderRadius: '45% 55% 40% 60% / 55% 45% 60% 40%',
+              animation: 'wave-spin 22s linear infinite',
+              filter: 'blur(30px)'
+            }}
+          ></div>
+          
+          {/* Wave 2 - Indigo/Sky Mid-layer */}
+          <div 
+            className="absolute top-1/2 left-1/2 w-[95%] h-[95%] bg-gradient-to-tl from-indigo-600 to-sky-400 dark:from-indigo-700 dark:to-sky-400 opacity-80 dark:opacity-60"
+            style={{
+              transformOrigin: '50% 52%',
+              borderRadius: '55% 45% 50% 50% / 45% 55% 45% 55%',
+              animation: 'wave-spin-reverse 28s linear infinite',
+              filter: 'blur(40px)'
             }}
           ></div>
 
-          {/* Shooting Data Streams (Lasers) */}
-          <div className="absolute left-[30%] top-0 w-[10px] h-[40vh] bg-gradient-to-b from-transparent to-blue-500 blur-[2px]" style={{ animation: 'data-stream-y 6s linear infinite' }}></div>
-          <div className="absolute left-[70%] top-0 w-[10px] h-[50vh] bg-gradient-to-b from-transparent to-cyan-400 blur-[2px]" style={{ animation: 'data-stream-y 9s linear infinite 2s' }}></div>
-          <div className="absolute top-[40%] left-0 w-[40vw] h-[10px] bg-gradient-to-r from-transparent to-indigo-500 blur-[2px]" style={{ animation: 'data-stream-x 7s linear infinite 1s' }}></div>
-          <div className="absolute top-[80%] left-0 w-[50vw] h-[10px] bg-gradient-to-r from-transparent to-blue-400 blur-[2px]" style={{ animation: 'data-stream-x 11s linear infinite 4s' }}></div>
+          {/* Wave 3 - Violet/Cyan Core Highlight */}
+          <div 
+            className="absolute top-1/2 left-1/2 w-[90%] h-[90%] bg-gradient-to-bl from-violet-600 to-cyan-400 dark:from-violet-600 dark:to-cyan-300 opacity-90 dark:opacity-80"
+            style={{
+              transformOrigin: '52% 48%',
+              borderRadius: '40% 60% 55% 45% / 50% 40% 60% 50%',
+              animation: 'wave-spin 18s linear infinite',
+              filter: 'blur(20px)'
+            }}
+          ></div>
         </div>
 
-        {/* Ambient Glowing Core (Behind login card) */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] max-w-[600px] max-h-[600px] bg-blue-500/10 dark:bg-blue-600/10 rounded-full blur-[100px]"></div>
+        {/* Minimalist Floating Dust Particles (Darker in Light Mode for contrast) */}
+        <div className="absolute top-[20%] left-[20%] w-[4px] h-[4px] bg-blue-500 dark:bg-blue-300 rounded-full blur-[1px] opacity-40 animate-pulse"></div>
+        <div className="absolute top-[40%] left-[80%] w-[5px] h-[5px] bg-cyan-600 dark:bg-cyan-200 rounded-full blur-[1px] opacity-50 animate-[pulse_4s_ease-in-out_infinite]"></div>
+        <div className="absolute top-[70%] left-[10%] w-[6px] h-[6px] bg-indigo-600 dark:bg-indigo-300 rounded-full blur-[2px] opacity-60 animate-[pulse_5s_ease-in-out_infinite]"></div>
 
-        {/* Soft Vignette Mask */}
-        <div className="absolute inset-0 bg-zinc-50/40 dark:bg-zinc-950/60"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(9,9,11,0.2)_100%)] dark:bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(9,9,11,0.7)_100%)]"></div>
+        {/* Frosted Glass Vignette Mask - THINNED OUT FOR LIGHT MODE TO LET COLORS POP */}
+        <div className="absolute inset-0 bg-gradient-to-b from-zinc-50/80 dark:from-zinc-950/90 via-transparent to-zinc-50/10 dark:to-zinc-950/40"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(250,250,250,0.5)_100%)] dark:bg-[radial-gradient(ellipse_at_top,transparent_10%,rgba(9,9,11,0.9)_100%)]"></div>
       </div>
 
       {/* Login Card */}
