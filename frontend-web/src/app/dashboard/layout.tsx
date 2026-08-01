@@ -176,11 +176,11 @@ export default function DashboardLayout({
                 href={item.href}
                 className={`flex items-center px-4 py-2.5 rounded-xl transition-all duration-200 group text-sm font-medium ${
                   isActive
-                    ? "bg-white/[0.05] text-white shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] active-nav-link"
-                    : "text-zinc-500 hover:bg-white/[0.02] hover:text-zinc-300"
+                    ? "bg-gradient-to-r from-cyan-500/10 to-transparent text-zinc-900 dark:text-white shadow-[inset_3px_0_0_0_rgba(6,182,212,1)] active-nav-link"
+                    : "text-zinc-500 hover:bg-black/5 dark:hover:bg-white/[0.02] hover:text-zinc-800 dark:hover:text-zinc-300"
                 }`}
               >
-                <Icon className={`w-4 h-4 mr-3 ${isActive ? "text-zinc-100 active-nav-icon" : "text-zinc-500 group-hover:text-zinc-400"}`} strokeWidth={isActive ? 2.5 : 2} />
+                <Icon className={`w-4 h-4 mr-3 ${isActive ? "text-cyan-600 dark:text-cyan-400" : "text-zinc-500 group-hover:text-zinc-800 dark:group-hover:text-zinc-400"}`} strokeWidth={isActive ? 2.5 : 2} />
                 {item.name}
               </Link>
             );
