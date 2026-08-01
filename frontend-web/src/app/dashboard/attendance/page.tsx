@@ -521,8 +521,14 @@ export default function AttendancePage() {
 
         {selectedUserId ? (
           isLoadingAttendance ? (
-            <div className="rounded-2xl border border-white/5 bg-[#09090b] px-6 py-8 text-center text-sm text-zinc-400">
-              Loading attendance history...
+            <div className="rounded-2xl border border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-[#09090b] p-6">
+              <div className="space-y-4">
+                <div className="h-12 w-full animate-pulse rounded-xl bg-zinc-200 dark:bg-white/5"></div>
+                <div className="h-12 w-full animate-pulse rounded-xl bg-zinc-200 dark:bg-white/5 delay-75"></div>
+                <div className="h-12 w-full animate-pulse rounded-xl bg-zinc-200 dark:bg-white/5 delay-150"></div>
+                <div className="h-12 w-full animate-pulse rounded-xl bg-zinc-200 dark:bg-white/5 delay-200"></div>
+                <div className="h-12 w-full animate-pulse rounded-xl bg-zinc-200 dark:bg-white/5 delay-300"></div>
+              </div>
             </div>
           ) : attendanceRecords.length > 0 ? (
             <div className="overflow-x-auto">

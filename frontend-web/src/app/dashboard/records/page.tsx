@@ -359,6 +359,11 @@ export default function AcademicRecordsPage() {
       });
 
       if (!response.ok) {
+        if (response.status === 404) {
+          setRecords([]);
+          setIsLoadingRecords(false);
+          return;
+        }
         throw new Error("Failed to fetch academic records.");
       }
 

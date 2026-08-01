@@ -812,11 +812,12 @@ export default function DashboardPage() {
           }),
         ]);
 
-        if (!featureResponse.ok) {
-          throw new Error(`Failed to fetch features for user ${user.userId}`);
+        let featureData: any = { tryoutCount: 0, x1: 0, x2: 0, x3: null, teacherObjectiveScore: null };
+        if (featureResponse.ok) {
+          featureData = (await featureResponse.json()) as UserFeatureSnapshot;
+        } else {
+          console.warn(`[browser] Failed to fetch features for user ${user.userId}`);
         }
-
-        const featureData = (await featureResponse.json()) as UserFeatureSnapshot;
         const recordData = recordsResponse.ok
           ? ((await recordsResponse.json()) as UserRecordResponse[])
           : [];
@@ -1805,8 +1806,9 @@ export default function DashboardPage() {
             })}
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-8">
-            <div className="rounded-[3rem] border border-white/5 bg-white/[0.02] p-8 shadow-2xl backdrop-blur-2xl md:p-10">
+          <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-8 items-start">
+            <div className="flex flex-col gap-8">
+              <div className="flex flex-col rounded-[3rem] border border-white/5 bg-white/[0.02] p-8 shadow-2xl backdrop-blur-2xl md:p-10">
               <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h3 className="text-2xl font-medium tracking-tight text-zinc-100">
@@ -1820,7 +1822,7 @@ export default function DashboardPage() {
                   type="button"
                   onClick={handleExportWorkbook}
                   disabled={isExportingAnalyticsReport}
-                  className="inline-flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-6 py-3 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-300 transition-all hover:border-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-500 dark:to-cyan-400 px-4 py-2 text-xs font-semibold text-white shadow-[0_8px_20px_rgba(14,165,233,0.3)] dark:shadow-[0_8px_20px_rgba(14,165,233,0.2)] transition-all hover:shadow-[0_10px_25px_rgba(14,165,233,0.4)] hover:from-blue-500 hover:to-cyan-400 dark:hover:from-blue-400 dark:hover:to-cyan-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider"
                 >
                   <FileSpreadsheet size={16} />
                   {isExportingAnalyticsReport
@@ -1918,7 +1920,39 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div className="space-y-8">
+            <div className="rounded-[3rem] border border-white/5 bg-white/[0.02] p-8 shadow-2xl backdrop-blur-2xl md:p-10">
+              <div className="space-y-2 mb-8">
+                <h3 className="text-2xl font-medium tracking-tight text-zinc-100">
+                  Data Quality & Eligibility
+                </h3>
+                <p className="text-xs uppercase tracking-widest text-zinc-500 opacity-60">
+                  Latest MLR run history
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {[
+                  ["Total Users", latestRunHistory?.totalUserCount],
+                  ["Active Users", latestRunHistory?.activeUserCount],
+                  ["Eligible Users", latestRunHistory?.eligibleUserCount],
+                  ["Excluded Inactive", latestRunHistory?.excludedInactiveCount],
+                  ["Excluded Tryout", latestRunHistory?.excludedInsufficientTryoutCount],
+                  ["Excluded Null Score", latestRunHistory?.excludedNullScoreCount],
+                  ["Training Samples", latestRunHistory?.trainingSampleCount],
+                  ["Predictions", latestRunHistory?.predictionCount],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-2xl border border-white/5 bg-[#09090b] px-4 py-4">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{label}</p>
+                    <p className="mt-2 text-xl font-semibold text-zinc-100">
+                      {typeof value === "number" ? value : "N/A"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-8">
               <div className="rounded-[3rem] border border-white/5 bg-white/[0.02] p-8 shadow-2xl backdrop-blur-2xl md:p-10">
                 <div className="space-y-2 mb-8">
                   <h3 className="text-2xl font-medium tracking-tight text-zinc-100">
@@ -1987,37 +2021,6 @@ export default function DashboardPage() {
                         : "No fallback used in the latest run."}
                     </p>
                   </div>
-                </div>
-              </div>
-
-              <div className="rounded-[3rem] border border-white/5 bg-white/[0.02] p-8 shadow-2xl backdrop-blur-2xl md:p-10">
-                <div className="space-y-2 mb-8">
-                  <h3 className="text-2xl font-medium tracking-tight text-zinc-100">
-                    Data Quality & Eligibility
-                  </h3>
-                  <p className="text-xs uppercase tracking-widest text-zinc-500 opacity-60">
-                    Latest MLR run history
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  {[
-                    ["Total Users", latestRunHistory?.totalUserCount],
-                    ["Active Users", latestRunHistory?.activeUserCount],
-                    ["Eligible Users", latestRunHistory?.eligibleUserCount],
-                    ["Excluded Inactive", latestRunHistory?.excludedInactiveCount],
-                    ["Excluded Tryout", latestRunHistory?.excludedInsufficientTryoutCount],
-                    ["Excluded Null Score", latestRunHistory?.excludedNullScoreCount],
-                    ["Training Samples", latestRunHistory?.trainingSampleCount],
-                    ["Predictions Generated", latestRunHistory?.predictionCount],
-                  ].map(([label, value]) => (
-                    <div key={label} className="rounded-2xl border border-white/5 bg-[#09090b] px-4 py-4">
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{label}</p>
-                      <p className="mt-2 text-xl font-semibold text-zinc-100">
-                        {typeof value === "number" ? value : "N/A"}
-                      </p>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>

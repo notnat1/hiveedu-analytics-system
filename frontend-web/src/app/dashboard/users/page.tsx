@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertCircle, CheckCircle2, Edit, Plus, Trash2, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, Edit, Plus, Trash2, X, Search } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 
 type UserRole = "ADMIN" | "TEACHER" | "USER";
@@ -396,7 +396,20 @@ export default function UserManagementPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.02]">
-              {filteredUsers.length > 0 ? (
+              {isLoadingUsers ? (
+                Array.from({ length: 5 }).map((_, index) => (
+                  <tr key={index}>
+                    <td colSpan={6} className="px-6 py-5">
+                      <div className="flex items-center gap-4">
+                        <div className="h-4 w-1/4 animate-pulse rounded bg-zinc-200 dark:bg-white/5" style={{ animationDelay: `${index * 100}ms` }}></div>
+                        <div className="h-4 w-1/4 animate-pulse rounded bg-zinc-200 dark:bg-white/5" style={{ animationDelay: `${index * 100 + 50}ms` }}></div>
+                        <div className="h-4 w-1/4 animate-pulse rounded bg-zinc-200 dark:bg-white/5" style={{ animationDelay: `${index * 100 + 100}ms` }}></div>
+                        <div className="h-4 w-1/4 animate-pulse rounded bg-zinc-200 dark:bg-white/5" style={{ animationDelay: `${index * 100 + 150}ms` }}></div>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : filteredUsers.length > 0 ? (
                 filteredUsers.map((user) => (
                   <tr key={user.userId} className="hover:bg-white/[0.02] transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-300">
@@ -446,11 +459,16 @@ export default function UserManagementPage() {
                 ))
               ) : (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-12 text-center text-sm uppercase tracking-widest text-zinc-600"
-                  >
-                    {isLoadingUsers ? "Loading accounts..." : "No accounts found."}
+                  <td colSpan={6} className="p-8">
+                    <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl bg-white/[0.01] border border-white/[0.05] shadow-inner backdrop-blur-md">
+                      <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mb-4 ring-1 ring-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                        <Search className="w-8 h-8 text-cyan-400 opacity-80" />
+                      </div>
+                      <h3 className="text-lg font-medium text-zinc-200 mb-1">No accounts found</h3>
+                      <p className="text-sm text-zinc-500 max-w-sm">
+                        There are no user accounts matching your current filter criteria in the database.
+                      </p>
+                    </div>
                   </td>
                 </tr>
               )}

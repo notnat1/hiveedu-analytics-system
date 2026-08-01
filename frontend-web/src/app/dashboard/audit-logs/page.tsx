@@ -241,7 +241,7 @@ export default function AuditLogsPage() {
           <button
             onClick={exportToCSV}
             disabled={auditLogs.length === 0}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 px-4 py-2.5 text-sm font-semibold transition-all hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-500 dark:to-cyan-400 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(14,165,233,0.3)] dark:shadow-[0_8px_20px_rgba(14,165,233,0.2)] transition-all hover:shadow-[0_10px_25px_rgba(14,165,233,0.4)] hover:from-blue-500 hover:to-cyan-400 dark:hover:from-blue-400 dark:hover:to-cyan-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Download size={16} />
             Export CSV
@@ -390,8 +390,14 @@ export default function AuditLogsPage() {
 
           <section className="rounded-[2rem] border border-zinc-200 dark:border-white/[0.04] bg-white dark:bg-white/[0.01] p-6 md:p-8 backdrop-blur-3xl overflow-hidden">
             {isLoading ? (
-              <div className="rounded-2xl border border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-[#09090b] px-6 py-10 text-center text-sm text-zinc-500 dark:text-zinc-400">
-                Loading audit logs...
+              <div className="rounded-2xl border border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-[#09090b] p-6">
+                <div className="space-y-4">
+                  <div className="h-12 w-full animate-pulse rounded-xl bg-zinc-200 dark:bg-white/5"></div>
+                  <div className="h-12 w-full animate-pulse rounded-xl bg-zinc-200 dark:bg-white/5 delay-75"></div>
+                  <div className="h-12 w-full animate-pulse rounded-xl bg-zinc-200 dark:bg-white/5 delay-150"></div>
+                  <div className="h-12 w-full animate-pulse rounded-xl bg-zinc-200 dark:bg-white/5 delay-200"></div>
+                  <div className="h-12 w-full animate-pulse rounded-xl bg-zinc-200 dark:bg-white/5 delay-300"></div>
+                </div>
               </div>
             ) : auditLogs.length > 0 ? (
               <div className="overflow-x-auto">

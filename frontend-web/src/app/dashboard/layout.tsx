@@ -290,7 +290,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto z-10 relative">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto z-10 relative animate-in fade-in zoom-in-95 duration-500 ease-out">
           {children}
         </main>
       </div>
