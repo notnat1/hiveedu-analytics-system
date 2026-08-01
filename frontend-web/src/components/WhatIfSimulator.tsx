@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Calculator, ChevronRight, Info, AlertTriangle } from "lucide-react";
 
 interface WhatIfSimulatorProps {
@@ -18,6 +19,7 @@ export default function WhatIfSimulator({
   tryoutCount,
   token,
 }: WhatIfSimulatorProps) {
+  const { t } = useTranslation();
   const [x1, setX1] = useState(initialX1);
   const [x2, setX2] = useState(initialX2);
   const [x3, setX3] = useState(initialX3);
@@ -43,7 +45,7 @@ export default function WhatIfSimulator({
         });
 
         if (response.ok) {
-          const data = await response.json();
+          const data = await response.json().then(r => r.data ?? r);
           setPredictedScore(data.predictedPerformance);
         }
       } catch (error) {
@@ -90,14 +92,14 @@ export default function WhatIfSimulator({
             <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-4 py-1.5 mb-2">
               <Calculator className="w-3.5 h-3.5 text-indigo-400" />
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-300">
-                Interactive Planner
+                {t("dashboard.what_if_interactive_planner")}
               </span>
             </div>
             <h3 className="text-2xl font-medium text-zinc-100 tracking-tight">
-              "What-If" Target Simulator
+              {t("dashboard.what_if_title")}
             </h3>
             <p className="text-sm text-zinc-500 leading-7">
-              Adjust the sliders to see how improving your attendance, tryout scores, or teacher objective impacts your predicted final exam score in real-time.
+              {t("dashboard.what_if_desc")}
             </p>
           </div>
 
@@ -171,7 +173,7 @@ export default function WhatIfSimulator({
             <div className="flex items-start gap-3 rounded-2xl bg-[#09090b] border border-white/5 p-4 mt-8">
                <Info className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
                <p className="text-xs text-zinc-400 leading-relaxed">
-                 <strong className="text-zinc-200">Pro-tip:</strong> Focus on increasing your X2 (Tryout) score as it usually has a strong coefficient multiplier in the MLR formula.
+                 <strong className="text-zinc-200">{t("components.pro_tip_label")}</strong> Focus on increasing your X2 (Tryout) score as it usually has a strong coefficient multiplier in the MLR formula.
                </p>
             </div>
           </div>
@@ -209,7 +211,7 @@ export default function WhatIfSimulator({
                   }}
                   className="text-xs font-medium text-zinc-400 hover:text-white transition-colors flex items-center gap-1 bg-white/5 px-4 py-2 rounded-full hover:bg-white/10"
                 >
-                  Reset to Current Metrics
+                  {t("dashboard.what_if_reset")}
                 </button>
               </div>
             </div>

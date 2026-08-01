@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Users,
   Target,
@@ -234,6 +235,7 @@ export default function DashboardPage() {
     message: "",
     tone: "success",
   });
+  const { t } = useTranslation();
 
   const showToast = (message: string, tone: ToastState["tone"] = "success") => {
     setToast({ show: true, message, tone });
@@ -394,7 +396,7 @@ export default function DashboardPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to export analytics report.");
+        throw new Error(t("errors.failed_export_report"));
       }
 
       const workbookBlob = await response.blob();
@@ -474,9 +476,9 @@ export default function DashboardPage() {
         : userAnalytics.englishScore;
 
     return [
-      { subject: "Mathematics", score: mathematicsScore },
-      { subject: "Logical Reasoning", score: logicalReasoningScore },
-      { subject: "English Proficiency", score: englishScore },
+      { subject: t("dashboard.mathematics"), score: mathematicsScore },
+      { subject: t("dashboard.logical_reasoning"), score: logicalReasoningScore },
+      { subject: t("dashboard.english_proficiency"), score: englishScore },
     ];
   }, [userAnalytics, userRecords]);
 
@@ -557,8 +559,8 @@ export default function DashboardPage() {
     if (userAnalytics.x1 === 100) {
       badges.push({
         key: "perfect-attendance",
-        title: "Perfect Attendance",
-        description: "You maintained flawless attendance across all recorded sessions.",
+        title: t("dashboard.badges_perfect_attendance_title"),
+        description: t("dashboard.badges_perfect_attendance_desc"),
         className:
           "border-emerald-500/20 bg-emerald-500/10 shadow-[0_0_30px_rgba(16,185,129,0.16)]",
         iconClassName: "text-emerald-400",
@@ -568,8 +570,8 @@ export default function DashboardPage() {
     if (userAnalytics.x1 >= 90) {
       badges.push({
         key: "consistent-attendance",
-        title: "Consistent Attendance",
-        description: "Your attendance is operating inside a highly reliable range.",
+        title: t("dashboard.badges_consistent_attendance_title"),
+        description: t("dashboard.badges_consistent_attendance_desc"),
         className:
           "border-sky-500/20 bg-sky-500/10 shadow-[0_0_30px_rgba(59,130,246,0.16)]",
         iconClassName: "text-sky-400",
@@ -579,8 +581,8 @@ export default function DashboardPage() {
     if (userAnalytics.x2 >= 85) {
       badges.push({
         key: "tryout-achiever",
-        title: "Tryout Achiever",
-        description: "Your average tryout performance is operating at an advanced level.",
+        title: t("dashboard.badges_tryout_achiever_title"),
+        description: t("dashboard.badges_tryout_achiever_desc"),
         className:
           "border-amber-500/20 bg-amber-500/10 shadow-[0_0_30px_rgba(245,158,11,0.16)]",
         iconClassName: "text-amber-400",
@@ -590,8 +592,8 @@ export default function DashboardPage() {
     if (userAnalytics.predictedScore !== null && userAnalytics.predictedScore >= 75) {
       badges.push({
         key: "safe-zone",
-        title: "Safe Zone",
-        description: "Your predicted next exam score is currently inside the safe performance band.",
+        title: t("dashboard.badges_safe_zone_title"),
+        description: t("dashboard.badges_safe_zone_desc"),
         className:
           "border-emerald-500/20 bg-emerald-500/10 shadow-[0_0_30px_rgba(16,185,129,0.16)]",
         iconClassName: "text-emerald-400",
@@ -601,8 +603,8 @@ export default function DashboardPage() {
     if (userAnalytics.predictedScore !== null && userAnalytics.predictedScore < 75) {
       badges.push({
         key: "early-improvement",
-        title: "Early Improvement",
-        description: "Your current analytics signal is highlighting an area to improve before the next exam.",
+        title: t("dashboard.badge_early_improvement_title"),
+        description: t("dashboard.badge_early_improvement_desc"),
         className:
           "border-red-500/20 bg-red-500/10 shadow-[0_0_30px_rgba(239,68,68,0.16)]",
         iconClassName: "text-red-400",
@@ -656,16 +658,23 @@ export default function DashboardPage() {
       throw new Error("Failed to fetch user features");
     }
 
-    const featureData = (await featureResponse.json()) as UserFeatureSnapshot;
-    const recordData = recordsResponse.ok
-      ? ((await recordsResponse.json()) as UserRecordResponse[])
-      : [];
-    const attendanceData = attendanceResponse.ok
-      ? ((await attendanceResponse.json()) as AttendanceRecordResponse[])
-      : [];
-    const selfAnalyticsData = selfAnalyticsResponse.ok
-      ? ((await selfAnalyticsResponse.json()) as UserSelfAnalyticsResponse)
-      : null;
+    const _featJson = await featureResponse.json().then(r => r.data ?? r);
+    const featureData = (_featJson.data || _featJson) as UserFeatureSnapshot;
+    let recordData: UserRecordResponse[] = [];
+    if (recordsResponse.ok) {
+      const _rJson = await recordsResponse.json().then(r => r.data ?? r);
+      recordData = (_rJson.data || _rJson) as UserRecordResponse[];
+    }
+    let attendanceData: AttendanceRecordResponse[] = [];
+    if (attendanceResponse.ok) {
+      const _aJson = await attendanceResponse.json().then(r => r.data ?? r);
+      attendanceData = (_aJson.data || _aJson) as AttendanceRecordResponse[];
+    }
+    let selfAnalyticsData: UserSelfAnalyticsResponse | null = null;
+    if (selfAnalyticsResponse.ok) {
+      const _saJson = await selfAnalyticsResponse.json().then(r => r.data ?? r);
+      selfAnalyticsData = (_saJson.data || _saJson) as UserSelfAnalyticsResponse;
+    }
     const attendancePercentage =
       selfAnalyticsData?.attendancePercentage ?? featureData.attendancePercentage ?? featureData.x1 ?? 0;
     const averageTryoutScore =
@@ -782,7 +791,8 @@ export default function DashboardPage() {
       throw new Error("Failed to fetch analytics users.");
     }
 
-    const users = (await usersResponse.json()) as UserAccountResponse[];
+    const _usersResponseJson = await usersResponse.json().then(r => r.data ?? r);
+    const users = (_usersResponseJson.data || _usersResponseJson) as UserAccountResponse[];
     const userAccounts = users.filter((user) => user.role === "USER");
     const tutorMap = new Map(
       users
@@ -791,7 +801,8 @@ export default function DashboardPage() {
     );
 
     if (runHistoryResponse.ok) {
-      const runHistoryData = (await runHistoryResponse.json()) as RunHistoryItem[];
+      const _runHistoryJson = await runHistoryResponse.json().then(r => r.data ?? r);
+      const runHistoryData = (_runHistoryJson.data || _runHistoryJson) as RunHistoryItem[];
       setLatestRunHistory(runHistoryData[0] ?? null);
     } else {
       setLatestRunHistory(null);
@@ -814,13 +825,16 @@ export default function DashboardPage() {
 
         let featureData: any = { tryoutCount: 0, x1: 0, x2: 0, x3: null, teacherObjectiveScore: null };
         if (featureResponse.ok) {
-          featureData = (await featureResponse.json()) as UserFeatureSnapshot;
+          const _featureJson = await featureResponse.json().then(r => r.data ?? r);
+          featureData = (_featureJson.data || _featureJson) as UserFeatureSnapshot;
         } else {
           console.warn(`[browser] Failed to fetch features for user ${user.userId}`);
         }
-        const recordData = recordsResponse.ok
-          ? ((await recordsResponse.json()) as UserRecordResponse[])
-          : [];
+        let recordData: UserRecordResponse[] = [];
+        if (recordsResponse.ok) {
+          const _rJson = await recordsResponse.json().then(r => r.data ?? r);
+          recordData = (_rJson.data || _rJson) as UserRecordResponse[];
+        }
         const actualScores = recordData
           .map((record) => record.actualExamScore)
           .filter(
@@ -861,8 +875,9 @@ export default function DashboardPage() {
           );
 
           if (predictionResponse.ok) {
+            const _predJson = await predictionResponse.json().then(r => r.data ?? r);
             const predictionData =
-              (await predictionResponse.json()) as { predictedPerformance: number };
+              (_predJson.data || _predJson) as { predictedPerformance: number };
             predictedScore = predictionData.predictedPerformance;
           }
         }
@@ -906,7 +921,8 @@ export default function DashboardPage() {
       throw new Error("Failed to fetch global analytics");
     }
 
-    const globalData = (await response.json()) as GlobalAnalyticsSnapshot;
+    const _glbJson = await response.json().then(r => r.data ?? r);
+    const globalData = (_glbJson.data || _glbJson) as GlobalAnalyticsSnapshot;
     setGlobalAnalytics(globalData);
   };
 
@@ -916,7 +932,8 @@ export default function DashboardPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
-        const data = await response.json() as TutorAnalyticsRow[];
+        const _tutJson = await response.json().then(r => r.data ?? r);
+        const data = (_tutJson.data || _tutJson) as TutorAnalyticsRow[];
         const myRow = data.find((row) => row.tutorId === userId) || data[0];
         setTutorRow(myRow ?? null);
       }
@@ -1016,10 +1033,10 @@ export default function DashboardPage() {
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-8">
             <div className="space-y-1">
               <h2 className="text-xl font-bold text-zinc-100 tracking-tight">
-                Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">{currentUser.username}</span>
+                {t("dashboard.welcome")}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">{currentUser.username}</span>
               </h2>
               <p className="text-zinc-500 text-sm font-light tracking-wide">
-                Here is your personalized E-Raport prediction based on your recent activities.
+                {t("dashboard.user_subtitle")}
               </p>
             </div>
 
@@ -1036,7 +1053,7 @@ export default function DashboardPage() {
               ) : (
                 <>
                   <Download className="w-4 h-4 text-blue-400 group-hover:translate-y-0.5 transition-transform" />
-                  Download E-Raport (PDF)
+                  {t("dashboard.download_pdf")}
                 </>
               )}
             </button>
@@ -1046,39 +1063,39 @@ export default function DashboardPage() {
             {userAnalytics ? (
               <>
                 <div className="bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl shadow-2xl rounded-2xl p-6 group transition-all duration-500 hover:bg-white/[0.03]">
-                  <h4 className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-4">X1 Attendance</h4>
+                  <h4 className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-4">{t("dashboard.x1_attendance")}</h4>
                   <p className="text-3xl font-semibold text-zinc-100 tracking-tighter">
                     {Number.isFinite(userAnalytics.x1) ? `${userAnalytics.x1.toFixed(1)}%` : "N/A"}
                   </p>
-                  <p className="mt-3 text-xs text-zinc-500">Attendance consistency directly shapes your next exam prediction.</p>
+                  <p className="mt-3 text-xs text-zinc-500">{t("dashboard.x1_desc")}</p>
                 </div>
                 <div className="bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl shadow-2xl rounded-2xl p-6 group transition-all duration-500 hover:bg-white/[0.03]">
-                  <h4 className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-4">X2 Tryout Average</h4>
+                  <h4 className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-4">{t("dashboard.x2_tryout")}</h4>
                   <p className="text-3xl font-semibold text-zinc-100 tracking-tighter">
                     {Number.isFinite(userAnalytics.x2) ? userAnalytics.x2.toFixed(1) : "N/A"}
                   </p>
-                  <p className="mt-3 text-xs text-zinc-500">This is your average academic record signal across complete tryout history.</p>
+                  <p className="mt-3 text-xs text-zinc-500">{t("dashboard.x2_desc")}</p>
                 </div>
                 <div className="bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl shadow-2xl rounded-2xl p-6 group transition-all duration-500 hover:bg-white/[0.03]">
-                  <h4 className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-4">X3 Teacher Objective</h4>
+                  <h4 className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-4">{t("dashboard.x3_teacher")}</h4>
                   <p className="text-3xl font-semibold text-zinc-100 tracking-tighter">
                     {getSafeNumber(userAnalytics.x3 ?? userAnalytics.teacherObjectiveScore) !== null
                       ? getSafeNumber(userAnalytics.x3 ?? userAnalytics.teacherObjectiveScore)?.toFixed(1)
                       : "N/A"}
                   </p>
-                  <p className="mt-3 text-xs text-zinc-500">Teacher objective score adds guided assessment context to the prediction.</p>
+                  <p className="mt-3 text-xs text-zinc-500">{t("dashboard.x3_desc")}</p>
                 </div>
                 <div className="bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl shadow-2xl rounded-2xl p-6 group transition-all duration-500 hover:bg-white/[0.03]">
-                  <h4 className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-4">Y Predicted Next Exam Score</h4>
+                  <h4 className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-4">{t("dashboard.y_predicted")}</h4>
                   <p className="text-3xl font-semibold text-zinc-100 tracking-tighter">
                     {userAnalytics.predictedScore !== null
                       ? userAnalytics.predictedScore.toFixed(1)
                       : "N/A"}
                   </p>
-                  <p className="mt-3 text-xs text-zinc-500">Generated from the final HiveEdu MLR formula using X1, X2, and X3.</p>
+                  <p className="mt-3 text-xs text-zinc-500">{t("dashboard.y_desc")}</p>
                 </div>
                 <div className="bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl shadow-2xl rounded-2xl p-6 group transition-all duration-500 hover:bg-white/[0.03]">
-                  <h4 className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-4">Risk Level</h4>
+                  <h4 className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-4">{t("dashboard.risk_level")}</h4>
                   <p
                     className={`text-3xl font-semibold tracking-tighter ${
                       getResolvedUserRiskLevel(userAnalytics) === "HIGH"
@@ -1090,9 +1107,9 @@ export default function DashboardPage() {
                             : "text-zinc-400"
                     }`}
                   >
-                    {getResolvedUserRiskLevel(userAnalytics)}
+                    {t(`dashboard.risk_${getResolvedUserRiskLevel(userAnalytics)}`)}
                   </p>
-                  <p className="mt-3 text-xs text-zinc-500">This flag highlights whether your current prediction is inside a safe band.</p>
+                  <p className="mt-3 text-xs text-zinc-500">{t("dashboard.risk_desc")}</p>
                 </div>
 
                 <div className="md:col-span-2 xl:col-span-4 bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl shadow-2xl rounded-3xl p-8 md:p-10 relative overflow-hidden">
@@ -1101,32 +1118,32 @@ export default function DashboardPage() {
                     <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
                       <div className="space-y-4 xl:max-w-md">
                         <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500">
-                          Personal Prediction
+                          {t("dashboard.personal_prediction")}
                         </p>
                         <h3 className="text-3xl font-semibold tracking-tight text-zinc-100">
                           {userAnalytics.predictedScore !== null
                             ? `${userAnalytics.predictedScore.toFixed(1)}`
-                            : "Prediction Pending"}
+                            : t("dashboard.prediction_pending")}
                         </h3>
                         <p className="text-sm leading-7 text-zinc-400">
-                          Your next exam score is projected from attendance consistency, average tryout history, and teacher objective score, then clamped into the 0-100 HiveEdu score range.
+                          {t("dashboard.personal_desc")}
                         </p>
                         <div className="inline-flex items-center rounded-full border border-white/10 bg-[#09090b] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-300">
-                          Risk: {getResolvedUserRiskLevel(userAnalytics)}
+                          {t("dashboard.risk_label")}{t(`dashboard.risk_${getResolvedUserRiskLevel(userAnalytics)}`)}
                         </div>
                       </div>
 
                       <div className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         <div className="rounded-2xl border border-white/[0.06] bg-[#09090b] px-5 py-5">
-                          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">X1 Attendance</p>
+                          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.x1_attendance")}</p>
                           <p className="mt-3 text-2xl font-semibold text-zinc-100">{userAnalytics.x1.toFixed(1)}%</p>
                         </div>
                         <div className="rounded-2xl border border-white/[0.06] bg-[#09090b] px-5 py-5">
-                          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">X2 Tryout Average</p>
+                          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.x2_tryout")}</p>
                           <p className="mt-3 text-2xl font-semibold text-zinc-100">{userAnalytics.x2.toFixed(1)}</p>
                         </div>
                         <div className="rounded-2xl border border-white/[0.06] bg-[#09090b] px-5 py-5">
-                          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">X3 Teacher Objective</p>
+                          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.x3_teacher")}</p>
                           <p className="mt-3 text-2xl font-semibold text-zinc-100">
                             {getSafeNumber(userAnalytics.x3 ?? userAnalytics.teacherObjectiveScore) !== null
                               ? getSafeNumber(userAnalytics.x3 ?? userAnalytics.teacherObjectiveScore)?.toFixed(1)
@@ -1134,7 +1151,7 @@ export default function DashboardPage() {
                           </p>
                         </div>
                         <div className="rounded-2xl border border-white/[0.06] bg-[#09090b] px-5 py-5">
-                          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Recorded Tryouts</p>
+                          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.recorded_tryouts")}</p>
                           <p className="mt-3 text-2xl font-semibold text-zinc-100">{userAnalytics.tryoutCount.toFixed(0)}</p>
                         </div>
                       </div>
@@ -1149,19 +1166,19 @@ export default function DashboardPage() {
                         Prediction Explanation
                       </h3>
                       <p className="text-sm text-zinc-500 leading-7">
-                        This score is explained through the three research variables that HiveEdu is tracking for your progress.
+                        {t("dashboard.prediction_explanation_desc")}
                       </p>
                     </div>
                     <div className="rounded-[1.5rem] border border-white/[0.06] bg-[#09090b] px-6 py-6">
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Formula Preview</p>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.formula_preview")}</p>
                       <p className="mt-3 text-2xl font-semibold tracking-tight text-zinc-100">
                         Y = a + b1X1 + b2X2 + b3X3
                       </p>
                       <div className="mt-5 space-y-3 text-sm leading-7 text-zinc-400">
-                        <p>X1 represents your attendance percentage.</p>
-                        <p>X2 represents your average tryout score history.</p>
-                        <p>X3 represents your teacher objective score from Academic Records.</p>
-                        <p>Y is your predicted next exam score generated from those three inputs.</p>
+                        <p>{t("dashboard.formula_x1")}</p>
+                        <p>{t("dashboard.formula_x2")}</p>
+                        <p>{t("dashboard.formula_x3")}</p>
+                        <p>{t("dashboard.formula_y")}</p>
                       </div>
                     </div>
                   </div>
@@ -1172,16 +1189,16 @@ export default function DashboardPage() {
                         Recommendation Signal
                       </h3>
                       <p className="text-sm text-zinc-500 leading-7">
-                        A direct next step generated from your current attendance, tryout, and teacher objective pattern.
+                        {t("dashboard.recommendation_desc")}
                       </p>
                     </div>
                     <div className="rounded-[1.5rem] border border-blue-500/10 bg-[#09090b] px-6 py-6">
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Recommended Focus</p>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.recommended_focus")}</p>
                       <p className="mt-4 text-xl font-semibold tracking-tight text-zinc-100">
                         {recommendationMessage}
                       </p>
                       <p className="mt-4 text-sm leading-7 text-zinc-400">
-                        Keep improving all three signals together to move your predicted next exam score deeper into the safe range.
+                        {t("dashboard.recommended_action")}
                       </p>
                     </div>
                   </div>
@@ -1196,32 +1213,32 @@ export default function DashboardPage() {
                           Prediction Breakdown
                         </h3>
                         <p className="text-sm text-zinc-500 leading-7">
-                          See how each factor contributes to your final predicted score. Each bar represents the individual contribution from the MLR model.
+                          {t("dashboard.prediction_breakdown_desc")}
                         </p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
                         {[
                           {
-                            label: "Intercept",
+                            label: t("dashboard.intercept"),
                             value: userAnalytics.explanation.interceptContribution,
                             color: "text-zinc-300",
                             barColor: "bg-zinc-500",
                           },
                           {
-                            label: "Attendance (b1 × X1)",
+                            label: t("dashboard.attendance_b1"),
                             value: userAnalytics.explanation.attendanceContribution,
                             color: "text-sky-400",
                             barColor: "bg-sky-500",
                           },
                           {
-                            label: "Tryout (b2 × X2)",
+                            label: t("dashboard.tryout_b2"),
                             value: userAnalytics.explanation.tryoutContribution,
                             color: "text-violet-400",
                             barColor: "bg-violet-500",
                           },
                           {
-                            label: "Teacher Objective (b3 × X3)",
+                            label: t("dashboard.teacher_b3"),
                             value: userAnalytics.explanation.teacherObjectiveContribution,
                             color: "text-amber-400",
                             barColor: "bg-amber-500",
@@ -1252,7 +1269,7 @@ export default function DashboardPage() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="rounded-2xl border border-white/[0.06] bg-[#09090b] px-5 py-5">
                           <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-                            Raw Score (unclamped)
+                            {t("dashboard.raw_score")}
                           </p>
                           <p className="mt-3 text-2xl font-semibold text-zinc-200">
                             {Number.isFinite(userAnalytics.explanation.rawPredictedScore)
@@ -1262,7 +1279,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="rounded-2xl border border-blue-500/10 bg-[#09090b] px-5 py-5">
                           <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-                            Final Predicted Score
+                            {t("dashboard.final_predicted_score")}
                           </p>
                           <p className="mt-3 text-2xl font-semibold text-blue-400">
                             {Number.isFinite(userAnalytics.explanation.predictedScore)
@@ -1281,7 +1298,7 @@ export default function DashboardPage() {
                       X2 Tryout Trend
                     </h3>
                     <p className="text-sm text-zinc-500 leading-7">
-                      This line tracks your academic record average over time using saved tryout history.
+                      {t("dashboard.x2_trend_desc")}
                     </p>
                   </div>
 
@@ -1334,15 +1351,15 @@ export default function DashboardPage() {
                         </ResponsiveContainer>
                       ) : (
                         <div className="flex h-full w-full items-center justify-center rounded-[1.5rem] border border-white/5 bg-[#09090b] text-sm text-zinc-500">
-                          Preparing chart surface...
+                          {t("dashboard.preparing_chart")}
                         </div>
                       )}
                     </div>
                   ) : (
                     <div className="rounded-[1.5rem] border border-white/5 bg-[#09090b] px-6 py-8 text-center">
-                      <p className="text-sm font-medium text-zinc-200">No tryout history available yet.</p>
+                      <p className="text-sm font-medium text-zinc-200">{t("dashboard.no_tryout_history")}</p>
                       <p className="mt-3 text-sm leading-7 text-zinc-500">
-                        Your X2 trend will appear here after academic records are saved for your account.
+                        {t("dashboard.no_tryout_desc")}
                       </p>
                     </div>
                   )}
@@ -1356,7 +1373,7 @@ export default function DashboardPage() {
                         Competency Radar
                       </h3>
                       <p className="text-sm text-zinc-500 leading-7">
-                        A visual snapshot of your latest competency balance across Mathematics, Logical Reasoning, and English Proficiency.
+                        {t("dashboard.competency_radar_desc")}
                       </p>
                       <div className="space-y-3 pt-2">
                         {latestCompetencyScores.length > 0 ? (
@@ -1368,7 +1385,7 @@ export default function DashboardPage() {
                           ))
                         ) : (
                           <div className="rounded-2xl border border-white/5 bg-[#09090b] px-4 py-4 text-sm text-zinc-500">
-                            No competency score data is available yet.
+                            {t("dashboard.no_competency_data")}
                           </div>
                         )}
                       </div>
@@ -1401,13 +1418,13 @@ export default function DashboardPage() {
                         </ResponsiveContainer>
                         ) : (
                           <div className="flex h-full w-full items-center justify-center rounded-[1.5rem] border border-white/5 bg-[#09090b] text-sm text-zinc-500">
-                            Preparing chart surface...
+                            {t("dashboard.preparing_chart")}
                           </div>
                         )
                       ) : (
                         <div className="flex h-full items-center justify-center rounded-[1.5rem] border border-white/5 bg-[#09090b] px-6 py-8 text-center">
                           <div>
-                            <p className="text-sm font-medium text-zinc-200">No competency chart available yet.</p>
+                            <p className="text-sm font-medium text-zinc-200">{t("dashboard.no_competency_chart")}</p>
                             <p className="mt-3 text-sm leading-7 text-zinc-500">
                               Add complete academic records to unlock your competency radar.
                             </p>
@@ -1424,7 +1441,7 @@ export default function DashboardPage() {
                       Global Comparison
                     </h3>
                     <p className="text-sm text-zinc-500 leading-7">
-                      Compare your current metrics against the live class average generated from active users in the HiveEdu model.
+                      {t("dashboard.global_comparison_desc")}
                     </p>
                   </div>
 
@@ -1479,15 +1496,15 @@ export default function DashboardPage() {
                         </ResponsiveContainer>
                       ) : (
                         <div className="flex h-full w-full items-center justify-center rounded-[1.5rem] border border-white/5 bg-[#09090b] text-sm text-zinc-500">
-                          Preparing chart surface...
+                          {t("dashboard.preparing_chart")}
                         </div>
                       )}
                     </div>
                   ) : (
                     <div className="rounded-[1.5rem] border border-white/5 bg-[#09090b] px-6 py-8 text-center">
-                      <p className="text-sm font-medium text-zinc-200">Global comparison is not available yet.</p>
+                      <p className="text-sm font-medium text-zinc-200">{t("dashboard.global_comparison_not_available")}</p>
                       <p className="mt-3 text-sm leading-7 text-zinc-500">
-                        This comparison will appear once both your analytics and the class average are ready.
+                        {t("dashboard.global_comparison_will_appear")}
                       </p>
                     </div>
                   )}
@@ -1495,15 +1512,15 @@ export default function DashboardPage() {
                   {globalAnalytics && (
                     <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="rounded-2xl border border-white/5 bg-[#09090b] px-5 py-4">
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Active Users</p>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.active_users")}</p>
                         <p className="mt-2 text-2xl font-semibold text-zinc-100">{globalAnalytics.activeUserCount}</p>
                       </div>
                       <div className="rounded-2xl border border-white/5 bg-[#09090b] px-5 py-4">
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Global X1 Average</p>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.global_x1_avg")}</p>
                         <p className="mt-2 text-2xl font-semibold text-zinc-100">{globalAnalytics.averageX1.toFixed(1)}%</p>
                       </div>
                       <div className="rounded-2xl border border-white/5 bg-[#09090b] px-5 py-4">
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Global Predicted Average</p>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.global_predicted_avg")}</p>
                         <p className="mt-2 text-2xl font-semibold text-zinc-100">{globalAnalytics.averagePredictedScore.toFixed(1)}</p>
                       </div>
                     </div>
@@ -1522,7 +1539,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="space-y-1">
                           <h3 className="text-2xl font-medium text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-violet-400 tracking-tight">
-                            Llama-3 Academic Counselor
+                            {t("dashboard.llama_counselor")}
                           </h3>
                           <p className="text-xs uppercase tracking-widest text-blue-500/60 font-bold">
                             Dynamic Personalized Insight
@@ -1550,10 +1567,10 @@ export default function DashboardPage() {
                 <div className="md:col-span-2 xl:col-span-4 bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl rounded-3xl p-8 md:p-10">
                   <div className="space-y-2 mb-8">
                     <h3 className="text-2xl font-medium text-zinc-100 tracking-tight">
-                      Gamification Achievements
+                      {t("dashboard.gamification_achievements")}
                     </h3>
                     <p className="text-sm text-zinc-500 leading-7">
-                      Milestones unlock automatically as your attendance consistency, tryout quality, and predictive safety improve.
+                      {t("dashboard.gamification_desc")}
                     </p>
                   </div>
 
@@ -1578,9 +1595,9 @@ export default function DashboardPage() {
                     </div>
                   ) : (
                     <div className="rounded-[1.5rem] border border-white/5 bg-[#09090b] px-6 py-8 text-center">
-                      <p className="text-sm font-medium text-zinc-200">No achievement badges unlocked yet.</p>
+                      <p className="text-sm font-medium text-zinc-200">{t("dashboard.no_badges")}</p>
                       <p className="mt-3 text-sm leading-7 text-zinc-500">
-                        Keep pushing your attendance and academic performance to unlock premium milestones.
+                        {t("dashboard.keep_pushing")}
                       </p>
                     </div>
                   )}
@@ -1588,7 +1605,7 @@ export default function DashboardPage() {
               </>
             ) : (
               <div className="md:col-span-2 xl:col-span-4 p-16 text-center bg-white/[0.01] border border-white/5 rounded-[2rem]">
-                <p className="text-sm text-zinc-500 tracking-widest uppercase">No feature data available yet.</p>
+                <p className="text-sm text-zinc-500 tracking-widest uppercase">{t("dashboard.no_feature_data")}</p>
               </div>
             )}
           </div>
@@ -1598,37 +1615,37 @@ export default function DashboardPage() {
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-8">
             <div className="space-y-1">
               <h2 className="text-xl font-bold text-zinc-100 tracking-tight">
-                Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">{currentUser.username}</span>
+                {t("dashboard.welcome")}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">{currentUser.username}</span>
               </h2>
               <p className="text-zinc-500 text-sm font-light tracking-wide">
-                Here is your overview of assigned user accounts and their predictive analytics.
+                {t("dashboard.teacher_subtitle")}
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
             <div className="rounded-3xl border border-white/5 bg-white/[0.02] p-6 shadow-2xl backdrop-blur-xl">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Assigned Users</h3>
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.teacher_assigned_users")}</h3>
               <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-100">{tutorRow?.assignedUserCount ?? 0}</p>
             </div>
             <div className="rounded-3xl border border-white/5 bg-white/[0.02] p-6 shadow-2xl backdrop-blur-xl">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Avg Predicted</h3>
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.teacher_avg_predicted")}</h3>
               <p className="mt-3 text-3xl font-semibold tracking-tight text-blue-400">
                 {tutorRow?.averagePredictedScore ? tutorRow.averagePredictedScore.toFixed(1) : "N/A"}
               </p>
             </div>
             <div className="rounded-3xl border border-white/5 bg-white/[0.02] p-6 shadow-2xl backdrop-blur-xl">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">At-Risk Users</h3>
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.teacher_at_risk")}</h3>
               <p className="mt-3 text-3xl font-semibold tracking-tight text-red-400">{tutorRow?.atRiskUserCount ?? 0}</p>
             </div>
             <div className="rounded-3xl border border-white/5 bg-white/[0.02] p-6 shadow-2xl backdrop-blur-xl">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Avg Tryout (X2)</h3>
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.teacher_avg_tryout")}</h3>
               <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-100">
                 {tutorRow?.averageTryoutScore ? tutorRow.averageTryoutScore.toFixed(1) : "N/A"}
               </p>
             </div>
             <div className="rounded-3xl border border-white/5 bg-white/[0.02] p-6 shadow-2xl backdrop-blur-xl">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Avg Objective (X3)</h3>
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.teacher_avg_objective")}</h3>
               <p className="mt-3 text-3xl font-semibold tracking-tight text-zinc-100">
                 {typeof tutorRow?.averageTeacherObjectiveScore === "number" ? tutorRow.averageTeacherObjectiveScore.toFixed(1) : "N/A"}
               </p>
@@ -1638,25 +1655,25 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="rounded-[2rem] border border-white/5 bg-white/[0.02] p-8 shadow-2xl backdrop-blur-xl">
               <div className="space-y-2 mb-6">
-                <h3 className="text-xl font-medium tracking-tight text-zinc-100">Quick Actions</h3>
-                <p className="text-xs text-zinc-500">Navigate to key teacher tools</p>
+                <h3 className="text-xl font-medium tracking-tight text-zinc-100">{t("dashboard.quick_actions")}</h3>
+                <p className="text-xs text-zinc-500">{t("dashboard.quick_actions_desc")}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <a href="/dashboard/records" className="block rounded-xl border border-white/5 bg-[#09090b] p-4 hover:bg-white/[0.02] transition-colors">
-                  <p className="text-sm font-medium text-zinc-200">Academic Records</p>
-                  <p className="mt-1 text-[10px] text-zinc-500">Manage tryout scores</p>
+                  <p className="text-sm font-medium text-zinc-200">{t("dashboard.quick_academic_records")}</p>
+                  <p className="mt-1 text-[10px] text-zinc-500">{t("dashboard.quick_academic_records_desc")}</p>
                 </a>
                 <a href="/dashboard/attendance" className="block rounded-xl border border-white/5 bg-[#09090b] p-4 hover:bg-white/[0.02] transition-colors">
-                  <p className="text-sm font-medium text-zinc-200">Attendance</p>
-                  <p className="mt-1 text-[10px] text-zinc-500">Mark user attendance</p>
+                  <p className="text-sm font-medium text-zinc-200">{t("dashboard.quick_attendance")}</p>
+                  <p className="mt-1 text-[10px] text-zinc-500">{t("dashboard.quick_attendance_desc")}</p>
                 </a>
                 <a href="/dashboard/tutors" className="block rounded-xl border border-white/5 bg-[#09090b] p-4 hover:bg-white/[0.02] transition-colors">
-                  <p className="text-sm font-medium text-zinc-200">Tutor Analytics</p>
-                  <p className="mt-1 text-[10px] text-zinc-500">View detailed metrics</p>
+                  <p className="text-sm font-medium text-zinc-200">{t("dashboard.quick_tutor_analytics")}</p>
+                  <p className="mt-1 text-[10px] text-zinc-500">{t("dashboard.quick_tutor_analytics_desc")}</p>
                 </a>
                 <a href="/dashboard/settings" className="block rounded-xl border border-white/5 bg-[#09090b] p-4 hover:bg-white/[0.02] transition-colors">
-                  <p className="text-sm font-medium text-zinc-200">Settings</p>
-                  <p className="mt-1 text-[10px] text-zinc-500">Manage your profile</p>
+                  <p className="text-sm font-medium text-zinc-200">{t("dashboard.quick_settings")}</p>
+                  <p className="mt-1 text-[10px] text-zinc-500">{t("dashboard.quick_settings_desc")}</p>
                 </a>
               </div>
             </div>
@@ -1664,12 +1681,12 @@ export default function DashboardPage() {
             <div className="rounded-[2rem] border border-white/5 bg-white/[0.02] p-8 shadow-2xl backdrop-blur-xl flex flex-col">
               <div className="space-y-2 mb-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-medium tracking-tight text-zinc-100">Priority Intervention Preview</h3>
+                  <h3 className="text-xl font-medium tracking-tight text-zinc-100">{t("dashboard.priority_intervention")}</h3>
                   <a href="/dashboard/tutors" className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors">
                     View All
                   </a>
                 </div>
-                <p className="text-xs text-zinc-500">User accounts needing attention</p>
+                <p className="text-xs text-zinc-500">{t("dashboard.priority_intervention_desc")}</p>
               </div>
 
               <div className="flex-1 overflow-y-auto space-y-4">
@@ -1682,7 +1699,7 @@ export default function DashboardPage() {
                       <div className="flex h-[180px] items-center justify-center rounded-2xl border border-white/5 bg-[#09090b]">
                         <div className="text-center">
                           <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-500/80 mb-3" />
-                          <p className="text-sm font-medium text-zinc-300">No priority intervention needed right now.</p>
+                          <p className="text-sm font-medium text-zinc-300">{t("dashboard.no_priority_intervention")}</p>
                         </div>
                       </div>
                     );
@@ -1717,7 +1734,7 @@ export default function DashboardPage() {
                           </p>
                         </div>
                         <div className="rounded border border-white/5 bg-white/5 p-1.5">
-                          <p className="text-[9px] uppercase tracking-wider text-zinc-400 mb-0.5">Pred</p>
+                          <p className="text-[9px] uppercase tracking-wider text-zinc-400 mb-0.5">{t("dashboard.pred")}</p>
                           <p className="text-xs font-semibold text-blue-400">{user.predictedScore?.toFixed(1) || "N/A"}</p>
                         </div>
                       </div>
@@ -1742,37 +1759,37 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 relative z-10">
             {[
               {
-                label: "Total Users",
+                label: t("dashboard.total_users_stat"),
                 value: latestRunHistory?.totalUserCount ?? "N/A",
                 icon: Users,
               },
               {
-                label: "Active Users",
+                label: t("dashboard.active_users_stat"),
                 value: latestRunHistory?.activeUserCount ?? "N/A",
                 icon: Activity,
               },
               {
-                label: "Eligible Users",
+                label: t("dashboard.eligible_users_stat"),
                 value: latestRunHistory?.eligibleUserCount ?? "N/A",
                 icon: Target,
               },
               {
-                label: "Excluded Users",
+                label: t("dashboard.excluded_users_stat"),
                 value: latestRunHistory?.excludedUserCount ?? "N/A",
                 icon: AlertTriangle,
               },
               {
-                label: "Training Samples",
+                label: t("dashboard.training_samples_stat"),
                 value: latestRunHistory?.trainingSampleCount ?? "N/A",
                 icon: Activity,
               },
               {
-                label: "Predictions",
+                label: t("dashboard.predictions_stat"),
                 value: latestRunHistory?.predictionCount ?? "N/A",
                 icon: Target,
               },
               {
-                label: "MSE",
+                label: t("dashboard.mse_stat"),
                 value:
                   latestRunHistory?.mse !== null &&
                   typeof latestRunHistory?.mse !== "undefined"
@@ -1827,7 +1844,7 @@ export default function DashboardPage() {
                   <FileSpreadsheet size={16} />
                   {isExportingAnalyticsReport
                     ? "Exporting Report..."
-                    : "Export Analytics Report"}
+                    : t("dashboard.export_report_btn")}
                 </button>
               </div>
 
@@ -1908,7 +1925,7 @@ export default function DashboardPage() {
                   </ResponsiveContainer>
                 ) : (
                   <div className="flex h-full w-full items-center justify-center rounded-[1.5rem] border border-white/5 bg-[#09090b] text-sm text-zinc-500">
-                    Preparing chart surface...
+                    {t("dashboard.preparing_chart")}
                   </div>
                 )}
               </div>
@@ -1965,7 +1982,7 @@ export default function DashboardPage() {
 
                 <div className="rounded-[1.5rem] border border-white/5 bg-[#09090b] p-5">
                   <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-                    Formula Preview
+                    {t("dashboard.formula_preview")}
                   </p>
                   <p className="mt-3 text-xl font-semibold tracking-tight text-zinc-100">
                     Y = a + b1X1 + b2X2 + b3X3
@@ -1974,14 +1991,14 @@ export default function DashboardPage() {
 
                 <div className="mt-5 grid grid-cols-1 gap-4">
                   <div className="rounded-2xl border border-white/5 bg-[#09090b] px-5 py-4">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Coefficient Mode</p>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.admin_coefficient_mode")}</p>
                     <p className="mt-2 text-lg font-semibold text-zinc-100">
                       {latestRunHistory?.coefficientMode ?? "N/A"}
                     </p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                     <div className="rounded-2xl border border-white/5 bg-[#09090b] px-5 py-4">
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Intercept</p>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.admin_intercept")}</p>
                       <p className="mt-2 text-lg font-semibold text-zinc-100">
                         {typeof latestRunHistory?.intercept === "number"
                           ? latestRunHistory.intercept.toFixed(2)
@@ -1989,7 +2006,7 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="rounded-2xl border border-white/5 bg-[#09090b] px-5 py-4">
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Attendance Coefficient</p>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.admin_attendance_coef")}</p>
                       <p className="mt-2 text-lg font-semibold text-zinc-100">
                         {typeof latestRunHistory?.attendanceCoefficient === "number"
                           ? latestRunHistory.attendanceCoefficient.toFixed(2)
@@ -1997,7 +2014,7 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="rounded-2xl border border-white/5 bg-[#09090b] px-5 py-4">
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Tryout Coefficient</p>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.admin_tryout_coef")}</p>
                       <p className="mt-2 text-lg font-semibold text-zinc-100">
                         {typeof latestRunHistory?.tryoutCoefficient === "number"
                           ? latestRunHistory.tryoutCoefficient.toFixed(2)
@@ -2005,7 +2022,7 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="rounded-2xl border border-white/5 bg-[#09090b] px-5 py-4">
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Teacher Objective Coefficient</p>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.admin_teacher_coef")}</p>
                       <p className="mt-2 text-lg font-semibold text-zinc-100">
                         {typeof latestRunHistory?.teacherObjectiveCoefficient === "number"
                           ? latestRunHistory.teacherObjectiveCoefficient.toFixed(2)
@@ -2014,7 +2031,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="rounded-2xl border border-white/5 bg-[#09090b] px-5 py-4">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Fallback Status</p>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.admin_fallback_status")}</p>
                     <p className="mt-2 text-sm font-medium text-zinc-200">
                       {latestRunHistory?.fallbackUsed
                         ? latestRunHistory.fallbackReason || "Stored coefficients were used as fallback."
@@ -2051,7 +2068,7 @@ export default function DashboardPage() {
                             ? `Tutor: ${row.tutorName}`
                             : row.assignedTutorId
                               ? `Assigned Tutor ID: ${row.assignedTutorId}`
-                              : "Tutor assignment unavailable"}
+                              : t("dashboard.tutor_unavailable")}
                         </p>
                       </div>
                       <span
@@ -2079,13 +2096,13 @@ export default function DashboardPage() {
 
                     <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
                       <div>
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Attendance</p>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.quick_attendance")}</p>
                         <p className="mt-2 text-sm font-semibold text-zinc-100">
                           {row.attendancePercentage.toFixed(1)}%
                         </p>
                       </div>
                       <div>
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Tryout</p>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.ew_tryout")}</p>
                         <p className="mt-2 text-sm font-semibold text-zinc-100">
                           {row.averageTryoutScore.toFixed(1)}
                         </p>
@@ -2099,7 +2116,7 @@ export default function DashboardPage() {
                         </p>
                       </div>
                       <div>
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Predicted</p>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.ew_predicted")}</p>
                         <p className="mt-2 text-sm font-semibold text-red-400">
                           {row.predictedScore?.toFixed(1)}
                         </p>
@@ -2107,7 +2124,7 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="mt-5 rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-4">
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Suggested Intervention</p>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("dashboard.ew_suggested")}</p>
                       <p className="mt-2 text-sm leading-7 text-zinc-300">
                         {row.suggestedIntervention}
                       </p>
@@ -2117,7 +2134,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="rounded-[1.5rem] border border-white/5 bg-[#09090b] px-6 py-8 text-center">
-                <p className="text-sm font-medium text-zinc-200">No early warning users detected.</p>
+                <p className="text-sm font-medium text-zinc-200">{t("dashboard.ew_no_users")}</p>
                 <p className="mt-3 text-sm leading-7 text-zinc-500">
                   All current predicted users are operating inside the safe band or are still pending prediction eligibility.
                 </p>
@@ -2141,14 +2158,14 @@ export default function DashboardPage() {
               <table className="w-full border-collapse text-left">
                 <thead>
                   <tr>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-6 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500">User Name</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-6 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500">Tutor</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-6 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500">X1 Attendance</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-6 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500">X2 Tryout</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-6 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500">X3 Teacher Objective</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-6 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500">Actual</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-6 text-[10px] font-bold uppercase tracking-[0.3em] text-blue-400 text-right">Predicted</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-6 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500 text-right">Risk</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-6 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500">{t("dashboard.table_user_name")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-6 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500">{t("dashboard.table_tutor")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-6 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500">{t("dashboard.x1_attendance")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-6 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500">{t("dashboard.table_x2")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-6 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500">{t("dashboard.x3_teacher")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-6 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500">{t("dashboard.table_actual")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-6 text-[10px] font-bold uppercase tracking-[0.3em] text-blue-400 text-right">{t("dashboard.ew_predicted")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-6 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500 text-right">{t("dashboard.table_risk")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">

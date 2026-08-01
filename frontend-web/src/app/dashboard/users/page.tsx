@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "react-i18next";
 
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, CheckCircle2, Edit, Plus, Trash2, X, Search } from "lucide-react";
@@ -33,6 +34,7 @@ const inputClassName =
   "w-full rounded-xl bg-white dark:bg-[#09090b] border border-zinc-300 dark:border-white/10 px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed";
 
 export default function UserManagementPage() {
+  const { t } = useTranslation();
   const [currentUser, setCurrentUser] = useState<DecodedToken | null>(null);
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [teachers, setTeachers] = useState<UserRecord[]>([]);
@@ -94,7 +96,7 @@ export default function UserManagementPage() {
   const fetchUsers = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      setPageError("Authentication token not found.");
+      setPageError(t("errors.token_not_found"));
       setIsLoadingUsers(false);
       return;
     }
@@ -110,17 +112,17 @@ export default function UserManagementPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch users.");
+        throw new Error(t("errors.failed_fetch_users"));
       }
 
-      const data = (await response.json()) as UserRecord[];
+      const data = (await response.json().then(r => r.data ?? r)) as UserRecord[];
       setUsers(data);
       setTeachers(data.filter((user) => user.role === "TEACHER"));
     } catch (error) {
       console.error("Error fetching users:", error);
       setUsers([]);
       setTeachers([]);
-      setPageError("Unable to load accounts right now.");
+      setPageError(t("errors.unable_load_accounts"));
       showToast("Unable to load accounts right now.", "error");
     } finally {
       setIsLoadingUsers(false);
@@ -130,7 +132,7 @@ export default function UserManagementPage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      setPageError("Authentication token not found.");
+      setPageError(t("errors.token_not_found"));
       setIsLoadingUsers(false);
       return;
     }
@@ -140,7 +142,7 @@ export default function UserManagementPage() {
       setCurrentUser(decoded);
     } catch (error) {
       console.error("Error decoding token:", error);
-      setPageError("Unable to identify the current session.");
+      setPageError(t("errors.unable_identify_session"));
       setIsLoadingUsers(false);
     }
 
@@ -229,7 +231,7 @@ export default function UserManagementPage() {
       await fetchUsers();
       showToast(isEditing ? "Account updated successfully." : "Account created successfully.");
     } catch (error) {
-      console.error(isEditing ? "Error updating user:" : "Error creating user:", error);
+      console.error(isEditing ? t("errors.error_updating_user") : t("errors.error_creating_user"), error);
       showToast("Unable to save account right now.", "error");
     } finally {
       setIsSubmitting(false);
@@ -252,7 +254,7 @@ export default function UserManagementPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete user.");
+        throw new Error(t("errors.failed_delete_user"));
       }
 
       await fetchUsers();
@@ -268,7 +270,7 @@ export default function UserManagementPage() {
       return "N/A";
     }
 
-    const assignedTutor = teachers.find((teacher) => teacher.id === user.assignedTutorId);
+    const assignedTutor = teachers.find((teacher) => teacher.userId === user.assignedTutorId);
     return assignedTutor?.fullName || assignedTutor?.username || "N/A";
   };
 
@@ -294,7 +296,7 @@ export default function UserManagementPage() {
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold text-zinc-100">User Management</h1>
+          <h1 className="text-2xl font-bold text-zinc-100">{t("users.title")}</h1>
           <p className="text-sm text-zinc-500">
             Manage account roles, active status, and tutor assignment for user accounts.
           </p>
@@ -329,7 +331,7 @@ export default function UserManagementPage() {
             type="text"
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="Search by full name or username"
+            placeholder={t("users.search_placeholder")}
             className={inputClassName}
           />
         </div>
@@ -452,7 +454,7 @@ export default function UserManagementPage() {
                           </button>
                         </div>
                       ) : (
-                        <span className="text-zinc-500">Read-only</span>
+                        <span className="text-zinc-500">{t("users.readonly")}</span>
                       )}
                     </td>
                   </tr>
@@ -464,7 +466,7 @@ export default function UserManagementPage() {
                       <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mb-4 ring-1 ring-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
                         <Search className="w-8 h-8 text-cyan-400 opacity-80" />
                       </div>
-                      <h3 className="text-lg font-medium text-zinc-200 mb-1">No accounts found</h3>
+                      <h3 className="text-lg font-medium text-zinc-200 mb-1">{t("users.no_accounts")}</h3>
                       <p className="text-sm text-zinc-500 max-w-sm">
                         There are no user accounts matching your current filter criteria in the database.
                       </p>
@@ -482,7 +484,7 @@ export default function UserManagementPage() {
           <div className="bg-white dark:bg-[#09090b] border border-zinc-200 dark:border-white/[0.05] backdrop-blur-3xl rounded-2xl shadow-2xl p-8 w-full max-w-md">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-                {editingUserId ? "Edit Account" : "Add New Account"}
+                {editingUserId ? t("users.edit_account_title") : t("users.add_new_account")}
               </h2>
               <button onClick={closeModal} className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
                 <X size={20} />
@@ -491,10 +493,10 @@ export default function UserManagementPage() {
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Full Name</label>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("users.full_name")}</label>
                 <input
                   type="text"
-                  placeholder="Full Name"
+                  placeholder={t("users.placeholder_fullname")}
                   value={newFullName}
                   onChange={(event) => setNewFullName(event.target.value)}
                   className={inputClassName}
@@ -502,10 +504,10 @@ export default function UserManagementPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Username</label>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("users.username")}</label>
                 <input
                   type="text"
-                  placeholder="Username"
+                  placeholder={t("users.placeholder_username")}
                   value={newUsername}
                   onChange={(event) => setNewUsername(event.target.value)}
                   className={inputClassName}
@@ -514,14 +516,14 @@ export default function UserManagementPage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  {editingUserId ? "Optional Password Update" : "Password"}
+                  {editingUserId ? t("users.optional_password") : t("users.password_label")}
                 </label>
                 <input
                   type="password"
                   placeholder={
                     editingUserId
                       ? "Leave blank to keep current password"
-                      : "Minimum 8 characters"
+                      : t("users.min_8_chars")
                   }
                   value={newPassword}
                   onChange={(event) => setNewPassword(event.target.value)}
@@ -530,7 +532,7 @@ export default function UserManagementPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Role</label>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("users.role")}</label>
                 <select
                   value={newRole}
                   onChange={(event) => {
@@ -557,7 +559,7 @@ export default function UserManagementPage() {
               <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.04] bg-zinc-50 dark:bg-[#09090b] px-5 py-5">
                 <div className="flex items-center justify-between gap-4">
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-200">Active Status</p>
+                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-200">{t("users.active_status")}</p>
                     <p className="text-xs text-zinc-500">
                       Control whether the account should be treated as active.
                     </p>
@@ -592,7 +594,7 @@ export default function UserManagementPage() {
                     className={inputClassName}
                   >
                     <option value="" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
-                      {teachers.length > 0 ? "No tutor assigned" : "No teacher accounts available"}
+                      {teachers.length > 0 ? t("users.no_tutor_assigned") : t("users.no_teachers_available")}
                     </option>
                     {teachers.map((teacher) => (
                       <option
@@ -626,7 +628,7 @@ export default function UserManagementPage() {
                     : "Creating Account..."
                   : editingUserId
                     ? "Save Changes"
-                    : "Create Account"}
+                    : t("users.create_account_btn")}
               </button>
             </div>
           </div>

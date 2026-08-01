@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 
 const colors = {
@@ -252,6 +253,7 @@ interface ReportData {
 const valueOrNA = (value?: string) => value || 'N/A';
 
 const ReportDocument = ({ data }: { data: ReportData }) => {
+  const { t } = useTranslation();
   const teacherObjectiveScore = valueOrNA(data.teacherObjectiveScore ?? data.x3);
   const displayName = valueOrNA(data.fullName ?? data.userName);
 
@@ -261,39 +263,39 @@ const ReportDocument = ({ data }: { data: ReportData }) => {
         <View style={styles.header}>
           <View>
             <Text style={styles.brandName}>HiveEdu</Text>
-            <Text style={styles.brandMeta}>Web-Based E-Raport System</Text>
+            <Text style={styles.brandMeta}>{t("components.report_system")}</Text>
           </View>
           <View style={styles.titleBlock}>
-            <Text style={styles.title}>Formal E-Raport</Text>
+            <Text style={styles.title}>{t("components.report_formal")}</Text>
             <Text style={styles.date}>Generated: {data.date}</Text>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>User Identity</Text>
+          <Text style={styles.sectionTitle}>{t("components.report_user_identity")}</Text>
           <View style={styles.identityGrid}>
             <View style={styles.identityRow}>
-              <Text style={styles.identityLabel}>Full Name</Text>
+              <Text style={styles.identityLabel}>{t("components.report_fullname")}</Text>
               <Text style={styles.identityValue}>{displayName}</Text>
             </View>
             <View style={styles.identityRow}>
-              <Text style={styles.identityLabel}>Username</Text>
+              <Text style={styles.identityLabel}>{t("components.report_username")}</Text>
               <Text style={styles.identityValue}>{valueOrNA(data.username ?? data.userName)}</Text>
             </View>
             <View style={styles.identityRow}>
-              <Text style={styles.identityLabel}>Reporting Period</Text>
+              <Text style={styles.identityLabel}>{t("components.report_period")}</Text>
               <Text style={styles.identityValue}>{valueOrNA(data.period ?? data.date)}</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Academic Results</Text>
+          <Text style={styles.sectionTitle}>{t("components.report_academic_results")}</Text>
           <View style={styles.table}>
             <View style={[styles.tableRow, styles.tableHeader]}>
-              <Text style={[styles.tableCellHeader, styles.colWide]}>Component</Text>
-              <Text style={[styles.tableCellHeader, styles.colSmall]}>Score</Text>
-              <Text style={[styles.tableCellHeader, styles.colWide]}>Notes</Text>
+              <Text style={[styles.tableCellHeader, styles.colWide]}>{t("components.report_component")}</Text>
+              <Text style={[styles.tableCellHeader, styles.colSmall]}>{t("components.report_score")}</Text>
+              <Text style={[styles.tableCellHeader, styles.colWide]}>{t("components.report_notes")}</Text>
             </View>
             {[
               ['Mathematics', valueOrNA(data.mathScore), 'Subject competency result'],
@@ -314,7 +316,7 @@ const ReportDocument = ({ data }: { data: ReportData }) => {
 
         <View style={styles.twoCol}>
           <View style={styles.twoColLeft}>
-            <Text style={styles.sectionTitle}>Attendance Summary</Text>
+            <Text style={styles.sectionTitle}>{t("components.report_attendance_summary")}</Text>
             <View style={styles.table}>
               {[
                 ['Present', valueOrNA(data.presentCount)],
@@ -330,9 +332,9 @@ const ReportDocument = ({ data }: { data: ReportData }) => {
             </View>
           </View>
           <View style={styles.twoColRight}>
-            <Text style={styles.sectionTitle}>Predictive Summary</Text>
+            <Text style={styles.sectionTitle}>{t("components.report_predictive_summary")}</Text>
             <View style={styles.predictionPanel}>
-              <Text style={styles.sectionTitle}>Predicted Next Exam Score</Text>
+              <Text style={styles.sectionTitle}>{t("components.report_predicted_next")}</Text>
               <Text style={styles.predictionValue}>{data.predictedScore}</Text>
               <Text style={styles.riskText}>Risk Level: {valueOrNA(data.riskLevel)}</Text>
               <Text style={styles.explanation}>{data.recommendation || 'Maintain current progress.'}</Text>
@@ -341,7 +343,7 @@ const ReportDocument = ({ data }: { data: ReportData }) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Teacher Note / Recommendation</Text>
+          <Text style={styles.sectionTitle}>{t("components.report_teacher_note")}</Text>
           <View style={styles.noteBox}>
             <Text style={styles.noteText}>
               {data.teacherNote || data.recommendation || 'Maintain current progress.'}
@@ -350,13 +352,13 @@ const ReportDocument = ({ data }: { data: ReportData }) => {
         </View>
 
         <View style={styles.signatureArea}>
-          <Text style={styles.signatureBox}>Homeroom / Teacher Validation</Text>
-          <Text style={styles.signatureBox}>Parent / Guardian Acknowledgement</Text>
+          <Text style={styles.signatureBox}>{t("components.report_homeroom")}</Text>
+          <Text style={styles.signatureBox}>{t("components.report_parent")}</Text>
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>HiveEdu E-Raport</Text>
-          <Text style={styles.footerText}>Page 1 - Formal Report</Text>
+          <Text style={styles.footerText}>{t("components.report_footer_1")}</Text>
+          <Text style={styles.footerText}>{t("components.report_page_1")}</Text>
         </View>
       </Page>
 
@@ -364,10 +366,10 @@ const ReportDocument = ({ data }: { data: ReportData }) => {
         <View style={styles.header}>
           <View>
             <Text style={styles.brandName}>HiveEdu</Text>
-            <Text style={styles.brandMeta}>Learning Analytics Appendix</Text>
+            <Text style={styles.brandMeta}>{t("components.report_appendix")}</Text>
           </View>
           <View style={styles.titleBlock}>
-            <Text style={styles.title}>Analytics Summary</Text>
+            <Text style={styles.title}>{t("components.report_analytics_summary")}</Text>
             <Text style={styles.date}>{displayName}</Text>
           </View>
         </View>
@@ -375,20 +377,20 @@ const ReportDocument = ({ data }: { data: ReportData }) => {
         <View style={styles.twoCol}>
           <View style={styles.twoColLeft}>
             <View style={styles.analyticsCard}>
-              <Text style={styles.sectionTitle}>X1 Attendance Percentage</Text>
+              <Text style={styles.sectionTitle}>{t("components.report_x1")}</Text>
               <Text style={styles.analyticsValue}>{valueOrNA(data.x1)}</Text>
             </View>
           </View>
           <View style={styles.twoColRight}>
             <View style={styles.analyticsCard}>
-              <Text style={styles.sectionTitle}>X2 Average Tryout Score</Text>
+              <Text style={styles.sectionTitle}>{t("components.report_x2")}</Text>
               <Text style={styles.analyticsValue}>{valueOrNA(data.x2)}</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.analyticsCard}>
-          <Text style={styles.sectionTitle}>X3 Teacher Objective Score</Text>
+          <Text style={styles.sectionTitle}>{t("components.report_x3")}</Text>
           <Text style={styles.analyticsValue}>{teacherObjectiveScore}</Text>
           <Text style={styles.explanation}>
             X3 is supplied from the teacher objective score in Academic Records.
@@ -396,7 +398,7 @@ const ReportDocument = ({ data }: { data: ReportData }) => {
         </View>
 
         <View style={styles.analyticsCard}>
-          <Text style={styles.sectionTitle}>Coefficient Mode</Text>
+          <Text style={styles.sectionTitle}>{t("components.report_mode")}</Text>
           <Text style={styles.analyticsValue}>{valueOrNA(data.coefficientMode)}</Text>
           <Text style={styles.explanation}>
             AUTO_TRAINED uses current valid training samples. MANUAL_OVERRIDE uses stored coefficient values.
@@ -404,8 +406,8 @@ const ReportDocument = ({ data }: { data: ReportData }) => {
         </View>
 
         <View style={styles.formulaBox}>
-          <Text style={styles.sectionTitle}>Prediction Formula</Text>
-          <Text style={styles.formulaText}>Y = a + b1X1 + b2X2 + b3X3</Text>
+          <Text style={styles.sectionTitle}>{t("components.report_formula")}</Text>
+          <Text style={styles.formulaText}>{t("components.report_formula_y")}</Text>
           <Text style={styles.explanation}>
             Y is the predicted next exam score. X1 is attendance percentage, X2 is average tryout score,
             and X3 is teacher objective score. The formula is included as an appendix so the formal
@@ -414,8 +416,8 @@ const ReportDocument = ({ data }: { data: ReportData }) => {
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>HiveEdu Learning Analytics</Text>
-          <Text style={styles.footerText}>Page 2 - Analytics Appendix</Text>
+          <Text style={styles.footerText}>{t("components.report_footer_2")}</Text>
+          <Text style={styles.footerText}>{t("components.report_page_2")}</Text>
         </View>
       </Page>
     </Document>

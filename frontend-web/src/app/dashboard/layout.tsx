@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, LineChart, Settings, LogOut, UserCircle, Users, BookOpen, History, CalendarDays, BarChart3, ShieldCheck, Sun, Moon, Menu, X } from "lucide-react";
+import { LayoutDashboard, LineChart, Settings, LogOut, UserCircle, Users, BookOpen, History, CalendarDays, BarChart3, ShieldCheck, Sun, Moon, Menu, X, ArrowUp } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
+import { useTranslation } from "react-i18next";
+import OnboardingTour from "@/components/OnboardingTour";
 import RealtimeNotifications from "@/components/RealtimeNotifications";
 
 interface DecodedToken {
@@ -23,10 +25,23 @@ export default function DashboardLayout({
   const [username, setUsername] = useState<string>("Platform User");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [mounted, setMounted] = useState(false);
+  const { t, i18n } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [token, setToken] = useState<string>("");
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const mainRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
+
+  const handleScroll = () => {
+    if (mainRef.current) {
+      setShowScrollTop(mainRef.current.scrollTop > 50);
+    }
+  };
+
+  const scrollToTop = () => {
+    mainRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -89,30 +104,30 @@ export default function DashboardLayout({
   };
 
   const adminNav = [
-    { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Academic Records", href: "/dashboard/records", icon: BookOpen },
-    { name: "Attendance", href: "/dashboard/attendance", icon: CalendarDays },
-    { name: "Analytics Engine", href: "/dashboard/analytics", icon: LineChart },
-    { name: "Tutor Analytics", href: "/dashboard/tutors", icon: BarChart3 },
-    { name: "User Management", href: "/dashboard/users", icon: Users },
-    { name: "Audit Logs", href: "/dashboard/audit-logs", icon: ShieldCheck },
-    { name: "Settings", href: "/dashboard/settings", icon: Settings },
+    { name: t("sidebar.overview"), href: "/dashboard", icon: LayoutDashboard },
+    { name: t("sidebar.records"), href: "/dashboard/records", icon: BookOpen },
+    { name: t("sidebar.attendance"), href: "/dashboard/attendance", icon: CalendarDays },
+    { name: t("sidebar.analytics"), href: "/dashboard/analytics", icon: LineChart },
+    { name: t("sidebar.tutors"), href: "/dashboard/tutors", icon: BarChart3 },
+    { name: t("sidebar.users"), href: "/dashboard/users", icon: Users },
+    { name: t("sidebar.audit"), href: "/dashboard/audit-logs", icon: ShieldCheck },
+    { name: t("sidebar.settings"), href: "/dashboard/settings", icon: Settings },
   ];
 
   const teacherNav = [
-    { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Academic Records", href: "/dashboard/records", icon: BookOpen },
-    { name: "Attendance", href: "/dashboard/attendance", icon: CalendarDays },
-    { name: "Tutor Analytics", href: "/dashboard/tutors", icon: BarChart3 },
-    { name: "Settings", href: "/dashboard/settings", icon: Settings },
+    { name: t("sidebar.overview"), href: "/dashboard", icon: LayoutDashboard },
+    { name: t("sidebar.records"), href: "/dashboard/records", icon: BookOpen },
+    { name: t("sidebar.attendance"), href: "/dashboard/attendance", icon: CalendarDays },
+    { name: t("sidebar.tutors"), href: "/dashboard/tutors", icon: BarChart3 },
+    { name: t("sidebar.settings"), href: "/dashboard/settings", icon: Settings },
   ];
 
   const userNav = [
-    { name: "My E-Raport", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Academic Records", href: "/dashboard/records", icon: BookOpen },
-    { name: "Attendance", href: "/dashboard/attendance", icon: CalendarDays },
-    { name: "Academic History", href: "/dashboard/history", icon: History },
-    { name: "Settings", href: "/dashboard/settings", icon: Settings },
+    { name: t("sidebar.overview"), href: "/dashboard", icon: LayoutDashboard },
+    { name: t("sidebar.records"), href: "/dashboard/records", icon: BookOpen },
+    { name: t("sidebar.attendance"), href: "/dashboard/attendance", icon: CalendarDays },
+    { name: t("sidebar.history"), href: "/dashboard/history", icon: History },
+    { name: t("sidebar.settings"), href: "/dashboard/settings", icon: Settings },
   ];
 
   const navItems =
@@ -123,7 +138,8 @@ export default function DashboardLayout({
         : userNav;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-zinc-100 flex flex-col md:flex-row font-sans selection:bg-blue-500/30 overflow-hidden">
+    <div className="h-screen bg-[#0a0a0a] text-zinc-100 flex flex-col md:flex-row font-sans selection:bg-blue-500/30 overflow-hidden">
+      <OnboardingTour theme={theme} />
       {token && <RealtimeNotifications token={token} />}
       
       {/* Premium Full-Screen Loading Overlay */}
@@ -152,7 +168,7 @@ export default function DashboardLayout({
         />
       )}
       
-      <aside className={`fixed md:static inset-y-0 left-0 w-64 border-r border-white/5 flex flex-col z-50 bg-[#0a0a0a] md:bg-black/20 md:backdrop-blur-2xl transition-transform duration-300 ease-in-out ${
+      <aside id="tour-sidebar" className={`fixed md:static inset-y-0 left-0 w-64 border-r border-white/5 flex flex-col z-50 bg-[#0a0a0a] md:bg-black/20 md:backdrop-blur-2xl transition-transform duration-300 ease-in-out ${
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       }`}>
         <div className="p-6 md:p-8 border-b border-white/5 flex items-center justify-between">
@@ -220,7 +236,7 @@ export default function DashboardLayout({
               <Menu size={20} />
             </button>
             <h1 className="text-sm font-medium text-zinc-100">
-              {navItems.find((item) => item.href === pathname)?.name || "Dashboard"}
+              {navItems.find((item) => item.href === pathname)?.name || t("components.dashboard_fallback")}
             </h1>
           </div>
           <div className="flex items-center gap-3">
@@ -231,7 +247,7 @@ export default function DashboardLayout({
                   role="switch"
                   aria-checked={theme === "light"}
                 >
-                  <span className="sr-only">Toggle theme</span>
+                  <span className="sr-only">{t("components.toggle_theme")}</span>
                   <span
                     className={`flex h-5 w-5 transform items-center justify-center rounded-full bg-zinc-200 transition-transform duration-300 ease-in-out shadow-sm ${
                       theme === "light" ? "translate-x-6" : "translate-x-1"
@@ -251,19 +267,29 @@ export default function DashboardLayout({
         {/* Desktop Topbar */}
         <header className="hidden md:flex h-20 border-b border-white/5 bg-[#0a0a0a]/50 backdrop-blur-xl items-center justify-between px-10 z-10 sticky top-0">
           <h1 className="text-sm font-medium text-zinc-400 tracking-widest uppercase opacity-70">
-            {navItems.find((item) => item.href === pathname)?.name || "Dashboard"}
+            {navItems.find((item) => item.href === pathname)?.name || t("components.dashboard_fallback")}
           </h1>
           <div className="flex items-center space-x-6 ml-auto">
             {/* Theme Toggle Switch */}
             <div className="flex items-center gap-3">
               {mounted && (
                 <button
+                  onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'id' : 'en')}
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/5 border border-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50 hover:bg-white/10"
+                  title={t("components.toggle_language")}
+                >
+                  <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500">{i18n.language === 'en' ? 'EN' : 'ID'}</span>
+                </button>
+              )}
+              {mounted && (
+                <button
+                  id="tour-theme-toggle"
                   onClick={toggleTheme}
                   className="relative flex h-7 w-12 items-center rounded-full bg-white/5 border border-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                   role="switch"
                   aria-checked={theme === "light"}
                 >
-                  <span className="sr-only">Toggle theme</span>
+                  <span className="sr-only">{t("components.toggle_theme")}</span>
                   <span
                     className={`flex h-5 w-5 transform items-center justify-center rounded-full bg-zinc-200 transition-transform duration-300 ease-in-out shadow-sm ${
                       theme === "light" ? "translate-x-6" : "translate-x-1"
@@ -280,19 +306,35 @@ export default function DashboardLayout({
             </div>
 
             <button
+              id="tour-logout"
               onClick={handleLogout}
               className="flex items-center text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-red-400 px-4 py-2 rounded-xl hover:bg-white/[0.03] border border-transparent hover:border-white/5 transition-all group"
             >
               <LogOut className="w-4 h-4 mr-2.5 group-hover:-translate-x-0.5 transition-transform" strokeWidth={2.5} />
-              Logout
+              {t('sidebar.logout')}
             </button>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto z-10 relative animate-in fade-in zoom-in-95 duration-500 ease-out">
+        <main 
+          ref={mainRef}
+          onScroll={handleScroll}
+          className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto z-10 relative animate-in fade-in zoom-in-95 duration-500 ease-out"
+        >
           {children}
         </main>
+        
+        {/* Scroll to Top Button */}
+        <button
+          onClick={scrollToTop}
+          className={`fixed bottom-8 right-8 z-50 p-3 rounded-full bg-cyan-500 hover:bg-cyan-600 text-white shadow-[0_4px_14px_0_rgba(6,182,212,0.39)] dark:bg-cyan-500/20 dark:hover:bg-cyan-500/40 dark:border dark:border-cyan-500/30 dark:text-cyan-400 dark:backdrop-blur-md dark:shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all duration-300 transform ${
+            showScrollTop ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0 pointer-events-none"
+          }`}
+          aria-label={t("components.scroll_to_top")}
+        >
+          <ArrowUp size={20} />
+        </button>
       </div>
     </div>
   );

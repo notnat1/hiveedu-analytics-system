@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface InterventionNote {
@@ -24,6 +25,7 @@ interface InterventionModalProps {
 }
 
 export default function InterventionModal({
+
   isOpen,
   onClose,
   userId,
@@ -32,6 +34,7 @@ export default function InterventionModal({
   predictedScore,
   onSuccess,
 }: InterventionModalProps) {
+  const { t } = useTranslation();
   const [note, setNote] = useState('');
   const [actionPlan, setActionPlan] = useState('');
   const [status, setStatus] = useState<'OPEN' | 'IN_PROGRESS' | 'RESOLVED'>('OPEN');
@@ -58,7 +61,8 @@ export default function InterventionModal({
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        const data: InterventionNote[] = await res.json();
+        const responseJson = await res.json().then(r => r.data ?? r);
+        const data: InterventionNote[] = responseJson.data || responseJson;
         if (data && data.length > 0) {
           const latest = data[0]; // Assuming ordered by createdAt DESC
           setNote(latest.note);
@@ -129,7 +133,7 @@ export default function InterventionModal({
       <div className="w-full max-w-lg rounded-2xl border border-zinc-200 dark:border-white/[0.05] bg-white dark:bg-[#09090b] p-8 shadow-2xl backdrop-blur-3xl">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Intervention Follow-up</h2>
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{t("components.intervention_followup")}</h2>
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">User Account: {userName}</p>
           </div>
           <button onClick={onClose} className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors">
@@ -146,37 +150,37 @@ export default function InterventionModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Follow-up Note</label>
+            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("components.followup_note")}</label>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Record observation, meeting details, or reason for warning..."
+              placeholder={t("components.placeholder_followup")}
               rows={3}
               className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 px-4 py-3 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-600 focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Action Plan (Optional)</label>
+            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("components.action_plan")}</label>
             <textarea
               value={actionPlan}
               onChange={(e) => setActionPlan(e.target.value)}
-              placeholder="What steps will be taken to help this user?"
+              placeholder={t("components.placeholder_action_plan")}
               rows={2}
               className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 px-4 py-3 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-600 focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Status</label>
+            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("components.status")}</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as any)}
               className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 px-4 py-3 text-sm text-zinc-900 dark:text-white focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
             >
-              <option value="OPEN" className="bg-white dark:bg-[#09090b]">OPEN</option>
-              <option value="IN_PROGRESS" className="bg-white dark:bg-[#09090b]">IN_PROGRESS</option>
-              <option value="RESOLVED" className="bg-white dark:bg-[#09090b]">RESOLVED</option>
+              <option value="OPEN" className="bg-white dark:bg-[#09090b]">{t("components.status_open")}</option>
+              <option value="IN_PROGRESS" className="bg-white dark:bg-[#09090b]">{t("components.status_in_progress")}</option>
+              <option value="RESOLVED" className="bg-white dark:bg-[#09090b]">{t("components.status_resolved")}</option>
             </select>
           </div>
 

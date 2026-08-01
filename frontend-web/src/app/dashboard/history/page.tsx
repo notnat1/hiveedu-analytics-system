@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "react-i18next";
 
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -61,6 +62,7 @@ const INITIAL_HISTORY_RECORDS: AcademicHistoryRecord[] = [
 ];
 
 export default function AcademicHistoryPage() {
+  const { t } = useTranslation();
   const [hasMounted, setHasMounted] = useState(false);
   const [historyRecords] = useState<AcademicHistoryRecord[]>(INITIAL_HISTORY_RECORDS);
 
@@ -84,7 +86,7 @@ export default function AcademicHistoryPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">Academic History</h1>
+        <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">{t("history.academic_history")}</h1>
         <p className="text-sm text-zinc-500">
           Review long-range tryout movement and archived academic records for this user.
         </p>
@@ -93,7 +95,7 @@ export default function AcademicHistoryPage() {
       <div className="bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl rounded-[2rem] p-6 md:p-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h2 className="text-lg font-semibold text-zinc-100">X2 Tryout Trend</h2>
+            <h2 className="text-lg font-semibold text-zinc-100">{t("history.x2_tryout_trend")}</h2>
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mt-2">
               Historical average score trajectory
             </p>
@@ -151,7 +153,7 @@ export default function AcademicHistoryPage() {
 
       <div className="bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl rounded-[2rem] p-6 md:p-8">
         <div className="mb-8">
-          <h2 className="text-lg font-semibold text-zinc-100">Archived Academic Records</h2>
+          <h2 className="text-lg font-semibold text-zinc-100">{t("history.archived_records")}</h2>
           <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mt-2">
             Historical subject-by-subject performance detail
           </p>
@@ -161,11 +163,11 @@ export default function AcademicHistoryPage() {
           <table className="min-w-full border-collapse text-left">
             <thead>
               <tr>
-                <th className="border-b border-white/5 py-4 px-4 text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 whitespace-nowrap">Date</th>
-                <th className="border-b border-white/5 py-4 px-4 text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 whitespace-nowrap">Math</th>
-                <th className="border-b border-white/5 py-4 px-4 text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 whitespace-nowrap">Logic</th>
-                <th className="border-b border-white/5 py-4 px-4 text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 whitespace-nowrap">English</th>
-                <th className="border-b border-white/5 py-4 px-4 text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 whitespace-nowrap">Teacher Feedback</th>
+                <th className="border-b border-white/5 py-4 px-4 text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 whitespace-nowrap">{t("history.col_date")}</th>
+                <th className="border-b border-white/5 py-4 px-4 text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 whitespace-nowrap">{t("history.col_math")}</th>
+                <th className="border-b border-white/5 py-4 px-4 text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 whitespace-nowrap">{t("history.col_logic")}</th>
+                <th className="border-b border-white/5 py-4 px-4 text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 whitespace-nowrap">{t("history.col_english")}</th>
+                <th className="border-b border-white/5 py-4 px-4 text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 whitespace-nowrap">{t("history.col_teacher_feedback")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">

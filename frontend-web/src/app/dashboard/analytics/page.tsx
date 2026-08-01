@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "react-i18next";
 
 import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2, FileSpreadsheet } from "lucide-react";
@@ -42,6 +43,7 @@ interface ToastState {
 }
 
 export default function AnalyticsEnginePage() {
+  const { t } = useTranslation();
   const [intercept, setIntercept] = useState(0);
   const [attendanceCoefficient, setAttendanceCoefficient] = useState(0.4);
   const [tryoutCoefficient, setTryoutCoefficient] = useState(0.5);
@@ -73,7 +75,7 @@ export default function AnalyticsEnginePage() {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      setConfigError("Authentication token not found.");
+      setConfigError(t("errors.token_not_found"));
       setIsLoadingConfig(false);
       return;
     }
@@ -96,10 +98,10 @@ export default function AnalyticsEnginePage() {
       ]);
 
       if (!configResponse.ok) {
-        throw new Error("Failed to fetch analytics configuration.");
+        throw new Error(t("errors.failed_fetch_config"));
       }
 
-      const configData = (await configResponse.json()) as AnalyticsConfigResponse;
+      const configData = (await configResponse.json().then(r => r.data ?? r)) as AnalyticsConfigResponse;
 
       setIntercept(Number(configData.intercept ?? 0));
       setAttendanceCoefficient(
@@ -129,14 +131,14 @@ export default function AnalyticsEnginePage() {
       setCoefficientMode(configData.coefficientMode ?? "AUTO_TRAINED");
 
       if (runHistoryResponse.ok) {
-        const runHistoryData = (await runHistoryResponse.json()) as RunHistoryItem[];
+        const runHistoryData = (await runHistoryResponse.json().then(r => r.data ?? r)) as RunHistoryItem[];
         setLatestRunHistory(runHistoryData[0] ?? null);
       } else {
         setLatestRunHistory(null);
       }
     } catch (error) {
       console.error("Error fetching analytics configuration:", error);
-      setConfigError("Unable to load analytics configuration right now.");
+      setConfigError(t("errors.unable_load_config"));
     } finally {
       setIsLoadingConfig(false);
     }
@@ -173,7 +175,7 @@ export default function AnalyticsEnginePage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update analytics configuration.");
+        throw new Error(t("errors.failed_update_config"));
       }
 
       await fetchAnalyticsConfig();
@@ -204,7 +206,7 @@ export default function AnalyticsEnginePage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to export analytics report.");
+        throw new Error(t("errors.failed_export_report"));
       }
 
       const workbookBlob = await response.blob();
@@ -271,11 +273,11 @@ export default function AnalyticsEnginePage() {
                   How Contribution Is Calculated
                 </p>
                 <div className="space-y-2 text-sm leading-6 text-zinc-400">
-                  <p><span className="text-zinc-200 font-medium">Intercept (a)</span> — baseline constant added to every prediction.</p>
-                  <p><span className="text-sky-400 font-medium">b1 × X1</span> — attendance contribution = attendance coefficient × attendance %.</p>
-                  <p><span className="text-violet-400 font-medium">b2 × X2</span> — tryout contribution = tryout coefficient × average tryout score.</p>
-                  <p><span className="text-amber-400 font-medium">b3 × X3</span> — teacher objective contribution = teacher objective coefficient × teacher objective score.</p>
-                  <p className="text-zinc-500 pt-1">Final score is clamped between 0 and 100.</p>
+                  <p><span className="text-zinc-200 font-medium">{t("analytics.intercept_a")}</span> {t("analytics.intercept_desc_inline")}</p>
+                  <p><span className="text-sky-400 font-medium">{t("analytics.b1_x1")}</span> {t("analytics.b1_desc_inline")}</p>
+                  <p><span className="text-violet-400 font-medium">{t("analytics.b2_x2")}</span> {t("analytics.b2_desc_inline")}</p>
+                  <p><span className="text-amber-400 font-medium">{t("analytics.b3_x3")}</span> {t("analytics.b3_desc_inline")}</p>
+                  <p className="text-zinc-500 pt-1">{t("analytics.final_score_clamped")}</p>
                 </div>
               </div>
             </div>
@@ -295,8 +297,8 @@ export default function AnalyticsEnginePage() {
                 }
                 className="mt-3 w-full rounded-xl border border-white/10 bg-zinc-900 px-4 py-3 text-sm font-medium text-zinc-100 focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
               >
-                <option value="AUTO_TRAINED">AUTO_TRAINED</option>
-                <option value="MANUAL_OVERRIDE">MANUAL_OVERRIDE</option>
+                <option value="AUTO_TRAINED">{t("analytics.mode_auto")}</option>
+                <option value="MANUAL_OVERRIDE">{t("analytics.mode_manual")}</option>
               </select>
               <p className="mt-3 text-sm leading-6 text-zinc-500">
                 {isManualOverride
@@ -407,25 +409,25 @@ export default function AnalyticsEnginePage() {
               </p>
               <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-zinc-300">
                 <div>
-                  <p className="text-zinc-500">Eligible</p>
+                  <p className="text-zinc-500">{t("analytics.eligible")}</p>
                   <p className="mt-1 font-semibold text-zinc-100">
                     {latestRunHistory?.eligibleUserCount ?? "N/A"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-zinc-500">Excluded</p>
+                  <p className="text-zinc-500">{t("analytics.excluded")}</p>
                   <p className="mt-1 font-semibold text-zinc-100">
                     {latestRunHistory?.excludedUserCount ?? "N/A"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-zinc-500">Training Samples</p>
+                  <p className="text-zinc-500">{t("analytics.training_samples")}</p>
                   <p className="mt-1 font-semibold text-zinc-100">
                     {latestRunHistory?.trainingSampleCount ?? "N/A"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-zinc-500">Predictions</p>
+                  <p className="text-zinc-500">{t("analytics.predictions")}</p>
                   <p className="mt-1 font-semibold text-zinc-100">
                     {latestRunHistory?.predictionCount ?? "N/A"}
                   </p>
@@ -448,7 +450,7 @@ export default function AnalyticsEnginePage() {
               disabled={isSavingConfig || isLoadingConfig}
               className="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-500 dark:to-cyan-400 px-6 py-3 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(14,165,233,0.3)] dark:shadow-[0_8px_20px_rgba(14,165,233,0.2)] hover:shadow-[0_10px_25px_rgba(14,165,233,0.4)] dark:hover:shadow-[0_10px_25px_rgba(14,165,233,0.3)] transition-all hover:from-blue-500 hover:to-cyan-400 dark:hover:from-blue-400 dark:hover:to-cyan-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSavingConfig ? "Saving..." : "Save Configuration"}
+              {isSavingConfig ? "Saving..." : t("analytics.save_config")}
             </button>
           </div>
         </div>
@@ -502,7 +504,7 @@ export default function AnalyticsEnginePage() {
                     <span className="ml-2 text-zinc-200">
                       {latestRunHistory.fallbackUsed
                         ? latestRunHistory.fallbackReason || "Used stored coefficients"
-                        : "No fallback used"}
+                        : t("analytics.no_fallback")}
                     </span>
                   </p>
                 </div>
@@ -520,7 +522,7 @@ export default function AnalyticsEnginePage() {
               <FileSpreadsheet size={18} />
               {isExportingWorkbook
                 ? "Exporting Report..."
-                : "Export Analytics Report"}
+                : t("analytics.export_report_btn")}
             </button>
           </div>
         </div>

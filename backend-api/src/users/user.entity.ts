@@ -56,8 +56,14 @@ export class User {
   role!: Role;
 
   /** Whether the account is currently active */
-  @Column({ type: 'boolean', default: true })
+  @Column({ default: true })
   isActive!: boolean;
+
+  @Column({ default: false })
+  isTwoFactorEnabled!: boolean;
+
+  @Column({ nullable: true })
+  twoFactorSecret!: string;
 
   /** Indicates if the user has acknowledged an early warning alert */
   @Column({ type: 'boolean', default: false })

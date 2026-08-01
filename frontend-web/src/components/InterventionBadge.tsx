@@ -11,7 +11,8 @@ export default function InterventionBadge({ userId }: { userId: string }) {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
-          const data = await res.json();
+          const responseJson = await res.json().then(r => r.data ?? r);
+          const data = responseJson.data || responseJson;
           if (data && data.length > 0) {
             setStatus(data[0].status);
           }

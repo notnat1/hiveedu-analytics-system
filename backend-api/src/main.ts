@@ -6,6 +6,8 @@ import * as winston from 'winston';
 import 'winston-daily-rotate-file';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor.js';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -40,18 +42,28 @@ async function bootstrap() {
   app.use(helmet());
   
   // Security Hardening: CORS
+  const allowedOrigins = process.env.FRONTEND_URL 
+    ? process.env.FRONTEND_URL.split(',') 
+    : '*';
+
   app.enableCors({
-    origin: '*', // Allow all origins for now. In production, change to specific domains
+    origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
+
+  // Global Validation
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
       whitelist: true,
-      forbidNonWhitelisted: false,
+      forbidNonWhitelisted: true,
     }),
   );
+
+  // Global Interceptor & Filter
+  app.useGlobalInterceptors(new TransformInterceptor());
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   // API Documentation: Swagger
   const config = new DocumentBuilder()

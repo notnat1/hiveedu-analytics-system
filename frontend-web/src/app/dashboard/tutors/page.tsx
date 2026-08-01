@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "react-i18next";
 
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -72,6 +73,7 @@ interface ToastState {
 }
 
 export default function TutorsPage() {
+  const { t } = useTranslation();
   const [hasMounted, setHasMounted] = useState(false);
   const [interventionUser, setInterventionUser] = useState<{ id: string; name: string; riskLevel: string; predictedScore: number | null } | null>(null);
   const [tutorAnalytics, setTutorAnalytics] = useState<TutorAnalyticsRow[]>([]);
@@ -137,7 +139,7 @@ export default function TutorsPage() {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        setPageError("Authentication token not found.");
+        setPageError(t("errors.token_not_found"));
         setIsLoading(false);
         return;
       }
@@ -153,11 +155,11 @@ export default function TutorsPage() {
         });
 
         if (!tutorsResponse.ok) {
-          throw new Error("Failed to fetch tutor analytics.");
+          throw new Error(t("errors.failed_fetch_tutor"));
         }
 
         const tutorApiRows =
-          (await tutorsResponse.json()) as TutorAnalyticsApiRow[];
+          (await tutorsResponse.json().then(r => r.data ?? r)) as TutorAnalyticsApiRow[];
         const normalizedTutorRows: TutorAnalyticsRow[] = tutorApiRows.map((tutor) => {
           const assignedUserRows = (tutor.userPredictions ?? tutor.assignedUsers ?? []).map(
             (user) => {
@@ -292,7 +294,7 @@ export default function TutorsPage() {
         console.error("Error fetching tutor analytics:", error);
         setTutorAnalytics([]);
         setPriorityUsers([]);
-        setPageError("Unable to load tutor analytics right now.");
+        setPageError(t("errors.unable_load_tutor"));
         showToast("Unable to load tutor analytics right now.", "error");
       } finally {
         setIsLoading(false);

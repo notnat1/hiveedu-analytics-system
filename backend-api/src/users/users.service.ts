@@ -695,5 +695,19 @@ export class UsersService {
       },
     });
   }
+
+  /**
+   * Updates the 2FA secret for a user.
+   */
+  async updateTwoFactorSecret(userId: string, secret: string): Promise<void> {
+    await this.userRepository.update(userId, { twoFactorSecret: secret });
+  }
+
+  /**
+   * Enables 2FA for a user.
+   */
+  async enableTwoFactor(userId: string): Promise<void> {
+    await this.userRepository.update(userId, { isTwoFactorEnabled: true });
+  }
 }
 

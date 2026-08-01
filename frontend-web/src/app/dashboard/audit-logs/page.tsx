@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "react-i18next";
 
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, RefreshCcw, ShieldCheck, Download, Activity, AlertTriangle, Fingerprint, Database } from "lucide-react";
@@ -73,6 +74,7 @@ function buildMetadataPreview(metadata: Record<string, unknown> | null): string 
 }
 
 export default function AuditLogsPage() {
+  const { t } = useTranslation();
   const [currentUser, setCurrentUser] = useState<DecodedToken | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,7 +89,7 @@ export default function AuditLogsPage() {
   const fetchAuditLogs = async (isManualRefresh = false) => {
     const token = localStorage.getItem("token");
     if (!token) {
-      setPageError("Authentication token not found.");
+      setPageError(t("errors.token_not_found"));
       setIsLoading(false);
       return;
     }
@@ -122,15 +124,15 @@ export default function AuditLogsPage() {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to fetch audit logs.");
+        throw new Error(t("errors.failed_fetch_audit"));
       }
 
-      const data = (await response.json()) as AuditLogItem[];
+      const data = (await response.json().then(r => r.data ?? r)) as AuditLogItem[];
       setAuditLogs(data);
     } catch (error) {
       console.error("Error fetching audit logs:", error);
       setAuditLogs([]);
-      setPageError("Unable to load audit logs right now.");
+      setPageError(t("errors.unable_load_audit"));
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -140,7 +142,7 @@ export default function AuditLogsPage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      setPageError("Authentication token not found.");
+      setPageError(t("errors.token_not_found"));
       setIsLoading(false);
       return;
     }
@@ -156,7 +158,7 @@ export default function AuditLogsPage() {
       }
     } catch (error) {
       console.error("Error decoding token:", error);
-      setPageError("Unable to identify the current session.");
+      setPageError(t("errors.unable_identify_session"));
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -232,7 +234,7 @@ export default function AuditLogsPage() {
     <div className="flex flex-col gap-8">
       <header className="space-y-2 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">Audit Logs</h1>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">{t("audit.title")}</h1>
           <p className="text-sm text-zinc-500">
             Review important backend activity for accountability and enterprise traceability.
           </p>
@@ -254,7 +256,7 @@ export default function AuditLogsPage() {
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-red-500/20 bg-red-500/10 text-red-400">
             <ShieldCheck size={24} />
           </div>
-          <p className="mt-5 text-lg font-semibold text-zinc-100">Access denied</p>
+          <p className="mt-5 text-lg font-semibold text-zinc-100">{t("audit.access_denied")}</p>
           <p className="mt-3 text-sm leading-7 text-zinc-500">
             Audit log review is available to ADMIN accounts only.
           </p>
@@ -274,7 +276,7 @@ export default function AuditLogsPage() {
                 <Database size={24} />
               </div>
               <div>
-                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Total Logs</p>
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{t("audit.total_logs")}</p>
                 <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stats.total}</p>
               </div>
             </div>
@@ -284,7 +286,7 @@ export default function AuditLogsPage() {
                 <AlertTriangle size={24} />
               </div>
               <div>
-                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Suspicious</p>
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{t("audit.suspicious")}</p>
                 <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stats.suspicious}</p>
               </div>
             </div>
@@ -294,7 +296,7 @@ export default function AuditLogsPage() {
                 <Activity size={24} />
               </div>
               <div>
-                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Top Action</p>
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{t("audit.top_action")}</p>
                 <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100 truncate w-32">{stats.topAction}</p>
               </div>
             </div>
@@ -304,8 +306,8 @@ export default function AuditLogsPage() {
                 <Fingerprint size={24} />
               </div>
               <div>
-                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Audit Traces</p>
-                <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Secured</p>
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{t("audit.audit_traces")}</p>
+                <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{t("audit.secured")}</p>
               </div>
             </div>
           </div>
@@ -372,7 +374,7 @@ export default function AuditLogsPage() {
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.02] px-4 py-3 text-sm font-semibold text-zinc-900 dark:text-zinc-200 transition-all hover:bg-zinc-100 dark:hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <RefreshCcw size={16} className={isRefreshing ? "animate-spin" : ""} />
-                {isRefreshing ? "Refreshing..." : "Refresh"}
+                {isRefreshing ? "Refreshing..." : t("audit.refresh")}
               </button>
             </div>
 
@@ -468,7 +470,7 @@ export default function AuditLogsPage() {
               </div>
             ) : (
               <div className="rounded-2xl border border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-[#09090b] px-6 py-10 text-center">
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-200">No audit logs found.</p>
+                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-200">{t("audit.no_logs")}</p>
                 <p className="mt-3 text-sm leading-7 text-zinc-500">
                   Adjust your filters or refresh the feed when new system activity is expected.
                 </p>

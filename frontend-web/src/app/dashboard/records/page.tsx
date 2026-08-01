@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "react-i18next";
 
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, CheckCircle2, Pencil } from "lucide-react";
@@ -64,6 +65,7 @@ const textareaClassName =
   "w-full rounded-xl bg-[#09090b] border border-white/10 text-zinc-100 px-4 py-3 text-sm placeholder:text-zinc-600 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed";
 
 export default function AcademicRecordsPage() {
+  const { t } = useTranslation();
   const [currentUser, setCurrentUser] = useState<DecodedToken | null>(null);
   const [userOptions, setUserOptions] = useState<UserOption[]>([]);
   const [selectedUserId, setSelectedUserId] = useState("");
@@ -208,7 +210,7 @@ export default function AcademicRecordsPage() {
     ) {
       badges.push({
         key: "eligible-input",
-        label: "Eligible Input",
+        label: t("records.badge_eligible"),
         className:
           "border border-blue-500/20 bg-blue-500/10 text-blue-400",
       });
@@ -217,7 +219,7 @@ export default function AcademicRecordsPage() {
     if (typeof record.actualExamScore === "number") {
       badges.push({
         key: "ground-truth-ready",
-        label: "Ground Truth Ready",
+        label: t("records.badge_ground_truth"),
         className:
           "border border-emerald-500/20 bg-emerald-500/10 text-emerald-400",
       });
@@ -226,7 +228,7 @@ export default function AcademicRecordsPage() {
     if (getRecordTeacherObjectiveScore(record) !== null) {
       badges.push({
         key: "x3-ready",
-        label: "X3 Ready",
+        label: t("records.badge_x3_ready"),
         className:
           "border border-violet-500/20 bg-violet-500/10 text-violet-400",
       });
@@ -235,7 +237,7 @@ export default function AcademicRecordsPage() {
     if (record.isUsedForTraining === false) {
       badges.push({
         key: "excluded-training",
-        label: "Excluded from Training",
+        label: t("records.badge_excluded"),
         className:
           "border border-red-500/20 bg-red-500/10 text-red-400",
       });
@@ -268,10 +270,10 @@ export default function AcademicRecordsPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch users.");
+        throw new Error(t("errors.failed_fetch_users"));
       }
 
-      const responseData = await response.json();
+      const responseData = await response.json().then(r => r.data ?? r);
       const data: UserOption[] =
         decoded.role === "USER"
           ? [
@@ -312,7 +314,7 @@ export default function AcademicRecordsPage() {
     } catch (error) {
       console.error("Error fetching users:", error);
       setUserOptions([]);
-      setPageError("Unable to load user options right now.");
+      setPageError(t("errors.unable_load_users"));
       showToast("Unable to load user options right now.", "error");
     } finally {
       setIsLoadingUsers(false);
@@ -336,7 +338,7 @@ export default function AcademicRecordsPage() {
         throw new Error("Failed to fetch user features.");
       }
 
-      const data = (await response.json()) as UserFeatureSnapshot;
+      const data = (await response.json().then(r => r.data ?? r)) as UserFeatureSnapshot;
       setUserFeatures(data);
     } catch (error) {
       console.error("Error fetching user features:", error);
@@ -364,10 +366,10 @@ export default function AcademicRecordsPage() {
           setIsLoadingRecords(false);
           return;
         }
-        throw new Error("Failed to fetch academic records.");
+        throw new Error(t("errors.failed_fetch_records"));
       }
 
-      const data = (await response.json()) as AcademicRecord[];
+      const data = (await response.json().then(r => r.data ?? r)) as AcademicRecord[];
       setRecords(data);
     } catch (error) {
       console.error("Error fetching academic records:", error);
@@ -381,7 +383,7 @@ export default function AcademicRecordsPage() {
   useEffect(() => {
     const token = getAuthToken();
     if (!token) {
-      setPageError("Authentication token not found.");
+      setPageError(t("errors.token_not_found"));
       setIsLoadingUsers(false);
       return;
     }
@@ -392,7 +394,7 @@ export default function AcademicRecordsPage() {
       void fetchUsers(decoded);
     } catch (error) {
       console.error("Error decoding token:", error);
-      setPageError("Unable to identify the current session.");
+      setPageError(t("errors.unable_identify_session"));
       setIsLoadingUsers(false);
     }
   }, []);
@@ -530,7 +532,7 @@ export default function AcademicRecordsPage() {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to save academic record.");
+        throw new Error(t("errors.failed_save_record"));
       }
 
       await fetchRecords(selectedUserId);
@@ -552,7 +554,7 @@ export default function AcademicRecordsPage() {
   return (
     <div className="flex flex-col gap-8">
       <header className="space-y-2">
-        <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">Academic Records</h1>
+        <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">{t("records.title")}</h1>
         <p className="text-sm text-zinc-500">
           Input and maintain subject performance data for each user before analytics synthesis.
         </p>
@@ -567,7 +569,7 @@ export default function AcademicRecordsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <section className="bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl rounded-2xl p-6 space-y-6">
           <div className="space-y-1">
-            <h2 className="text-lg font-semibold text-zinc-100">Select User</h2>
+            <h2 className="text-lg font-semibold text-zinc-100">{t("records.select_user")}</h2>
             <p className="text-xs uppercase tracking-widest text-zinc-500">
               Target account for record entry
             </p>
@@ -585,7 +587,7 @@ export default function AcademicRecordsPage() {
               className={inputClassName}
             >
               <option value="" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
-                {isLoadingUsers ? "Loading users..." : "Select a user"}
+                {isLoadingUsers ? "Loading users..." : t("records.select_a_user")}
               </option>
               {userOptions.map((user) => (
                 <option key={user.userId} value={user.userId} className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
@@ -606,19 +608,19 @@ export default function AcademicRecordsPage() {
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
               <div className="bg-[#09090b] border border-white/10 rounded-xl px-4 py-3">
-                <p className="text-[11px] uppercase tracking-widest text-zinc-500">X1 Attendance</p>
+                <p className="text-[11px] uppercase tracking-widest text-zinc-500">{t("records.x1_attendance")}</p>
                 <p className="text-lg font-semibold text-zinc-100 mt-1">
                   {selectedUserId && userFeatures ? `${userFeatures.x1.toFixed(1)}%` : "N/A"}
                 </p>
               </div>
               <div className="bg-[#09090b] border border-white/10 rounded-xl px-4 py-3">
-                <p className="text-[11px] uppercase tracking-widest text-zinc-500">X2 Tryout</p>
+                <p className="text-[11px] uppercase tracking-widest text-zinc-500">{t("records.x2_tryout")}</p>
                 <p className="text-lg font-semibold text-zinc-100 mt-1">
                   {selectedUserId && userFeatures ? userFeatures.x2.toFixed(1) : "N/A"}
                 </p>
               </div>
               <div className="bg-[#09090b] border border-white/10 rounded-xl px-4 py-3">
-                <p className="text-[11px] uppercase tracking-widest text-zinc-500">Latest Average</p>
+                <p className="text-[11px] uppercase tracking-widest text-zinc-500">{t("records.latest_average")}</p>
                 <p className="text-lg font-semibold text-zinc-100 mt-1">
                   {typeof latestAverageScore === "number" ? latestAverageScore.toFixed(1) : "N/A"}
                 </p>
@@ -631,7 +633,7 @@ export default function AcademicRecordsPage() {
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-8">
             <div className="space-y-1">
               <h2 className="text-lg font-semibold text-zinc-100">
-                {editingRecordId ? "Update Academic Record" : "Input Subject Scores"}
+                {editingRecordId ? t("records.update_record") : t("records.input_scores")}
               </h2>
               <p className="text-xs uppercase tracking-widest text-zinc-500">
                 Enter normalized academic values for the selected user
@@ -663,7 +665,7 @@ export default function AcademicRecordsPage() {
                 onChange={(event) => setMathScore(event.target.value)}
                 disabled={isReadOnly || !selectedUserId}
                 className={inputClassName}
-                placeholder="0 - 100"
+                placeholder={t("records.placeholder_0_100")}
               />
             </div>
 
@@ -680,7 +682,7 @@ export default function AcademicRecordsPage() {
                 onChange={(event) => setLogicScore(event.target.value)}
                 disabled={isReadOnly || !selectedUserId}
                 className={inputClassName}
-                placeholder="0 - 100"
+                placeholder={t("records.placeholder_0_100")}
               />
             </div>
 
@@ -697,7 +699,7 @@ export default function AcademicRecordsPage() {
                 onChange={(event) => setEnglishScore(event.target.value)}
                 disabled={isReadOnly || !selectedUserId}
                 className={inputClassName}
-                placeholder="0 - 100"
+                placeholder={t("records.placeholder_0_100")}
               />
             </div>
 
@@ -709,7 +711,7 @@ export default function AcademicRecordsPage() {
                 id="average-score"
                 type="text"
                 readOnly
-                value={typeof localAveragePreview === "number" ? localAveragePreview.toFixed(1) : "Calculated by backend"}
+                value={typeof localAveragePreview === "number" ? localAveragePreview.toFixed(1) : t("records.calculated_backend")}
                 className={inputClassName}
               />
               <p className="text-xs text-zinc-500">
@@ -730,7 +732,7 @@ export default function AcademicRecordsPage() {
                 onChange={(event) => setTeacherObjectiveScore(event.target.value)}
                 disabled={isReadOnly || !selectedUserId}
                 className={inputClassName}
-                placeholder="Recommended for MLR eligibility"
+                placeholder={t("records.placeholder_recommended")}
               />
               <p className="text-xs text-zinc-500">
                 Optional for old records, recommended for the final research model.
@@ -750,7 +752,7 @@ export default function AcademicRecordsPage() {
                 onChange={(event) => setActualExamScore(event.target.value)}
                 disabled={isReadOnly || !selectedUserId}
                 className={inputClassName}
-                placeholder="Optional ground truth"
+                placeholder={t("records.placeholder_ground_truth")}
               />
             </div>
 
@@ -779,7 +781,7 @@ export default function AcademicRecordsPage() {
                 onChange={(event) => setExamLabel(event.target.value)}
                 disabled={isReadOnly || !selectedUserId}
                 className={inputClassName}
-                placeholder="Optional label such as Midterm Tryout 1"
+                placeholder={t("records.placeholder_label")}
               />
             </div>
           </div>
@@ -795,13 +797,13 @@ export default function AcademicRecordsPage() {
               onChange={(event) => setTeacherFeedback(event.target.value)}
               disabled={isReadOnly || !selectedUserId}
               className={textareaClassName}
-              placeholder="Add contextual notes for this user..."
+              placeholder={t("records.placeholder_notes")}
             />
           </div>
 
           <div className="mt-8 flex flex-col gap-4 rounded-2xl border border-white/[0.04] bg-[#09090b] px-5 py-5 md:flex-row md:items-center md:justify-between">
             <div className="space-y-1">
-              <p className="text-sm font-medium text-zinc-200">Use for MLR training</p>
+              <p className="text-sm font-medium text-zinc-200">{t("records.use_for_mlr")}</p>
               <p className="text-xs text-zinc-500">
                 Disable this when a record should not be used for training or eligibility checks.
               </p>
@@ -838,7 +840,7 @@ export default function AcademicRecordsPage() {
                     : "Saving Record..."
                   : editingRecordId
                     ? "Save Changes"
-                    : "Save Academic Record"}
+                    : t("records.save_record")}
               </button>
             </div>
           )}
@@ -847,11 +849,11 @@ export default function AcademicRecordsPage() {
 
       <section className="bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl rounded-2xl p-6 md:p-8">
         <div className="space-y-2 mb-8">
-          <h2 className="text-lg font-semibold text-zinc-100">Academic Record History</h2>
+          <h2 className="text-lg font-semibold text-zinc-100">{t("records.history")}</h2>
           <p className="text-xs uppercase tracking-widest text-zinc-500">
             {selectedUser
               ? `Showing records for ${selectedUser.fullName || selectedUser.username}`
-              : "Select a user to review saved academic records"}
+              : t("records.select_user_review")}
           </p>
         </div>
 
@@ -865,19 +867,19 @@ export default function AcademicRecordsPage() {
               <table className="w-full min-w-[1350px] border-collapse text-left">
                 <thead>
                   <tr>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">User Name</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Exam Label</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Exam Date</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Math</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Logic</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">English</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Average</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Teacher Objective Score (X3)</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Actual Exam</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Used for Training</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Eligibility</th>
-                    <th className="border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Teacher Feedback</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 text-right">Actions</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("records.col_user")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("records.exam_label")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("records.exam_date")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("records.col_math")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("records.col_logic")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("records.col_english")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("records.col_avg")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("records.teacher_x3")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("records.col_actual")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("records.col_training")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("records.col_eligibility")}</th>
+                    <th className="border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("records.teacher_feedback")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 text-right">{t("records.col_actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -927,7 +929,7 @@ export default function AcademicRecordsPage() {
                             : "N/A"}
                         </td>
                         <td className="whitespace-nowrap px-4 py-4 text-sm text-zinc-400">
-                          {record.isUsedForTraining === false ? "No" : "Yes"}
+                          {record.isUsedForTraining === false ? "No" : t("records.yes")}
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex flex-wrap gap-2">
@@ -959,7 +961,7 @@ export default function AcademicRecordsPage() {
                               Edit
                             </button>
                           ) : (
-                            <span className="text-sm text-zinc-500">Read-only</span>
+                            <span className="text-sm text-zinc-500">{t("records.badge_readonly")}</span>
                           )}
                         </td>
                       </tr>
@@ -970,7 +972,7 @@ export default function AcademicRecordsPage() {
             </div>
           ) : (
             <div className="rounded-2xl border border-white/5 bg-[#09090b] px-6 py-8 text-center">
-              <p className="text-sm font-medium text-zinc-200">No academic records found yet.</p>
+              <p className="text-sm font-medium text-zinc-200">{t("records.no_records")}</p>
               <p className="mt-3 text-sm leading-7 text-zinc-500">
                 Save the first academic record to start building the user&apos;s tryout history.
               </p>
@@ -978,7 +980,7 @@ export default function AcademicRecordsPage() {
           )
         ) : (
           <div className="rounded-2xl border border-white/5 bg-[#09090b] px-6 py-8 text-center">
-            <p className="text-sm font-medium text-zinc-200">No user selected.</p>
+            <p className="text-sm font-medium text-zinc-200">{t("records.no_user")}</p>
             <p className="mt-3 text-sm leading-7 text-zinc-500">
               Select a user first to review saved academic records and manage the final X2 input history.
             </p>

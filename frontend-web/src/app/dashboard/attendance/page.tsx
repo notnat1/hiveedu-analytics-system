@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "react-i18next";
 
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, CheckCircle2, Pencil, Trash2 } from "lucide-react";
@@ -50,6 +51,7 @@ const getAttendancePoint = (status: AttendanceStatus) => {
 };
 
 export default function AttendancePage() {
+  const { t } = useTranslation();
   const [currentUser, setCurrentUser] = useState<DecodedToken | null>(null);
   const [userOptions, setUserOptions] = useState<UserOption[]>([]);
   const [selectedUserId, setSelectedUserId] = useState("");
@@ -121,12 +123,12 @@ export default function AttendancePage() {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to fetch current user.");
+          throw new Error(t("errors.failed_fetch_user"));
         }
 
-        const currentAccount = (await response.json()) as UserOption;
+        const currentAccount = (await response.json().then(r => r.data ?? r)) as UserOption;
         setUserOptions([currentAccount]);
-        setSelectedUserId(currentAccount.id);
+        setSelectedUserId(currentAccount.userId);
         return;
       }
 
@@ -137,10 +139,10 @@ export default function AttendancePage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch users.");
+        throw new Error(t("errors.failed_fetch_users"));
       }
 
-      const data = (await response.json()) as UserOption[];
+      const data = (await response.json().then(r => r.data ?? r)) as UserOption[];
       const filteredUsers =
         decoded.role === "ADMIN"
           ? data
@@ -161,7 +163,7 @@ export default function AttendancePage() {
           return decoded.sub;
         }
 
-        return filteredUsers[0]?.id ?? "";
+        return filteredUsers[0]?.userId ?? "";
       });
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -193,10 +195,10 @@ export default function AttendancePage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch attendance records.");
+        throw new Error(t("errors.failed_fetch_attendance"));
       }
 
-      const data = (await response.json()) as AttendanceRecord[];
+      const data = (await response.json().then(r => r.data ?? r)) as AttendanceRecord[];
       setAttendanceRecords(data);
     } catch (error) {
       console.error("Error fetching attendance records:", error);
@@ -210,7 +212,7 @@ export default function AttendancePage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      setPageError("Authentication token not found.");
+      setPageError(t("errors.token_not_found"));
       setIsLoadingUsers(false);
       return;
     }
@@ -221,7 +223,7 @@ export default function AttendancePage() {
       void fetchUsers(decoded);
     } catch (error) {
       console.error("Error decoding token:", error);
-      setPageError("Unable to identify the current session.");
+      setPageError(t("errors.unable_identify_session"));
       setIsLoadingUsers(false);
     }
   }, []);
@@ -266,7 +268,7 @@ export default function AttendancePage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete attendance record.");
+        throw new Error(t("errors.failed_delete_attendance"));
       }
 
       await fetchAttendanceRecords(selectedUserId);
@@ -327,7 +329,7 @@ export default function AttendancePage() {
           return;
         }
 
-        throw new Error("Failed to save attendance");
+        throw new Error(t("errors.failed_save_attendance"));
       }
 
       await fetchAttendanceRecords(selectedUserId);
@@ -348,7 +350,7 @@ export default function AttendancePage() {
   return (
     <div className="flex flex-col gap-8">
       <header className="space-y-2">
-        <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">Attendance Tracking</h1>
+        <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">{t("attendance.title")}</h1>
         <p className="text-sm text-zinc-500">
           Record daily attendance events for each user and feed real participation data into the X1 attendance engine.
         </p>
@@ -365,7 +367,7 @@ export default function AttendancePage() {
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-8">
             <div className="space-y-2">
               <h2 className="text-lg font-semibold text-zinc-100">
-                {editingAttendanceId ? "Update Attendance" : "Attendance Input"}
+                {editingAttendanceId ? t("attendance.update_attendance") : t("attendance.attendance_input")}
               </h2>
               <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
                 Daily attendance signal entry
@@ -433,7 +435,7 @@ export default function AttendancePage() {
                 className={inputClassName}
               >
                 <option value="" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
-                  {isLoadingUsers ? "Loading users..." : "Select a user"}
+                  {isLoadingUsers ? "Loading users..." : t("attendance.select_a_user")}
                 </option>
                 {userOptions.map((user) => (
                   <option key={user.userId} value={user.userId} className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
@@ -463,7 +465,7 @@ export default function AttendancePage() {
                     : "Saving Attendance..."
                   : editingAttendanceId
                     ? "Save Changes"
-                    : "Save Attendance"}
+                    : t("attendance.save_attendance")}
               </button>
             </div>
           )}
@@ -471,7 +473,7 @@ export default function AttendancePage() {
 
         <aside className="bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl rounded-[2rem] p-6 md:p-8">
           <div className="space-y-2 mb-8">
-            <h2 className="text-lg font-semibold text-zinc-100">X1 Attendance Logic</h2>
+            <h2 className="text-lg font-semibold text-zinc-100">{t("attendance.x1_logic")}</h2>
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
               Attendance-driven MLR input
             </p>
@@ -479,23 +481,23 @@ export default function AttendancePage() {
 
           <div className="space-y-4">
             <div className="rounded-2xl border border-white/5 bg-[#09090b] px-5 py-4">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Attendance Points</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("attendance.attendance_points")}</p>
               <div className="mt-3 space-y-2 text-sm text-zinc-300">
-                <p>PRESENT = 1</p>
-                <p>LATE = 0.5</p>
-                <p>ABSENT = 0</p>
+                <p>{t("attendance.present_1")}</p>
+                <p>{t("attendance.late_05")}</p>
+                <p>{t("attendance.absent_0")}</p>
               </div>
             </div>
 
             <div className="rounded-2xl border border-white/5 bg-[#09090b] px-5 py-4">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">X1 Formula</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("attendance.x1_formula")}</p>
               <p className="mt-2 text-sm leading-7 text-zinc-300">
                 Attendance points / attendance records * 100
               </p>
             </div>
 
             <div className="rounded-2xl border border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-[#09090b] px-5 py-4">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Selected User X1</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("attendance.selected_user_x1")}</p>
               <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
                 {selectedUserId
                   ? `${attendanceSummary.attendancePercentage.toFixed(1)}%`
@@ -511,11 +513,11 @@ export default function AttendancePage() {
 
       <section className="bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl rounded-[2rem] p-6 md:p-8">
         <div className="space-y-2 mb-8">
-          <h2 className="text-lg font-semibold text-zinc-100">Attendance History</h2>
+          <h2 className="text-lg font-semibold text-zinc-100">{t("attendance.history")}</h2>
           <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
             {selectedUser
               ? `Showing attendance records for ${selectedUser.fullName || selectedUser.username}`
-              : "Select a user to review attendance history"}
+              : t("attendance.select_user_review")}
           </p>
         </div>
 
@@ -535,11 +537,11 @@ export default function AttendancePage() {
               <table className="w-full min-w-[900px] border-collapse text-left">
                 <thead>
                   <tr>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">User Name</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Date</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Status</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Attendance Point</th>
-                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 text-right">Actions</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("attendance.col_user")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("attendance.date")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("attendance.status")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t("attendance.col_point")}</th>
+                    <th className="whitespace-nowrap border-b border-white/5 px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 text-right">{t("attendance.col_actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -580,7 +582,7 @@ export default function AttendancePage() {
                             </button>
                           </div>
                         ) : (
-                          <span className="text-sm text-zinc-500">Read-only</span>
+                          <span className="text-sm text-zinc-500">{t("attendance.badge_readonly")}</span>
                         )}
                       </td>
                     </tr>
@@ -590,7 +592,7 @@ export default function AttendancePage() {
             </div>
           ) : (
             <div className="rounded-2xl border border-white/5 bg-[#09090b] px-6 py-8 text-center">
-              <p className="text-sm font-medium text-zinc-200">No attendance records found yet.</p>
+              <p className="text-sm font-medium text-zinc-200">{t("attendance.no_records")}</p>
               <p className="mt-3 text-sm leading-7 text-zinc-500">
                 Save the first attendance record to start building the user&apos;s X1 history.
               </p>
@@ -598,7 +600,7 @@ export default function AttendancePage() {
           )
         ) : (
           <div className="rounded-2xl border border-white/5 bg-[#09090b] px-6 py-8 text-center">
-            <p className="text-sm font-medium text-zinc-200">No user selected.</p>
+            <p className="text-sm font-medium text-zinc-200">{t("attendance.no_user")}</p>
             <p className="mt-3 text-sm leading-7 text-zinc-500">
               Select a user first to review attendance history and attendance percentage.
             </p>

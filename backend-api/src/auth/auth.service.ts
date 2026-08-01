@@ -5,6 +5,7 @@ import { UsersService } from '../users/users.service.js';
 import { Role } from '../users/role.enum.js';
 import { User } from '../users/user.entity.js';
 import { AuditLogService } from '../audit-log/audit-log.service.js';
+import { TwoFactorService } from './2fa.service.js';
 
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
@@ -29,6 +30,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly auditLogService: AuditLogService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly twoFactorService: TwoFactorService,
   ) {}
 
   /**
@@ -72,7 +74,7 @@ export class AuthService {
     username: string,
     password: string,
     requestMetadata?: { ipAddress?: string | null; userAgent?: string | null },
-  ): Promise<{ accessToken: string }> {
+  ): Promise<{ accessToken?: string; requires2FA?: boolean; tempToken?: string }> {
     const user = await this.usersService.findAuthUserByUsername(username);
     if (!user) {
       await this.auditLogService.createLog({
@@ -142,7 +144,40 @@ export class AuthService {
 
     this.eventEmitter.emit('auth.login.success', user);
 
+    if (user.isTwoFactorEnabled) {
+      const payload = {
+        sub: user.userId,
+        username: user.username,
+        role: user.role,
+        is2faAuth: true,
+      };
+      const tempToken = await this.jwtService.signAsync(payload, { expiresIn: '5m' });
+      return { requires2FA: true, tempToken };
+    }
+
     return this.generateAccessToken(user);
+  }
+
+  /**
+   * Verifies a 2FA code and issues a full access token.
+   */
+  async verify2FA(tempToken: string, code: string): Promise<{ accessToken: string }> {
+    try {
+      const payload = await this.jwtService.verifyAsync(tempToken);
+      if (!payload.is2faAuth) throw new UnauthorizedException('Invalid temporary token');
+      
+      const user = await this.usersService.findAuthUserByUsername(payload.username);
+      if (!user || !user.isTwoFactorEnabled || !user.twoFactorSecret) {
+        throw new UnauthorizedException('2FA is not properly configured for this user');
+      }
+
+      const isValid = this.twoFactorService.verifyTwoFactorToken(code, user.twoFactorSecret);
+      if (!isValid) throw new UnauthorizedException('Invalid 2FA code');
+
+      return this.generateAccessToken(user);
+    } catch (e) {
+      throw new UnauthorizedException('Invalid or expired temporary token');
+    }
   }
 
   /**

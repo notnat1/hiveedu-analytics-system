@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "react-i18next";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -106,11 +107,18 @@ const HiveEduLogo = () => (
 );
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  
+  // 2FA State
+  const [is2FA, setIs2FA] = useState(false);
+  const [otpToken, setOtpToken] = useState("");
+  const [tempToken, setTempToken] = useState("");
+
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -119,6 +127,29 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      if (is2FA) {
+        const res = await fetch("http://localhost:3000/auth/login/2fa", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tempToken, code: otpToken }),
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json().then(r => r.data ?? r).catch(() => ({}));
+          throw new Error(errorData.message || t("login.error_invalid_2fa"));
+        }
+
+        const responseJson = await res.json().then(r => r.data ?? r);
+        const payload = responseJson.data || responseJson;
+        
+        const token = payload.accessToken || payload.access_token;
+        localStorage.setItem("token", token);
+        if (payload.user) localStorage.setItem("user", JSON.stringify(payload.user));
+        
+        router.push("/dashboard");
+        return;
+      }
+
       const res = await fetch("http://localhost:3000/auth/login", {
         method: "POST",
         headers: {
@@ -128,26 +159,36 @@ export default function LoginPage() {
       });
 
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || "Invalid username or password");
+        const errorData = await res.json().then(r => r.data ?? r).catch(() => ({}));
+        throw new Error(errorData.message || t("login.error_invalid_credentials"));
       }
 
-      const data = await res.json();
+      const responseJson = await res.json().then(r => r.data ?? r);
+      
+      // The backend now wraps responses in { statusCode, message, data }
+      const payload = responseJson.data || responseJson;
 
-      if (data.accessToken || data.access_token) {
-        const token = data.accessToken || data.access_token;
+      if (payload.requires2FA) {
+        setIs2FA(true);
+        setTempToken(payload.tempToken);
+        setIsLoading(false);
+        return;
+      }
+
+      if (payload.accessToken || payload.access_token) {
+        const token = payload.accessToken || payload.access_token;
         localStorage.setItem("token", token);
 
-        if (data.user) {
-          localStorage.setItem("user", JSON.stringify(data.user));
+        if (payload.user) {
+          localStorage.setItem("user", JSON.stringify(payload.user));
         }
 
         router.push("/dashboard");
       } else {
-        throw new Error("Invalid response from server");
+        throw new Error(t("login.error_invalid_response"));
       }
     } catch (err: any) {
-      setError(err.message || "Failed to log in. Please try again.");
+      setError(err.message || t("login.error_generic"));
     } finally {
       setIsLoading(false);
     }
@@ -240,43 +281,61 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleLogin} className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2 transition-colors duration-300">
-              Username
-            </label>
-            {/* INPUT FIELD */}
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-3.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:border-cyan-500 dark:focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/20 dark:focus:ring-cyan-400/20 text-zinc-800 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 transition-all shadow-sm"
-              placeholder="Enter your username"
-              required
-            />
-          </div>
+          {!is2FA ? (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2 transition-colors duration-300">
+                  {t("login.username")}
+                </label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full px-4 py-3.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:border-cyan-500 dark:focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/20 dark:focus:ring-cyan-400/20 text-zinc-800 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 transition-all shadow-sm"
+                  placeholder={t("login.placeholder_username")}
+                  required
+                />
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2 transition-colors duration-300">
-              Password
-            </label>
-            <div className="relative">
+              <div>
+                <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2 transition-colors duration-300">
+                  {t("login.password")}
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-3.5 pr-12 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:border-cyan-500 dark:focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/20 dark:focus:ring-cyan-400/20 text-zinc-800 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 transition-all shadow-sm"
+                    placeholder={t("login.placeholder_password")}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-zinc-400 hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2 transition-colors duration-300">
+                {t("login.twofa_label")}
+              </label>
               <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3.5 pr-12 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:border-cyan-500 dark:focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/20 dark:focus:ring-cyan-400/20 text-zinc-800 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 transition-all shadow-sm"
-                placeholder="Enter your password"
+                type="text"
+                value={otpToken}
+                onChange={(e) => setOtpToken(e.target.value)}
+                className="w-full px-4 py-3.5 text-center tracking-[0.5em] font-mono text-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:border-cyan-500 dark:focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/20 dark:focus:ring-cyan-400/20 text-zinc-800 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 transition-all shadow-sm"
+                placeholder={t("login.placeholder_otp")}
+                maxLength={6}
                 required
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 flex items-center pr-4 text-zinc-400 hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors"
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
             </div>
-          </div>
+          )}
 
           <button
             type="submit"
@@ -289,7 +348,7 @@ export default function LoginPage() {
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             ) : (
-              "Sign In"
+              t("login.sign_in")
             )}
           </button>
         </form>

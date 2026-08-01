@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "react-i18next";
 
 import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
@@ -26,6 +27,7 @@ interface ToastState {
 }
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -67,10 +69,10 @@ export default function SettingsPage() {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to fetch current user profile");
+          throw new Error(t("errors.failed_fetch_profile"));
         }
 
-        const currentProfile = (await response.json()) as UserProfile;
+        const currentProfile = (await response.json().then(r => r.data ?? r)) as UserProfile;
 
         setProfile(currentProfile);
         setFullName(currentProfile.fullName ?? "");
@@ -123,10 +125,10 @@ export default function SettingsPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update current user profile");
+        throw new Error(t("errors.failed_update_profile"));
       }
 
-      const updatedProfile = (await response.json()) as UserProfile;
+      const updatedProfile = (await response.json().then(r => r.data ?? r)) as UserProfile;
 
       setProfile(updatedProfile);
       setFullName(updatedProfile.fullName ?? "");
@@ -146,7 +148,7 @@ export default function SettingsPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">Settings</h1>
+        <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">{t("settings.title")}</h1>
         <p className="text-sm text-zinc-500">
           Manage account identity, access credentials, and secure profile preferences.
         </p>
@@ -154,7 +156,7 @@ export default function SettingsPage() {
 
       <div className="max-w-4xl bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl rounded-[2rem] p-6 md:p-8">
         <div className="space-y-2 mb-8">
-          <h2 className="text-lg font-semibold text-zinc-100">Profile Management</h2>
+          <h2 className="text-lg font-semibold text-zinc-100">{t("settings.profile_management")}</h2>
           <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
             Update personal account information
           </p>
@@ -162,23 +164,23 @@ export default function SettingsPage() {
 
         <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="rounded-[1.5rem] border border-white/5 bg-[#09090b] p-5">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Role</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("settings.role")}</p>
             <p className="mt-3 text-lg font-semibold text-zinc-100">
               {profile?.role ?? "N/A"}
             </p>
           </div>
           <div className="rounded-[1.5rem] border border-white/5 bg-[#09090b] p-5">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Status</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("settings.status_label")}</p>
             <p className="mt-3 text-lg font-semibold text-zinc-100">
               {typeof profile?.isActive === "boolean"
                 ? profile.isActive
                   ? "Active"
-                  : "Inactive"
+                  : t("settings.status_inactive")
                 : "N/A"}
             </p>
           </div>
           <div className="rounded-[1.5rem] border border-white/5 bg-[#09090b] p-5">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Assigned Tutor</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("settings.assigned_tutor_label")}</p>
             <p className="mt-3 text-lg font-semibold text-zinc-100">
               {profile?.assignedTutor?.fullName ||
                 profile?.assignedTutor?.username ||
@@ -207,7 +209,7 @@ export default function SettingsPage() {
               onChange={(event) => setFullName(event.target.value)}
               disabled={isLoadingProfile}
               className="w-full rounded-xl bg-[#09090b] border border-white/10 text-zinc-100 px-4 py-3 text-sm placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50"
-              placeholder="Enter full name"
+              placeholder={t("settings.placeholder_fullname")}
             />
           </div>
 
@@ -222,7 +224,7 @@ export default function SettingsPage() {
               onChange={(event) => setUsername(event.target.value)}
               disabled={isLoadingProfile}
               className="w-full rounded-xl bg-[#09090b] border border-white/10 text-zinc-100 px-4 py-3 text-sm placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50"
-              placeholder="Enter username"
+              placeholder={t("settings.placeholder_username")}
             />
           </div>
 
@@ -237,7 +239,7 @@ export default function SettingsPage() {
               onChange={(event) => setNewPassword(event.target.value)}
               disabled={isLoadingProfile}
               className="w-full rounded-xl bg-[#09090b] border border-white/10 text-zinc-100 px-4 py-3 text-sm placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50"
-              placeholder="Enter new password"
+              placeholder={t("settings.placeholder_new_password")}
             />
           </div>
 
@@ -252,7 +254,7 @@ export default function SettingsPage() {
               onChange={(event) => setConfirmPassword(event.target.value)}
               disabled={isLoadingProfile}
               className="w-full rounded-xl bg-[#09090b] border border-white/10 text-zinc-100 px-4 py-3 text-sm placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50"
-              placeholder="Confirm new password"
+              placeholder={t("settings.placeholder_confirm_password")}
             />
           </div>
         </div>
@@ -264,7 +266,7 @@ export default function SettingsPage() {
             disabled={isSaving || isLoadingProfile}
             className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-500 dark:to-cyan-400 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(14,165,233,0.3)] dark:shadow-[0_8px_20px_rgba(14,165,233,0.2)] hover:shadow-[0_10px_25px_rgba(14,165,233,0.4)] dark:hover:shadow-[0_10px_25px_rgba(14,165,233,0.3)] hover:from-blue-500 hover:to-cyan-400 dark:hover:from-blue-400 dark:hover:to-cyan-300 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoadingProfile ? "Loading..." : isSaving ? "Saving..." : "Save Changes"}
+            {isLoadingProfile ? "Loading..." : isSaving ? "Saving..." : t("settings.save_changes")}
           </button>
         </div>
       </div>
