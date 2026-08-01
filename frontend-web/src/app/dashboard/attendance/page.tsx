@@ -455,7 +455,7 @@ export default function AttendancePage() {
                 type="button"
                 onClick={handleSubmitAttendance}
                 disabled={isSubmitting || !selectedUserId || !attendanceDate}
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 text-sm font-semibold text-white shadow-lg hover:from-blue-500 hover:to-violet-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-500 dark:to-cyan-400 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(14,165,233,0.3)] dark:shadow-[0_8px_20px_rgba(14,165,233,0.2)] hover:shadow-[0_10px_25px_rgba(14,165,233,0.4)] dark:hover:shadow-[0_10px_25px_rgba(14,165,233,0.3)] hover:from-blue-500 hover:to-cyan-400 dark:hover:from-blue-400 dark:hover:to-cyan-300 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting
                   ? editingAttendanceId
@@ -537,8 +537,8 @@ export default function AttendancePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {attendanceRecords.map((record) => (
-                    <tr key={record.id} className="hover:bg-white/[0.01]">
+                  {attendanceRecords.map((record, index) => (
+                    <tr key={record.id || index} className="hover:bg-white/[0.01]">
                       <td className="whitespace-nowrap px-4 py-4 text-sm font-medium text-zinc-200">
                         {selectedUser?.fullName || selectedUser?.username || "N/A"}
                       </td>

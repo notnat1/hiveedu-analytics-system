@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Left Pillar of H -->
+  <rect x="28" y="15" width="10" height="70" rx="5" fill="#3b82f6" />
+  
+  <!-- The A Chevron -->
+  <path d="M 16 85 L 50 20 L 84 85" fill="none" stroke="#22d3ee" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- Right Pillar of H -->
+  <rect x="62" y="15" width="10" height="70" rx="5" fill="#3b82f6" />
+
+  <!-- Analytics Apex Data Node -->
+  <circle cx="50" cy="20" r="5" fill="#22d3ee" />
+  <circle cx="50" cy="20" r="2.5" fill="#ffffff" />
+</svg>
