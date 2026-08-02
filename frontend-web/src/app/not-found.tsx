@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { Home, Hexagon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function NotFound() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center relative overflow-hidden font-sans">
       {/* Background Quantum Waves (from Login) */}
@@ -24,11 +28,11 @@ export default function NotFound() {
         </h1>
         
         <h2 className="text-2xl md:text-3xl font-semibold text-zinc-200 mb-4 tracking-tight">
-          Lost in the Data Hive
+          {t("not_found.title")}
         </h2>
         
         <p className="text-zinc-400 mb-10 max-w-md mx-auto text-sm md:text-base leading-relaxed">
-          The analytics node you are looking for has been moved, deleted, or never existed in the current simulation.
+          {t("not_found.desc")}
         </p>
         
         <Link 
@@ -36,7 +40,7 @@ export default function NotFound() {
           className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-2xl shadow-[0_8px_30px_rgba(14,165,233,0.3)] hover:shadow-[0_15px_40px_rgba(14,165,233,0.5)] transition-all duration-300 hover:-translate-y-1"
         >
           <Home size={18} />
-          Return to Dashboard
+          {t("not_found.return_btn")}
         </Link>
       </div>
     </div>

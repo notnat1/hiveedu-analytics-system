@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Joyride, Step, CallbackProps, STATUS } from "react-joyride";
+import { Joyride, Step, STATUS } from "react-joyride";
 import { useTranslation } from "react-i18next";
 
 export default function OnboardingTour({ theme = "dark" }: { theme?: "light" | "dark" }) {
@@ -24,6 +24,7 @@ export default function OnboardingTour({ theme = "dark" }: { theme?: "light" | "
       target: "body",
       content: t("tour.step1"),
       placement: "center",
+      // @ts-expect-error type change in v3
       disableBeacon: true,
     },
     {
@@ -48,7 +49,7 @@ export default function OnboardingTour({ theme = "dark" }: { theme?: "light" | "
     }
   ];
 
-  const handleJoyrideCallback = (data: CallBackProps) => {
+  const handleJoyrideCallback = (data: any) => {
     const { status } = data;
     const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
 
@@ -75,6 +76,7 @@ export default function OnboardingTour({ theme = "dark" }: { theme?: "light" | "
       showSkipButton
       callback={handleJoyrideCallback}
       styles={{
+        // @ts-expect-error type change in v3
         options: {
           primaryColor: "#06b6d4", // Cyan 500
           zIndex: 10000,

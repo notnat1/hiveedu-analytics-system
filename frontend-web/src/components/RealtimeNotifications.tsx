@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { Bell, X, AlertTriangle, MessageSquare, Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface Notification {
   id: string;
@@ -13,6 +14,7 @@ interface Notification {
 }
 
 export default function RealtimeNotifications({ token }: { token: string }) {
+  const { t } = useTranslation();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isVisible, setIsVisible] = useState(false);
@@ -38,7 +40,7 @@ export default function RealtimeNotifications({ token }: { token: string }) {
       console.log("New Notification Received:", payload);
       const newNotif: Notification = {
         id: Math.random().toString(36).substring(7),
-        title: payload.title || "Pemberitahuan Baru",
+        title: payload.title || t("notifications.new_notice"),
         message: payload.message,
         type: payload.type || "info",
         timestamp: new Date(),

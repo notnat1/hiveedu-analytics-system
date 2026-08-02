@@ -5,7 +5,7 @@ const withPWA = withPWAInit({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
   register: true,
-  skipWaiting: true,
+  // skipWaiting: true, // Type error: Object literal may only specify known properties, and 'skipWaiting' does not exist in type 'PluginOptions'.
 });
 
 const nextConfig: NextConfig = {

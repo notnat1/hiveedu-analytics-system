@@ -152,7 +152,7 @@ export default function AnalyticsEnginePage() {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      showToast("Authentication token not found.", "error");
+      showToast(t("errors.token_not_found"), "error");
       return;
     }
 
@@ -179,10 +179,10 @@ export default function AnalyticsEnginePage() {
       }
 
       await fetchAnalyticsConfig();
-      showToast("Analytics configuration updated successfully.");
+      showToast(t("toasts.config_updated"));
     } catch (error) {
       console.error("Error updating analytics configuration:", error);
-      showToast("Unable to update analytics configuration.", "error");
+      showToast(t("toasts.failed_update_config"), "error");
     } finally {
       setIsSavingConfig(false);
     }

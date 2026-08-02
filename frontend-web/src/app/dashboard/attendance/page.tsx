@@ -203,7 +203,7 @@ export default function AttendancePage() {
     } catch (error) {
       console.error("Error fetching attendance records:", error);
       setAttendanceRecords([]);
-      showToast("Unable to load attendance records right now.", "error");
+      showToast(t("errors.failed_fetch_attendance"), "error");
     } finally {
       setIsLoadingAttendance(false);
     }
@@ -275,27 +275,27 @@ export default function AttendancePage() {
       if (editingAttendanceId === attendanceId) {
         resetForm();
       }
-      showToast("Attendance record deleted successfully.");
+      showToast(t("toasts.attendance_deleted"));
     } catch (error) {
       console.error("Error deleting attendance:", error);
-      showToast("Unable to delete attendance record right now.", "error");
+      showToast(t("toasts.unable_delete_attendance"), "error");
     }
   };
 
   const handleSubmitAttendance = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      showToast("Authentication token not found.", "error");
+      showToast(t("errors.token_not_found"), "error");
       return;
     }
 
     if (isReadOnly) {
-      showToast("This page is read-only for user accounts.", "error");
+      showToast(t("toasts.readonly_user"), "error");
       return;
     }
 
     if (!selectedUserId || !attendanceDate) {
-      showToast("Please select a user and date first.", "error");
+      showToast(t("toasts.select_user_date"), "error");
       return;
     }
 
@@ -323,7 +323,7 @@ export default function AttendancePage() {
       if (!response.ok) {
         if (response.status === 409) {
           showToast(
-            "Attendance for this user on this date already exists.",
+            t("toasts.attendance_exists"),
             "error",
           );
           return;
@@ -336,12 +336,12 @@ export default function AttendancePage() {
       resetForm();
       showToast(
         editingAttendanceId
-          ? "Attendance record updated successfully."
-          : "Attendance record saved successfully.",
+          ? t("toasts.attendance_updated")
+          : t("toasts.attendance_added"),
       );
     } catch (error) {
       console.error("Error saving attendance:", error);
-      showToast("Unable to save attendance right now.", "error");
+      showToast(t("errors.failed_save_attendance"), "error");
     } finally {
       setIsSubmitting(false);
     }

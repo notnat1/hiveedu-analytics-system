@@ -120,18 +120,18 @@ export default function TutorsPage() {
     averageTryoutScore: number,
   ) => {
     if (attendancePercentage < 75 && averageTryoutScore >= 75) {
-      return "Improve attendance consistency.";
+      return t("feedback.improve_attendance");
     }
 
     if (attendancePercentage >= 75 && averageTryoutScore < 75) {
-      return "Strengthen tryout practice.";
+      return t("feedback.strengthen_tryout");
     }
 
     if (attendancePercentage < 75 && averageTryoutScore < 75) {
-      return "Assign early intervention.";
+      return t("feedback.assign_intervention");
     }
 
-    return "Maintain current progress.";
+    return t("feedback.maintain_progress");
   };
 
   useEffect(() => {
@@ -295,7 +295,7 @@ export default function TutorsPage() {
         setTutorAnalytics([]);
         setPriorityUsers([]);
         setPageError(t("errors.unable_load_tutor"));
-        showToast("Unable to load tutor analytics right now.", "error");
+        showToast(t("errors.unable_load_tutor"), "error");
       } finally {
         setIsLoading(false);
       }
@@ -730,7 +730,7 @@ export default function TutorsPage() {
           riskLevel={interventionUser.riskLevel}
           predictedScore={interventionUser.predictedScore}
           onSuccess={() => {
-            showToast("Follow-up saved successfully");
+            showToast(t("toasts.followup_saved"));
           }}
         />
       )}

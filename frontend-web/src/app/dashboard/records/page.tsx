@@ -315,7 +315,7 @@ export default function AcademicRecordsPage() {
       console.error("Error fetching users:", error);
       setUserOptions([]);
       setPageError(t("errors.unable_load_users"));
-      showToast("Unable to load user options right now.", "error");
+      showToast(t("errors.unable_load_users"), "error");
     } finally {
       setIsLoadingUsers(false);
     }
@@ -335,7 +335,7 @@ export default function AcademicRecordsPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch user features.");
+        throw new Error(t("errors.failed_fetch_user_features"));
       }
 
       const data = (await response.json().then(r => r.data ?? r)) as UserFeatureSnapshot;
@@ -374,7 +374,7 @@ export default function AcademicRecordsPage() {
     } catch (error) {
       console.error("Error fetching academic records:", error);
       setRecords([]);
-      showToast("Unable to load academic records right now.", "error");
+      showToast(t("errors.failed_fetch_records"), "error");
     } finally {
       setIsLoadingRecords(false);
     }
@@ -436,12 +436,12 @@ export default function AcademicRecordsPage() {
 
   const handleSubmitRecord = async () => {
     if (isReadOnly) {
-      showToast("This page is read-only for user accounts.", "error");
+      showToast(t("toasts.readonly_user"), "error");
       return;
     }
 
     if (!selectedUserId) {
-      showToast("Please select a user first.", "error");
+      showToast(t("toasts.select_user_first"), "error");
       return;
     }
 
@@ -459,7 +459,7 @@ export default function AcademicRecordsPage() {
       typeof parsedEnglishScore !== "number" ||
       Number.isNaN(parsedEnglishScore)
     ) {
-      showToast("Math, Logic, and English scores must be valid numbers.", "error");
+      showToast(t("toasts.valid_numbers_required"), "error");
       return;
     }
 
@@ -468,7 +468,7 @@ export default function AcademicRecordsPage() {
         (score) => score < 0 || score > 100,
       )
     ) {
-      showToast("Subject scores must stay within the 0-100 range.", "error");
+      showToast(t("toasts.score_range"), "error");
       return;
     }
 
@@ -478,7 +478,7 @@ export default function AcademicRecordsPage() {
         parsedTeacherObjectiveScore < 0 ||
         parsedTeacherObjectiveScore > 100)
     ) {
-      showToast("Teacher Objective Score (X3) must stay within the 0-100 range.", "error");
+      showToast(t("toasts.x3_range"), "error");
       return;
     }
 
@@ -488,13 +488,13 @@ export default function AcademicRecordsPage() {
         parsedActualExamScore < 0 ||
         parsedActualExamScore > 100)
     ) {
-      showToast("Actual exam score must stay within the 0-100 range.", "error");
+      showToast(t("toasts.exam_range"), "error");
       return;
     }
 
     const token = getAuthToken();
     if (!token) {
-      showToast("Session not found. Please login again.", "error");
+      showToast(t("toasts.session_not_found"), "error");
       return;
     }
 
@@ -538,14 +538,10 @@ export default function AcademicRecordsPage() {
       await fetchRecords(selectedUserId);
       await fetchUserFeatures(selectedUserId);
       resetForm();
-      showToast(
-        editingRecordId
-          ? "Academic record updated successfully."
-          : "Academic record saved successfully.",
-      );
+      showToast(t("toasts.record_saved"));
     } catch (error) {
       console.error("Error saving academic record:", error);
-      showToast("Unable to save academic record right now.", "error");
+      showToast(t("toasts.unable_save_record"), "error");
     } finally {
       setIsSubmitting(false);
     }

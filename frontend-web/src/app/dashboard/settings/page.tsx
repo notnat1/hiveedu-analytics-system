@@ -150,7 +150,7 @@ export default function SettingsPage() {
       <div className="space-y-2">
         <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">{t("settings.title")}</h1>
         <p className="text-sm text-zinc-500">
-          Manage account identity, access credentials, and secure profile preferences.
+          {t("settings.desc")}
         </p>
       </div>
 
@@ -158,7 +158,7 @@ export default function SettingsPage() {
         <div className="space-y-2 mb-8">
           <h2 className="text-lg font-semibold text-zinc-100">{t("settings.profile_management")}</h2>
           <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-            Update personal account information
+            {t("settings.profile_desc")}
           </p>
         </div>
 
@@ -166,7 +166,7 @@ export default function SettingsPage() {
           <div className="rounded-[1.5rem] border border-white/5 bg-[#09090b] p-5">
             <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("settings.role")}</p>
             <p className="mt-3 text-lg font-semibold text-zinc-100">
-              {profile?.role ?? "N/A"}
+              {profile?.role === "ADMIN" ? t("users.admin") : profile?.role === "TEACHER" ? t("users.teacher") : profile?.role === "USER" ? t("users.user") : profile?.role ?? "N/A"}
             </p>
           </div>
           <div className="rounded-[1.5rem] border border-white/5 bg-[#09090b] p-5">
@@ -174,8 +174,8 @@ export default function SettingsPage() {
             <p className="mt-3 text-lg font-semibold text-zinc-100">
               {typeof profile?.isActive === "boolean"
                 ? profile.isActive
-                  ? "Active"
-                  : t("settings.status_inactive")
+                  ? t("settings.active")
+                  : t("settings.inactive")
                 : "N/A"}
             </p>
           </div>

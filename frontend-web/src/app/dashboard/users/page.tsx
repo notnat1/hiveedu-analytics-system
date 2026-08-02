@@ -123,7 +123,7 @@ export default function UserManagementPage() {
       setUsers([]);
       setTeachers([]);
       setPageError(t("errors.unable_load_accounts"));
-      showToast("Unable to load accounts right now.", "error");
+      showToast(t("errors.unable_load_accounts"), "error");
     } finally {
       setIsLoadingUsers(false);
     }
@@ -167,23 +167,23 @@ export default function UserManagementPage() {
   const handleSubmit = async () => {
     const token = localStorage.getItem("token");
     if (!token || !isAdmin) {
-      showToast("Only ADMIN accounts can manage users.", "error");
+      showToast(t("toasts.admin_manage_users"), "error");
       return;
     }
 
     const isEditing = Boolean(editingUserId);
     if (!newFullName.trim() || !newUsername.trim()) {
-      showToast("Full name and username are required.", "error");
+      showToast(t("toasts.fullname_username_required"), "error");
       return;
     }
 
     if (!isEditing && newPassword.trim().length < 8) {
-      showToast("Password must be at least 8 characters long.", "error");
+      showToast(t("toasts.password_min_length"), "error");
       return;
     }
 
     if (isEditing && newPassword.trim() !== "" && newPassword.trim().length < 8) {
-      showToast("Updated password must be at least 8 characters long.", "error");
+      showToast(t("toasts.updated_password_min_length"), "error");
       return;
     }
 
@@ -229,10 +229,10 @@ export default function UserManagementPage() {
 
       closeModal();
       await fetchUsers();
-      showToast(isEditing ? "Account updated successfully." : "Account created successfully.");
+      showToast(isEditing ? t("toasts.account_updated") : t("toasts.account_created"));
     } catch (error) {
       console.error(isEditing ? t("errors.error_updating_user") : t("errors.error_creating_user"), error);
-      showToast("Unable to save account right now.", "error");
+      showToast(t("toasts.unable_save_account"), "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -241,7 +241,7 @@ export default function UserManagementPage() {
   const handleDeleteUser = async (id: string) => {
     const token = localStorage.getItem("token");
     if (!token || !isAdmin) {
-      showToast("Only ADMIN accounts can delete users.", "error");
+      showToast(t("toasts.admin_delete_users"), "error");
       return;
     }
 
@@ -258,10 +258,10 @@ export default function UserManagementPage() {
       }
 
       await fetchUsers();
-      showToast("Account deleted successfully.");
+      showToast(t("toasts.account_deleted"));
     } catch (error) {
       console.error("Error deleting user:", error);
-      showToast("Unable to delete account right now.", "error");
+      showToast(t("toasts.unable_delete_account"), "error");
     }
   };
 
@@ -342,16 +342,16 @@ export default function UserManagementPage() {
           className={inputClassName}
         >
           <option value="ALL" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
-            All Roles
+            {t("users.all_roles")}
           </option>
           <option value="ADMIN" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
-            ADMIN
+            {t("users.admin")}
           </option>
           <option value="TEACHER" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
-            TEACHER
+            {t("users.teacher")}
           </option>
           <option value="USER" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
-            USER
+            {t("users.user")}
           </option>
         </select>
 
@@ -361,13 +361,13 @@ export default function UserManagementPage() {
           className={inputClassName}
         >
           <option value="ALL" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
-            All Statuses
+            {t("users.all_statuses")}
           </option>
           <option value="ACTIVE" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
-            Active
+            {t("users.active")}
           </option>
           <option value="INACTIVE" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
-            Inactive
+            {t("users.inactive")}
           </option>
         </select>
       </div>
@@ -421,7 +421,7 @@ export default function UserManagementPage() {
                       {user.username}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">
-                      {user.role}
+                      {user.role === "ADMIN" ? t("users.admin") : user.role === "TEACHER" ? t("users.teacher") : user.role === "USER" ? t("users.user") : user.role}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">
                       {getAssignedTutorName(user)}
@@ -434,7 +434,7 @@ export default function UserManagementPage() {
                             : "border border-red-500/20 bg-red-500/10 text-red-400"
                         }`}
                       >
-                        {getSafeIsActive(user) ? "ACTIVE" : "INACTIVE"}
+                        {getSafeIsActive(user) ? t("users.active") : t("users.inactive")}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -468,7 +468,7 @@ export default function UserManagementPage() {
                       </div>
                       <h3 className="text-lg font-medium text-zinc-200 mb-1">{t("users.no_accounts")}</h3>
                       <p className="text-sm text-zinc-500 max-w-sm">
-                        There are no user accounts matching your current filter criteria in the database.
+                        {t("users.no_accounts_desc")}
                       </p>
                     </div>
                   </td>
@@ -545,13 +545,13 @@ export default function UserManagementPage() {
                   className={inputClassName}
                 >
                   <option value="ADMIN" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
-                    ADMIN
+                    {t("users.admin")}
                   </option>
                   <option value="TEACHER" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
-                    TEACHER
+                    {t("users.teacher")}
                   </option>
                   <option value="USER" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
-                    USER
+                    {t("users.user")}
                   </option>
                 </select>
               </div>
@@ -561,7 +561,7 @@ export default function UserManagementPage() {
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-zinc-900 dark:text-zinc-200">{t("users.active_status")}</p>
                     <p className="text-xs text-zinc-500">
-                      Control whether the account should be treated as active.
+                      {t("users.control_active")}
                     </p>
                   </div>
                   <button
@@ -585,7 +585,7 @@ export default function UserManagementPage() {
               {newRole === "USER" && (
                 <div className="space-y-2">
                   <label htmlFor="assigned-tutor" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    Assign Tutor
+                    {t("users.assign_tutor")}
                   </label>
                   <select
                     id="assigned-tutor"

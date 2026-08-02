@@ -267,7 +267,7 @@ const ReportDocument = ({ data }: { data: ReportData }) => {
           </View>
           <View style={styles.titleBlock}>
             <Text style={styles.title}>{t("components.report_formal")}</Text>
-            <Text style={styles.date}>Generated: {data.date}</Text>
+            <Text style={styles.date}>{t("components.report_generated_prefix")}{data.date}</Text>
           </View>
         </View>
 
@@ -298,12 +298,12 @@ const ReportDocument = ({ data }: { data: ReportData }) => {
               <Text style={[styles.tableCellHeader, styles.colWide]}>{t("components.report_notes")}</Text>
             </View>
             {[
-              ['Mathematics', valueOrNA(data.mathScore), 'Subject competency result'],
-              ['Logical Reasoning', valueOrNA(data.logicScore), 'Subject competency result'],
-              ['English', valueOrNA(data.englishScore), 'Subject competency result'],
-              ['Average Score', valueOrNA(data.averageScore ?? data.x2), 'Calculated academic average'],
-              ['Actual Exam Score', valueOrNA(data.actualExamScore), 'Ground truth when available'],
-              ['Teacher Objective Score (X3)', teacherObjectiveScore, 'Teacher assessment input'],
+              [t("components.report_mathematics"), valueOrNA(data.mathScore), t("components.report_desc_competency")],
+              [t("components.report_logical_reasoning"), valueOrNA(data.logicScore), t("components.report_desc_competency")],
+              [t("components.report_english"), valueOrNA(data.englishScore), t("components.report_desc_competency")],
+              [t("components.report_average_score"), valueOrNA(data.averageScore ?? data.x2), t("components.report_desc_average")],
+              [t("components.report_actual_exam_score"), valueOrNA(data.actualExamScore), t("components.report_desc_actual")],
+              [t("components.report_teacher_objective_score"), teacherObjectiveScore, t("components.report_desc_teacher")],
             ].map(([label, score, note]) => (
               <View style={styles.tableRow} key={label}>
                 <Text style={[styles.tableCell, styles.colWide]}>{label}</Text>
@@ -319,10 +319,10 @@ const ReportDocument = ({ data }: { data: ReportData }) => {
             <Text style={styles.sectionTitle}>{t("components.report_attendance_summary")}</Text>
             <View style={styles.table}>
               {[
-                ['Present', valueOrNA(data.presentCount)],
-                ['Late', valueOrNA(data.lateCount)],
-                ['Absent', valueOrNA(data.absentCount)],
-                ['Attendance Percentage (X1)', valueOrNA(data.x1)],
+                [t("components.report_present"), valueOrNA(data.presentCount)],
+                [t("components.report_late"), valueOrNA(data.lateCount)],
+                [t("components.report_absent"), valueOrNA(data.absentCount)],
+                [t("components.report_attendance_percentage"), valueOrNA(data.x1)],
               ].map(([label, value]) => (
                 <View style={styles.tableRow} key={label}>
                   <Text style={[styles.tableCell, { width: '62%' }]}>{label}</Text>
@@ -336,8 +336,8 @@ const ReportDocument = ({ data }: { data: ReportData }) => {
             <View style={styles.predictionPanel}>
               <Text style={styles.sectionTitle}>{t("components.report_predicted_next")}</Text>
               <Text style={styles.predictionValue}>{data.predictedScore}</Text>
-              <Text style={styles.riskText}>Risk Level: {valueOrNA(data.riskLevel)}</Text>
-              <Text style={styles.explanation}>{data.recommendation || 'Maintain current progress.'}</Text>
+              <Text style={styles.riskText}>{t("components.report_risk_level")}{valueOrNA(data.riskLevel)}</Text>
+              <Text style={styles.explanation}>{data.recommendation || t("components.report_maintain_progress")}</Text>
             </View>
           </View>
         </View>
@@ -346,7 +346,7 @@ const ReportDocument = ({ data }: { data: ReportData }) => {
           <Text style={styles.sectionTitle}>{t("components.report_teacher_note")}</Text>
           <View style={styles.noteBox}>
             <Text style={styles.noteText}>
-              {data.teacherNote || data.recommendation || 'Maintain current progress.'}
+              {data.teacherNote || data.recommendation || t("components.report_maintain_progress")}
             </Text>
           </View>
         </View>
@@ -393,7 +393,7 @@ const ReportDocument = ({ data }: { data: ReportData }) => {
           <Text style={styles.sectionTitle}>{t("components.report_x3")}</Text>
           <Text style={styles.analyticsValue}>{teacherObjectiveScore}</Text>
           <Text style={styles.explanation}>
-            X3 is supplied from the teacher objective score in Academic Records.
+            {t("components.report_x3_desc")}
           </Text>
         </View>
 
@@ -401,7 +401,7 @@ const ReportDocument = ({ data }: { data: ReportData }) => {
           <Text style={styles.sectionTitle}>{t("components.report_mode")}</Text>
           <Text style={styles.analyticsValue}>{valueOrNA(data.coefficientMode)}</Text>
           <Text style={styles.explanation}>
-            AUTO_TRAINED uses current valid training samples. MANUAL_OVERRIDE uses stored coefficient values.
+            {t("components.report_mode_desc")}
           </Text>
         </View>
 
@@ -409,9 +409,7 @@ const ReportDocument = ({ data }: { data: ReportData }) => {
           <Text style={styles.sectionTitle}>{t("components.report_formula")}</Text>
           <Text style={styles.formulaText}>{t("components.report_formula_y")}</Text>
           <Text style={styles.explanation}>
-            Y is the predicted next exam score. X1 is attendance percentage, X2 is average tryout score,
-            and X3 is teacher objective score. The formula is included as an appendix so the formal
-            e-raport remains focused on academic reporting first.
+            {t("components.report_formula_desc_full")}
           </Text>
         </View>
 

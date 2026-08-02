@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function InterventionBadge({ userId }: { userId: string }) {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,13 +29,24 @@ export default function InterventionBadge({ userId }: { userId: string }) {
   if (!status) return null;
 
   let colorClass = 'border-white/10 bg-white/5 text-zinc-400';
-  if (status === 'OPEN') colorClass = 'border-red-500/20 bg-red-500/10 text-red-400';
-  if (status === 'IN_PROGRESS') colorClass = 'border-amber-500/20 bg-amber-500/10 text-amber-400';
-  if (status === 'RESOLVED') colorClass = 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400';
+  let statusText = status.replace('_', ' ');
+
+  if (status === 'OPEN') {
+    colorClass = 'border-red-500/20 bg-red-500/10 text-red-400';
+    statusText = t('components.status_open');
+  }
+  if (status === 'IN_PROGRESS') {
+    colorClass = 'border-amber-500/20 bg-amber-500/10 text-amber-400';
+    statusText = t('components.status_in_progress');
+  }
+  if (status === 'RESOLVED') {
+    colorClass = 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400';
+    statusText = t('components.status_resolved');
+  }
 
   return (
     <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${colorClass}`}>
-      {status.replace('_', ' ')}
+      {statusText}
     </span>
   );
 }

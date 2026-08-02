@@ -382,7 +382,7 @@ export default function DashboardPage() {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      showToast("Authentication token not found.", "error");
+      showToast(t("errors.token_not_found"), "error");
       return;
     }
 
@@ -414,10 +414,10 @@ export default function DashboardPage() {
         await fetchAdminDashboardData(token);
       }
 
-      showToast("Analytics report exported successfully.");
+      showToast(t("toasts.report_exported"));
     } catch (error) {
       console.error("Error exporting analytics report:", error);
-      showToast("Unable to export analytics report right now.", "error");
+      showToast(t("toasts.unable_export_report"), "error");
     } finally {
       setIsExportingAnalyticsReport(false);
     }
@@ -526,17 +526,17 @@ export default function DashboardPage() {
 
     return [
       {
-        metric: "X1 Attendance",
+        metric: t("charts.x1_attendance"),
         you: Number(userAnalytics.x1.toFixed(1)),
         classAverage: Number(globalAnalytics.averageX1.toFixed(1)),
       },
       {
-        metric: "X2 Tryout",
+        metric: t("charts.x2_tryout"),
         you: Number(userAnalytics.x2.toFixed(1)),
         classAverage: Number(globalAnalytics.averageX2.toFixed(1)),
       },
       {
-        metric: "Predicted Score",
+        metric: t("charts.predicted_score"),
         you: Number(userAnalytics.predictedScore.toFixed(1)),
         classAverage: Number(globalAnalytics.averagePredictedScore.toFixed(1)),
       },
@@ -655,7 +655,7 @@ export default function DashboardPage() {
     ]);
 
     if (!featureResponse.ok) {
-      throw new Error("Failed to fetch user features");
+      throw new Error(t("errors.failed_fetch_user_features"));
     }
 
     const _featJson = await featureResponse.json().then(r => r.data ?? r);
@@ -748,22 +748,22 @@ export default function DashboardPage() {
     const lowSignalCount = [x1Low, x2Low, x3Low].filter(Boolean).length;
 
     if (lowSignalCount > 1) {
-      return "Assign early intervention.";
+      return t("feedback.assign_intervention");
     }
 
     if (x1Low && !x2Low && (!hasX3 || !x3Low)) {
-      return "Improve attendance consistency.";
+      return t("feedback.improve_attendance");
     }
 
     if (!x1Low && x2Low && (!hasX3 || !x3Low)) {
-      return "Strengthen tryout practice.";
+      return t("feedback.strengthen_tryout");
     }
 
     if (!x1Low && !x2Low && x3Low) {
-      return "Improve teacher-guided learning focus.";
+      return t("feedback.improve_focus");
     }
 
-    return "Maintain current progress.";
+    return t("feedback.maintain_progress");
   }
 
   const fetchAdminDashboardData = async (token: string) => {
@@ -788,7 +788,7 @@ export default function DashboardPage() {
     ]);
 
     if (!usersResponse.ok) {
-      throw new Error("Failed to fetch analytics users.");
+      throw new Error(t("errors.failed_fetch_analytics_users"));
     }
 
     const _usersResponseJson = await usersResponse.json().then(r => r.data ?? r);
@@ -918,7 +918,7 @@ export default function DashboardPage() {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch global analytics");
+      throw new Error(t("errors.failed_fetch_global"));
     }
 
     const _glbJson = await response.json().then(r => r.data ?? r);
@@ -981,7 +981,7 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
-      showToast("Sesi kedaluwarsa atau pengguna tidak ditemukan. Mengalihkan ke login...", "error");
+      showToast(t("toasts.session_expired_redirect"), "error");
       setTimeout(() => {
         localStorage.removeItem("hiveedu_token");
         window.location.href = "/login";
@@ -2254,7 +2254,7 @@ export default function DashboardPage() {
           riskLevel={interventionUser.riskLevel}
           predictedScore={interventionUser.predictedScore}
           onSuccess={() => {
-            showToast("Follow-up saved successfully");
+            showToast(t("toasts.followup_saved"));
             // Optionally re-fetch data if needed, but badge should update next reload
           }}
         />
