@@ -87,7 +87,7 @@ export class AnalyticsController {
 
   @UseGuards(JwtAuthGuard)
   @Get('global')
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.USER)
   @UseInterceptors(CacheInterceptor)
   getGlobalAnalytics(@Req() req: any) {
     return this.analyticsService.getGlobalAnalytics(req.user);
@@ -181,5 +181,16 @@ export class AnalyticsController {
     } catch (error) {
       throw new BadRequestException(error instanceof Error ? error.message : 'Update failed.');
     }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('chat')
+  @Roles(Role.USER)
+  async chatWithCounselor(@Body() body: { message: string; context: string }) {
+    if (!body.message || !body.context) {
+      throw new BadRequestException('Message and context are required.');
+    }
+    const reply = await this.analyticsService.chatWithCounselor(body.message, body.context);
+    return { reply };
   }
 }

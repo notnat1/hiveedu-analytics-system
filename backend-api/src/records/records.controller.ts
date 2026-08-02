@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { Roles } from '../auth/roles.decorator.js';
 import { CreateRecordDto } from './dto/create-record.dto.js';
@@ -32,6 +33,22 @@ export class RecordsController {
     @Req() req: { user: { userId: string; role: string } },
   ) {
     return this.recordsService.create(createRecordDto, {
+      actorId: req.user.userId,
+      actorRole: req.user.role,
+    });
+  }
+
+  @Post('bulk-import')
+  @Roles(Role.ADMIN, Role.TEACHER)
+  @UseInterceptors(FileInterceptor('file'))
+  async bulkImport(
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: { user: { userId: string; role: string } },
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file provided');
+    }
+    return this.recordsService.bulkImport(file.buffer, {
       actorId: req.user.userId,
       actorRole: req.user.role,
     });

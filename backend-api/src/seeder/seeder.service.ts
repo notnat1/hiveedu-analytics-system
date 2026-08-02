@@ -85,8 +85,8 @@ export class SeederService {
     return [
       {
         index: 1,
-        fullName: 'HiveEdu User 1',
-        username: 'user1',
+        fullName: 'Budi Santoso',
+        username: 'budi.santoso',
         isActive: true,
         assignedTutorUsername: 'teacher1',
         tryoutScores: this.buildTryoutSet('Diagnostic', [
@@ -107,8 +107,8 @@ export class SeederService {
       },
       {
         index: 2,
-        fullName: 'HiveEdu User 2',
-        username: 'user2',
+        fullName: 'Siti Aminah',
+        username: 'siti.aminah',
         isActive: true,
         assignedTutorUsername: 'teacher1',
         tryoutScores: this.buildTryoutSet('Benchmark', [
@@ -129,8 +129,8 @@ export class SeederService {
       },
       {
         index: 3,
-        fullName: 'HiveEdu User 3',
-        username: 'user3',
+        fullName: 'Kevin Pratama',
+        username: 'kevin.pratama',
         isActive: true,
         assignedTutorUsername: 'teacher1',
         tryoutScores: this.buildTryoutSet('Intervention', [
@@ -151,8 +151,8 @@ export class SeederService {
       },
       {
         index: 4,
-        fullName: 'HiveEdu User 4',
-        username: 'user4',
+        fullName: 'Ayu Lestari',
+        username: 'ayu.lestari',
         isActive: true,
         assignedTutorUsername: 'teacher1',
         tryoutScores: this.buildTryoutSet('Recovery', [
@@ -173,8 +173,8 @@ export class SeederService {
       },
       {
         index: 5,
-        fullName: 'HiveEdu User 5',
-        username: 'user5',
+        fullName: 'Dimas Anggara',
+        username: 'dimas.anggara',
         isActive: true,
         assignedTutorUsername: 'teacher2',
         tryoutScores: this.buildTryoutSet('Mastery', [
@@ -195,8 +195,8 @@ export class SeederService {
       },
       {
         index: 6,
-        fullName: 'HiveEdu User 6',
-        username: 'user6',
+        fullName: 'Rina Melati',
+        username: 'rina.melati',
         isActive: true,
         assignedTutorUsername: 'teacher2',
         tryoutScores: this.buildTryoutSet('Practice', [
@@ -217,8 +217,8 @@ export class SeederService {
       },
       {
         index: 7,
-        fullName: 'HiveEdu User 7',
-        username: 'user7',
+        fullName: 'Rizky Maulana',
+        username: 'rizky.maulana',
         isActive: true,
         assignedTutorUsername: 'teacher2',
         tryoutScores: this.buildTryoutSet('Support', [
@@ -239,8 +239,8 @@ export class SeederService {
       },
       {
         index: 8,
-        fullName: 'HiveEdu User 8',
-        username: 'user8',
+        fullName: 'Putri Rahayu',
+        username: 'putri.rahayu',
         isActive: false,
         assignedTutorUsername: 'teacher2',
         tryoutScores: this.buildTryoutSet('Inactive', [
@@ -261,8 +261,8 @@ export class SeederService {
       },
       {
         index: 9,
-        fullName: 'HiveEdu User 9',
-        username: 'user9',
+        fullName: 'Fajar Siddiq',
+        username: 'fajar.siddiq',
         isActive: true,
         assignedTutorUsername: 'teacher1',
         tryoutScores: [
@@ -295,8 +295,8 @@ export class SeederService {
       },
       {
         index: 10,
-        fullName: 'HiveEdu User 10',
-        username: 'user10',
+        fullName: 'Nadia Safira',
+        username: 'nadia.safira',
         isActive: true,
         assignedTutorUsername: 'teacher2',
         tryoutScores: [

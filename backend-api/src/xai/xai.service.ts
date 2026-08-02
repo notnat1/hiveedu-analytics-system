@@ -160,4 +160,44 @@ export class XaiService {
 
     return this.generateExamScoreExplanation(mathScore, logicScore, englishScore, actualExamScore);
   }
+
+  async chatWithCounselor(message: string, context: string): Promise<string> {
+    if (!this.aiClient) {
+      return "Mohon maaf, layanan AI Counselor sedang offline (API Key tidak diatur).";
+    }
+
+    try {
+      const systemPrompt = `Kamu adalah 'HiveEdu AI Counselor', konselor akademik virtual yang ramah, empatik, dan suportif. 
+Tugasmu adalah membantu siswa memahami performa akademiknya dan memberikan saran belajar yang spesifik.
+Gunakan bahasa Indonesia yang santai tapi profesional (gunakan kata 'Kamu' untuk siswa).
+Jawab dengan singkat dan jelas (maksimal 3 paragraf pendek).
+Berikut adalah konteks data akademik siswa saat ini yang didapat dari algoritma Regresi Linear:
+${context}`;
+
+      this.logger.log(`Memanggil Groq API untuk pesan: "${message}"`);
+      const response = await this.aiClient.chat.completions.create({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: message }
+        ],
+        model: 'llama-3.1-8b-instant',
+      }, {
+        maxRetries: 0,
+        timeout: 10000,
+      });
+      this.logger.log(`Berhasil menerima respons dari Groq API.`);
+      
+      if (response.choices[0]?.message?.content) {
+        return response.choices[0].message.content.trim();
+      }
+    } catch (error: any) {
+      if (error.status === 429 || error.message?.includes('429')) {
+        return "Mohon maaf, server AI saat ini sedang sibuk (Rate Limit). Silakan coba beberapa saat lagi.";
+      }
+      this.logger.error(`Failed to chat with AI: ${error.message}`);
+      return "Maaf, terjadi kesalahan saat menghubungi AI Counselor.";
+    }
+
+    return "Maaf, saya tidak mengerti. Bisa diulangi?";
+  }
 }

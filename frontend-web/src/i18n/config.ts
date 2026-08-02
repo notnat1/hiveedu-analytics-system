@@ -12,8 +12,8 @@ i18n
       en: { translation: en },
       id: { translation: id },
     },
-    lng: "en", // Default language (set to English for International impression)
-    fallbackLng: "en",
+    lng: "id", // Default language for Indonesian Thesis
+    fallbackLng: "id",
     interpolation: {
       escapeValue: false, // React already safe from xss
     },

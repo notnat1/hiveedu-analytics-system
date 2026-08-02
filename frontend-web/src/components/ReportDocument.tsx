@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
+import { Document, Page, StyleSheet, Text, View, Image } from '@react-pdf/renderer';
 
 const colors = {
   ink: '#111827',
@@ -178,6 +178,22 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 9,
   },
+  qrCodeBox: {
+    width: '16%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qrCodeImage: {
+    width: 48,
+    height: 48,
+  },
+  qrCodeText: {
+    fontSize: 6,
+    color: colors.muted,
+    marginTop: 4,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+  },
   analyticsCard: {
     borderWidth: 1,
     borderColor: colors.line,
@@ -247,6 +263,7 @@ interface ReportData {
   recommendation?: string;
   teacherNote?: string;
   coefficientMode?: string;
+  qrCodeUrl?: string;
   date: string;
 }
 
@@ -353,6 +370,12 @@ const ReportDocument = ({ data }: { data: ReportData }) => {
 
         <View style={styles.signatureArea}>
           <Text style={styles.signatureBox}>{t("components.report_homeroom")}</Text>
+          {data.qrCodeUrl && (
+            <View style={styles.qrCodeBox}>
+              <Image src={data.qrCodeUrl} style={styles.qrCodeImage} />
+              <Text style={styles.qrCodeText}>Scan to Verify</Text>
+            </View>
+          )}
           <Text style={styles.signatureBox}>{t("components.report_parent")}</Text>
         </View>
 

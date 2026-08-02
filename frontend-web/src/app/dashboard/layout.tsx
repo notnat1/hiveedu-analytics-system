@@ -269,8 +269,11 @@ export default function DashboardLayout({
           <h1 className="text-sm font-medium text-zinc-400 tracking-widest uppercase opacity-70">
             {navItems.find((item) => item.href === pathname)?.name || t("components.dashboard_fallback")}
           </h1>
-          <div className="flex items-center space-x-6 ml-auto">
-            {/* Theme Toggle Switch */}
+          {/* Header Actions */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div id="ai-chat-portal-target"></div>
+            
+            {/* Language Switch */}
             <div className="flex items-center gap-3">
               {mounted && (
                 <button

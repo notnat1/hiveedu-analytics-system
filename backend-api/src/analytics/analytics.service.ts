@@ -1737,4 +1737,8 @@ export class AnalyticsService implements OnModuleInit {
     
     return atRiskUsers;
   }
+
+  async chatWithCounselor(message: string, context: string): Promise<string> {
+    return this.xaiService.chatWithCounselor(message, context);
+  }
 }

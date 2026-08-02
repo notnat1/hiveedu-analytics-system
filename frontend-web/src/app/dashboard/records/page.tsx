@@ -90,6 +90,47 @@ export default function AcademicRecordsPage() {
     tone: "success",
   });
   const [userFeatures, setUserFeatures] = useState<UserFeatureSnapshot | null>(null);
+  
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+
+  const handleImport = async () => {
+    if (!importFile) return;
+    const token = getAuthToken();
+    if (!token) return;
+
+    setIsImporting(true);
+    const formData = new FormData();
+    formData.append('file', importFile);
+
+    try {
+      const response = await fetch("http://localhost:3000/records/bulk-import", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Gagal mengimpor data");
+      }
+
+      const result = await response.json();
+      showToast(`Berhasil: ${result.success}, Gagal: ${result.failed}`);
+      if (selectedUserId) {
+        await fetchRecords(selectedUserId);
+      }
+      setIsImportModalOpen(false);
+      setImportFile(null);
+    } catch (error) {
+      console.error(error);
+      showToast("Gagal mengimpor file Excel", "error");
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   const showToast = (message: string, tone: ToastState["tone"] = "success") => {
     setToast({ show: true, message, tone });
@@ -636,15 +677,27 @@ export default function AcademicRecordsPage() {
               </p>
             </div>
 
-            {editingRecordId && !isReadOnly && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-2 text-xs font-semibold uppercase tracking-widest text-zinc-300 transition-all hover:border-white/20 hover:bg-white/[0.04]"
-              >
-                {t("records.cancel_edit")}
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {editingRecordId && !isReadOnly && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-2 text-xs font-semibold uppercase tracking-widest text-zinc-300 transition-all hover:border-white/20 hover:bg-white/[0.04]"
+                >
+                  {t("records.cancel_edit")}
+                </button>
+              )}
+              {!isReadOnly && !editingRecordId && (
+                <button
+                  type="button"
+                  onClick={() => setIsImportModalOpen(true)}
+                  className="rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-blue-400 transition-all hover:border-blue-500/50 hover:bg-blue-500/20 flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                  Upload Excel
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -984,14 +1037,80 @@ export default function AcademicRecordsPage() {
         )}
       </section>
 
+      {isImportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#09090b] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl flex flex-col gap-6">
+            <div>
+              <h2 className="text-xl font-bold text-zinc-100">Upload Data Nilai (Excel)</h2>
+              <p className="text-sm text-zinc-500 mt-1">Upload file .xlsx untuk mengimpor data nilai secara massal. Baris pertama harus berisi header.</p>
+            </div>
+            
+            <div className="flex flex-col gap-4">
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/10 border-dashed rounded-xl cursor-pointer bg-white/[0.02] hover:bg-white/[0.04] transition-all">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <svg className="w-8 h-8 mb-3 text-zinc-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                  </svg>
+                  <p className="mb-2 text-sm text-zinc-400"><span className="font-semibold">Klik untuk upload</span> atau drag and drop</p>
+                  <p className="text-xs text-zinc-500">XLSX, XLS</p>
+                </div>
+                <input type="file" className="hidden" accept=".xlsx, .xls" onChange={(e) => setImportFile(e.target.files?.[0] ?? null)} />
+              </label>
+              {importFile && (
+                <div className="text-sm text-blue-400 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  {importFile.name}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsImportModalOpen(false);
+                  setImportFile(null);
+                }}
+                disabled={isImporting}
+                className="rounded-xl border border-white/10 bg-transparent px-4 py-2.5 text-sm font-semibold text-zinc-300 transition-colors hover:bg-white/5 disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleImport}
+                disabled={isImporting || !importFile}
+                className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-500 flex items-center gap-2"
+              >
+                {isImporting && (
+                  <svg className="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                )}
+                {isImporting ? "Mengimpor..." : "Mulai Import"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {toast.show && (
-        <div className="fixed bottom-8 right-8 flex items-center gap-3 bg-[#09090b] border border-white/[0.08] shadow-2xl backdrop-blur-3xl rounded-xl px-5 py-4 z-50 animate-in slide-in-from-bottom-6 fade-in duration-300">
-          {toast.tone === "success" ? (
-            <CheckCircle2 className="text-emerald-500" size={20} />
-          ) : (
-            <AlertCircle className="text-red-400" size={20} />
-          )}
-          <span className="text-sm font-medium text-zinc-200">{toast.message}</span>
+        <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-4">
+          <div
+            className={`flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-2xl ${
+              toast.tone === "success"
+                ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                : "border-red-500/20 bg-red-500/10 text-red-400"
+            }`}
+          >
+            {toast.tone === "success" ? (
+              <CheckCircle2 className="h-5 w-5" />
+            ) : (
+              <AlertCircle className="h-5 w-5" />
+            )}
+            <p className="text-sm font-medium">{toast.message}</p>
+          </div>
         </div>
       )}
     </div>

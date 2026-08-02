@@ -13,6 +13,7 @@ import { User } from '../users/user.entity.js';
 import { Role } from '../users/role.enum.js';
 import { AuditLogService } from '../audit-log/audit-log.service.js';
 import { XaiService } from '../xai/xai.service.js';
+import * as ExcelJS from 'exceljs';
 
 /**
  * RecordsService
@@ -194,8 +195,72 @@ export class RecordsService {
         teacherObjectiveScore: savedRecord.teacherObjectiveScore,
       },
     });
-
     return savedRecord;
+  }
+
+  async bulkImport(
+    buffer: Buffer,
+    actor: { actorId?: string | null; actorRole?: string | null },
+  ): Promise<{ success: number; failed: number; errors: string[] }> {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer as any);
+    const worksheet = workbook.worksheets[0];
+
+    let success = 0;
+    let failed = 0;
+    const errors: string[] = [];
+    
+    // Process rows starting from row 2 (assuming row 1 is header)
+    for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
+      const row = worksheet.getRow(rowNumber);
+      if (!row.hasValues) continue;
+
+      const username = row.getCell(1).text?.trim();
+      const mathScore = Number(row.getCell(2).value);
+      const logicScore = Number(row.getCell(3).value);
+      const englishScore = Number(row.getCell(4).value);
+      const x3ScoreRaw = row.getCell(5).value;
+      const x3Score = x3ScoreRaw !== null && x3ScoreRaw !== undefined && x3ScoreRaw !== '' ? Number(x3ScoreRaw) : undefined;
+      
+      if (!username) {
+        failed++;
+        errors.push(`Row ${rowNumber}: Username is empty.`);
+        continue;
+      }
+
+      try {
+        const user = await this.userRepository.findOne({ where: { username, role: Role.USER } });
+        if (!user) {
+          failed++;
+          errors.push(`Row ${rowNumber}: User "${username}" not found.`);
+          continue;
+        }
+
+        try {
+          this.assertCanManageUserRecords(actor, user);
+        } catch (e) {
+          failed++;
+          errors.push(`Row ${rowNumber}: Unauthorized to manage "${username}".`);
+          continue;
+        }
+
+        await this.create({
+          userId: user.userId,
+          mathematicsScore: mathScore,
+          logicalReasoningScore: logicScore,
+          englishScore: englishScore,
+          teacherObjectiveScore: x3Score,
+          isUsedForTraining: true,
+        }, actor);
+
+        success++;
+      } catch (err: any) {
+        failed++;
+        errors.push(`Row ${rowNumber} (${username}): ${err.message}`);
+      }
+    }
+
+    return { success, failed, errors };
   }
 
   async update(

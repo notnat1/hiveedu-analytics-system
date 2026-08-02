@@ -20,6 +20,8 @@ import ReportDocument from "@/components/ReportDocument";
 import InterventionModal from "@/components/InterventionModal";
 import InterventionBadge from "@/components/InterventionBadge";
 import WhatIfSimulator from "@/components/WhatIfSimulator";
+import { AiCounselorChat } from "@/components/AiCounselorChat";
+import QRCode from "qrcode";
 import {
   AreaChart,
   Area,
@@ -44,6 +46,7 @@ import { jwtDecode } from "jwt-decode";
 interface DecodedToken {
   sub: string;
   username: string;
+  fullName?: string;
   role: string;
 }
 
@@ -324,8 +327,10 @@ export default function DashboardPage() {
         return;
       }
 
+      const formattedName = currentUser.fullName || currentUser.username.split('.').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      const verifyUrl = `${window.location.origin}/verify/${currentUser.username}`;
       const reportData = {
-        userName: currentUser.username,
+        userName: formattedName,
         username: currentUser.username,
         period: latestRecord?.examLabel ?? latestRecord?.examDate ?? "Current reporting period",
         x1: record.x1,
@@ -351,6 +356,7 @@ export default function DashboardPage() {
         riskLevel: record.riskLevel,
         recommendation: record.recommendation,
         coefficientMode: userAnalytics?.coefficientMode,
+        qrCodeUrl: await QRCode.toDataURL(verifyUrl, { errorCorrectionLevel: 'H' }),
         date: new Date().toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'long',
@@ -956,7 +962,10 @@ export default function DashboardPage() {
         setTableData([]);
         setLatestRunHistory(null);
         setGlobalAnalytics(null);
-        await fetchUserAnalytics(decoded.sub, token);
+        await Promise.all([
+          fetchUserAnalytics(decoded.sub, token),
+          fetchGlobalAnalytics(token).catch(console.error),
+        ]);
       } else if (decoded.role === "ADMIN") {
         setUserAnalytics(null);
         setUserRecords([]);
@@ -2257,6 +2266,13 @@ export default function DashboardPage() {
             showToast(t("toasts.followup_saved"));
             // Optionally re-fetch data if needed, but badge should update next reload
           }}
+        />
+      )}
+      
+      {currentUser?.role === "USER" && userAnalytics && (
+        <AiCounselorChat 
+          contextString={`Kehadiran: ${userAnalytics.x1}%, Rata-rata Tryout: ${userAnalytics.x2}, Nilai Guru: ${userAnalytics.x3}, Prediksi Nilai Ujian Akhir: ${userAnalytics.predictedScore}, Risiko: ${userAnalytics.riskLevel}, Saran: ${recommendationMessage}`}
+          token={typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}
         />
       )}
     </div>
