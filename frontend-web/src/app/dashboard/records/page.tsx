@@ -552,7 +552,7 @@ export default function AcademicRecordsPage() {
       <header className="space-y-2">
         <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">{t("records.title")}</h1>
         <p className="text-sm text-zinc-500">
-          Input and maintain subject performance data for each user before analytics synthesis.
+          {t("records.desc")}
         </p>
       </header>
 
@@ -567,13 +567,13 @@ export default function AcademicRecordsPage() {
           <div className="space-y-1">
             <h2 className="text-lg font-semibold text-zinc-100">{t("records.select_user")}</h2>
             <p className="text-xs uppercase tracking-widest text-zinc-500">
-              Target account for record entry
+              {t("records.select_user_desc")}
             </p>
           </div>
 
           <div className="space-y-2">
             <label htmlFor="user-select" className="text-sm text-zinc-400">
-              Username
+              {t("records.username_label")}
             </label>
             <select
               id="user-select"
@@ -583,7 +583,7 @@ export default function AcademicRecordsPage() {
               className={inputClassName}
             >
               <option value="" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
-                {isLoadingUsers ? "Loading users..." : t("records.select_a_user")}
+                {isLoadingUsers ? t("records.loading_users") : t("records.select_a_user")}
               </option>
               {userOptions.map((user) => (
                 <option key={user.userId} value={user.userId} className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
@@ -593,14 +593,14 @@ export default function AcademicRecordsPage() {
             </select>
             {isReadOnly && (
               <p className="text-xs text-zinc-500">
-                User accounts can review records here, but record entry is read-only.
+                {t("records.readonly_note")}
               </p>
             )}
           </div>
 
           <div className="space-y-3">
             <h3 className="text-xs uppercase tracking-widest text-zinc-500">
-              Current Analytics Snapshot
+              {t("records.current_analytics_snapshot")}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
               <div className="bg-[#09090b] border border-white/10 rounded-xl px-4 py-3">
@@ -632,7 +632,7 @@ export default function AcademicRecordsPage() {
                 {editingRecordId ? t("records.update_record") : t("records.input_scores")}
               </h2>
               <p className="text-xs uppercase tracking-widest text-zinc-500">
-                Enter normalized academic values for the selected user
+                {t("records.enter_normalized")}
               </p>
             </div>
 
@@ -642,7 +642,7 @@ export default function AcademicRecordsPage() {
                 onClick={resetForm}
                 className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-2 text-xs font-semibold uppercase tracking-widest text-zinc-300 transition-all hover:border-white/20 hover:bg-white/[0.04]"
               >
-                Cancel Edit
+                {t("records.cancel_edit")}
               </button>
             )}
           </div>
@@ -650,7 +650,7 @@ export default function AcademicRecordsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-2">
               <label htmlFor="math-score" className="text-sm text-zinc-400">
-                Math Score
+                {t("records.math_score")}
               </label>
               <input
                 id="math-score"
@@ -667,7 +667,7 @@ export default function AcademicRecordsPage() {
 
             <div className="space-y-2">
               <label htmlFor="logic-score" className="text-sm text-zinc-400">
-                Logic Score
+                {t("records.logic_score")}
               </label>
               <input
                 id="logic-score"
@@ -684,7 +684,7 @@ export default function AcademicRecordsPage() {
 
             <div className="space-y-2">
               <label htmlFor="english-score" className="text-sm text-zinc-400">
-                English Score
+                {t("records.english_score")}
               </label>
               <input
                 id="english-score"
@@ -711,13 +711,13 @@ export default function AcademicRecordsPage() {
                 className={inputClassName}
               />
               <p className="text-xs text-zinc-500">
-                This is a read-only preview. The backend remains the source of truth for averageScore.
+                {t("records.avg_preview_note")}
               </p>
             </div>
 
             <div className="space-y-2">
               <label htmlFor="teacher-objective-score" className="text-sm text-zinc-400">
-                Teacher Objective Score (X3)
+                {t("records.teacher_x3")}
               </label>
               <input
                 id="teacher-objective-score"
@@ -731,13 +731,13 @@ export default function AcademicRecordsPage() {
                 placeholder={t("records.placeholder_recommended")}
               />
               <p className="text-xs text-zinc-500">
-                Optional for old records, recommended for the final research model.
+                {t("records.teacher_x3_desc")}
               </p>
             </div>
 
             <div className="space-y-2">
               <label htmlFor="actual-exam-score" className="text-sm text-zinc-400">
-                Actual Exam Score
+                {t("records.actual_exam")}
               </label>
               <input
                 id="actual-exam-score"
@@ -754,7 +754,7 @@ export default function AcademicRecordsPage() {
 
             <div className="space-y-2">
               <label htmlFor="exam-date" className="text-sm text-zinc-400">
-                Exam Date
+                {t("records.exam_date")}
               </label>
               <input
                 id="exam-date"
@@ -768,7 +768,7 @@ export default function AcademicRecordsPage() {
 
             <div className="space-y-2 md:col-span-2">
               <label htmlFor="exam-label" className="text-sm text-zinc-400">
-                Exam Label
+                {t("records.exam_label")}
               </label>
               <input
                 id="exam-label"
@@ -784,7 +784,7 @@ export default function AcademicRecordsPage() {
 
           <div className="mt-8 space-y-2">
             <label htmlFor="teacher-feedback" className="text-sm text-zinc-400">
-              Teacher Feedback
+              {t("records.teacher_feedback")}
             </label>
             <textarea
               id="teacher-feedback"
@@ -801,7 +801,7 @@ export default function AcademicRecordsPage() {
             <div className="space-y-1">
               <p className="text-sm font-medium text-zinc-200">{t("records.use_for_mlr")}</p>
               <p className="text-xs text-zinc-500">
-                Disable this when a record should not be used for training or eligibility checks.
+                {t("records.use_for_mlr_desc")}
               </p>
             </div>
             <button
@@ -832,10 +832,10 @@ export default function AcademicRecordsPage() {
               >
                 {isSubmitting
                   ? editingRecordId
-                    ? "Saving Changes..."
-                    : "Saving Record..."
+                    ? t("records.saving_changes")
+                    : t("records.saving_record")
                   : editingRecordId
-                    ? "Save Changes"
+                    ? t("records.save_changes")
                     : t("records.save_record")}
               </button>
             </div>
@@ -848,7 +848,7 @@ export default function AcademicRecordsPage() {
           <h2 className="text-lg font-semibold text-zinc-100">{t("records.history")}</h2>
           <p className="text-xs uppercase tracking-widest text-zinc-500">
             {selectedUser
-              ? `Showing records for ${selectedUser.fullName || selectedUser.username}`
+              ? t("records.showing_records_for", { name: selectedUser.fullName || selectedUser.username })
               : t("records.select_user_review")}
           </p>
         </div>
@@ -856,7 +856,7 @@ export default function AcademicRecordsPage() {
         {selectedUserId ? (
           isLoadingRecords ? (
             <div className="rounded-2xl border border-white/5 bg-[#09090b] px-6 py-8 text-center text-sm text-zinc-400">
-              Loading academic records...
+              {t("records.loading_records")}
             </div>
           ) : records.length > 0 ? (
             <div className="overflow-x-auto">
@@ -925,7 +925,7 @@ export default function AcademicRecordsPage() {
                             : "N/A"}
                         </td>
                         <td className="whitespace-nowrap px-4 py-4 text-sm text-zinc-400">
-                          {record.isUsedForTraining === false ? "No" : t("records.yes")}
+                          {record.isUsedForTraining === false ? t("records.no") : t("records.yes")}
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex flex-wrap gap-2">
@@ -954,7 +954,7 @@ export default function AcademicRecordsPage() {
                               className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2 text-xs font-semibold uppercase tracking-widest text-zinc-300 transition-all hover:border-white/20 hover:bg-white/[0.04]"
                             >
                               <Pencil size={14} />
-                              Edit
+                              {t("records.btn_edit")}
                             </button>
                           ) : (
                             <span className="text-sm text-zinc-500">{t("records.badge_readonly")}</span>
@@ -970,7 +970,7 @@ export default function AcademicRecordsPage() {
             <div className="rounded-2xl border border-white/5 bg-[#09090b] px-6 py-8 text-center">
               <p className="text-sm font-medium text-zinc-200">{t("records.no_records")}</p>
               <p className="mt-3 text-sm leading-7 text-zinc-500">
-                Save the first academic record to start building the user&apos;s tryout history.
+                {t("records.no_records_desc")}
               </p>
             </div>
           )
@@ -978,7 +978,7 @@ export default function AcademicRecordsPage() {
           <div className="rounded-2xl border border-white/5 bg-[#09090b] px-6 py-8 text-center">
             <p className="text-sm font-medium text-zinc-200">{t("records.no_user")}</p>
             <p className="mt-3 text-sm leading-7 text-zinc-500">
-              Select a user first to review saved academic records and manage the final X2 input history.
+              {t("records.no_user_desc")}
             </p>
           </div>
         )}

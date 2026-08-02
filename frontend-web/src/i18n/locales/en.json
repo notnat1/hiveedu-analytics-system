@@ -231,6 +231,17 @@
     "badge_x3_ready": "X3 Ready",
     "badge_excluded": "Excluded from Training",
     "yes": "Yes",
+    "no": "No",
+    "username_label": "Username",
+    "current_analytics_snapshot": "Current Analytics Snapshot",
+    "avg_preview_note": "This is a read-only preview. The backend remains the source of truth for averageScore.",
+    "saving_changes": "Saving Changes...",
+    "saving_record": "Saving Record...",
+    "save_changes": "Save Changes",
+    "loading_records": "Loading academic records...",
+    "loading_users": "Loading users...",
+    "readonly_note": "User accounts can review records here, but record entry is read-only.",
+    "showing_records_for": "Showing records for {{name}}",
     "badge_eligible_desc": "This record has valid math, logic, and English scores.",
     "badge_ground_truth_desc": "Actual exam score is available for validation.",
     "badge_x3_ready_desc": "Teacher objective score has been set.",
@@ -269,7 +280,24 @@
     "attendance_input": "Attendance Input",
     "select_user_review": "Select a user to review attendance history",
     "select_a_user": "Select a user",
-    "save_attendance": "Save Attendance"
+    "save_attendance": "Save Attendance",
+    "present": "PRESENT",
+    "late": "LATE",
+    "absent": "ABSENT",
+    "active_user": "Active User",
+    "cancel_edit": "Cancel Edit",
+    "saving_changes": "Saving Changes...",
+    "saving_attendance": "Saving Attendance...",
+    "save_changes": "Save Changes",
+    "read_only_desc": "User accounts can review attendance here, but create, update, and delete actions are disabled.",
+    "x1_formula_value": "Attendance points / attendance records * 100",
+    "attendance_built_from": "Built from {{records}} attendance records and {{points}} attendance points.",
+    "showing_attendance_for": "Showing attendance records for {{name}}",
+    "btn_edit": "Edit",
+    "btn_delete": "Delete",
+    "no_records_desc": "Save the first attendance record to start building the user's X1 history.",
+    "no_user_desc": "Select a user first to review attendance history and attendance percentage.",
+    "loading_users": "Loading users..."
   },
   "analytics": {
     "title": "Analytics Engine",
@@ -391,7 +419,10 @@
     "min_8_chars": "Minimum 8 characters",
     "no_tutor_assigned": "No tutor assigned",
     "no_teachers_available": "No teacher accounts available",
-    "create_account_btn": "Create Account"
+    "create_account_btn": "Create Account",
+    "loading_users": "Loading users...",
+    "saving_changes": "Saving Changes...",
+    "save_changes_btn": "Save Changes"
   },
   "audit": {
     "title": "Audit Logs",
@@ -451,6 +482,7 @@
     "placeholder_username": "Enter username",
     "placeholder_new_password": "Enter new password",
     "placeholder_confirm_password": "Confirm new password",
+    "profile_desc": "Update personal account information",
     "status_inactive": "Inactive"
   },
   "history": {
@@ -474,7 +506,8 @@
     "no_history_desc": "Your tryout records will appear here once your teacher inputs them.",
     "academic_history": "Academic History",
     "x2_tryout_trend": "X2 Tryout Trend",
-    "archived_records": "Archived Academic Records"
+    "archived_records": "Archived Academic Records",
+    "loading_history": "Loading tryout history..."
   },
   "components": {
     "synthesizing": "Synthesizing Analytics...",

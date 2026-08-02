@@ -170,8 +170,8 @@ export default function AttendancePage() {
       setUserOptions([]);
       const message =
         decoded.role === "USER"
-          ? "Unable to load your attendance profile right now."
-          : "Unable to load user options right now.";
+          ? t("errors.unable_load_attendance_profile")
+          : t("errors.unable_load_user_options");
       setPageError(message);
       showToast(message, "error");
     } finally {
@@ -352,7 +352,7 @@ export default function AttendancePage() {
       <header className="space-y-2">
         <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">{t("attendance.title")}</h1>
         <p className="text-sm text-zinc-500">
-          Record daily attendance events for each user and feed real participation data into the X1 attendance engine.
+          {t("attendance.desc")}
         </p>
       </header>
 
@@ -370,7 +370,7 @@ export default function AttendancePage() {
                 {editingAttendanceId ? t("attendance.update_attendance") : t("attendance.attendance_input")}
               </h2>
               <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-                Daily attendance signal entry
+                {t("attendance.input_signal")}
               </p>
             </div>
 
@@ -380,7 +380,7 @@ export default function AttendancePage() {
                 onClick={resetForm}
                 className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-2 text-xs font-semibold uppercase tracking-widest text-zinc-300 transition-all hover:border-white/20 hover:bg-white/[0.04]"
               >
-                Cancel Edit
+                {t("attendance.cancel_edit")}
               </button>
             )}
           </div>
@@ -388,7 +388,7 @@ export default function AttendancePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label htmlFor="attendance-date" className="text-sm font-medium text-zinc-300">
-                Date
+                {t("attendance.date")}
               </label>
               <input
                 id="attendance-date"
@@ -402,7 +402,7 @@ export default function AttendancePage() {
 
             <div className="space-y-2">
               <label htmlFor="attendance-status" className="text-sm font-medium text-zinc-300">
-                Status
+                {t("attendance.status")}
               </label>
               <select
                 id="attendance-status"
@@ -412,20 +412,20 @@ export default function AttendancePage() {
                 className={inputClassName}
               >
                 <option value="PRESENT" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
-                  PRESENT
+                  {t("attendance.present")}
                 </option>
                 <option value="LATE" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
-                  LATE
+                  {t("attendance.late")}
                 </option>
                 <option value="ABSENT" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
-                  ABSENT
+                  {t("attendance.absent")}
                 </option>
               </select>
             </div>
 
             <div className="space-y-2 md:col-span-2">
               <label htmlFor="attendance-user" className="text-sm font-medium text-zinc-300">
-                Active User
+                {t("attendance.active_user")}
               </label>
               <select
                 id="attendance-user"
@@ -435,7 +435,7 @@ export default function AttendancePage() {
                 className={inputClassName}
               >
                 <option value="" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
-                  {isLoadingUsers ? "Loading users..." : t("attendance.select_a_user")}
+                  {isLoadingUsers ? t("attendance.loading_users") : t("attendance.select_a_user")}
                 </option>
                 {userOptions.map((user) => (
                   <option key={user.userId} value={user.userId} className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
@@ -445,7 +445,7 @@ export default function AttendancePage() {
               </select>
               {isReadOnly && (
                 <p className="text-xs text-zinc-500">
-                  User accounts can review attendance here, but create, update, and delete actions are disabled.
+                  {t("attendance.read_only_desc")}
                 </p>
               )}
             </div>
@@ -461,10 +461,10 @@ export default function AttendancePage() {
               >
                 {isSubmitting
                   ? editingAttendanceId
-                    ? "Saving Changes..."
-                    : "Saving Attendance..."
+                    ? t("attendance.saving_changes")
+                    : t("attendance.saving_attendance")
                   : editingAttendanceId
-                    ? "Save Changes"
+                    ? t("attendance.save_changes")
                     : t("attendance.save_attendance")}
               </button>
             </div>
@@ -475,7 +475,7 @@ export default function AttendancePage() {
           <div className="space-y-2 mb-8">
             <h2 className="text-lg font-semibold text-zinc-100">{t("attendance.x1_logic")}</h2>
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-              Attendance-driven MLR input
+              {t("attendance.x1_logic_desc")}
             </p>
           </div>
 
@@ -492,7 +492,7 @@ export default function AttendancePage() {
             <div className="rounded-2xl border border-white/5 bg-[#09090b] px-5 py-4">
               <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{t("attendance.x1_formula")}</p>
               <p className="mt-2 text-sm leading-7 text-zinc-300">
-                Attendance points / attendance records * 100
+                {t("attendance.x1_formula_value")}
               </p>
             </div>
 
@@ -504,7 +504,7 @@ export default function AttendancePage() {
                   : "N/A"}
               </p>
               <p className="mt-3 text-sm leading-7 text-zinc-500">
-                Built from {attendanceSummary.totalAttendanceRecords} attendance records and {attendanceSummary.attendancePoints.toFixed(1)} attendance points.
+                {t("attendance.attendance_built_from", { records: attendanceSummary.totalAttendanceRecords, points: attendanceSummary.attendancePoints.toFixed(1) })}
               </p>
             </div>
           </div>
@@ -516,7 +516,7 @@ export default function AttendancePage() {
           <h2 className="text-lg font-semibold text-zinc-100">{t("attendance.history")}</h2>
           <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
             {selectedUser
-              ? `Showing attendance records for ${selectedUser.fullName || selectedUser.username}`
+              ? t("attendance.showing_attendance_for", { name: selectedUser.fullName || selectedUser.username })
               : t("attendance.select_user_review")}
           </p>
         </div>
@@ -570,7 +570,7 @@ export default function AttendancePage() {
                               className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2 text-xs font-semibold uppercase tracking-widest text-zinc-300 transition-all hover:border-white/20 hover:bg-white/[0.04]"
                             >
                               <Pencil size={14} />
-                              Edit
+                              {t("attendance.btn_edit")}
                             </button>
                             <button
                               type="button"
@@ -578,7 +578,7 @@ export default function AttendancePage() {
                               className="inline-flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-red-300 transition-all hover:border-red-500/30 hover:bg-red-500/15"
                             >
                               <Trash2 size={14} />
-                              Delete
+                              {t("attendance.btn_delete")}
                             </button>
                           </div>
                         ) : (
@@ -594,7 +594,7 @@ export default function AttendancePage() {
             <div className="rounded-2xl border border-white/5 bg-[#09090b] px-6 py-8 text-center">
               <p className="text-sm font-medium text-zinc-200">{t("attendance.no_records")}</p>
               <p className="mt-3 text-sm leading-7 text-zinc-500">
-                Save the first attendance record to start building the user&apos;s X1 history.
+                {t("attendance.no_records_desc")}
               </p>
             </div>
           )
@@ -602,7 +602,7 @@ export default function AttendancePage() {
           <div className="rounded-2xl border border-white/5 bg-[#09090b] px-6 py-8 text-center">
             <p className="text-sm font-medium text-zinc-200">{t("attendance.no_user")}</p>
             <p className="mt-3 text-sm leading-7 text-zinc-500">
-              Select a user first to review attendance history and attendance percentage.
+              {t("attendance.no_user_desc")}
             </p>
           </div>
         )}

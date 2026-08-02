@@ -154,7 +154,7 @@ export default function DashboardLayout({
             <div className="absolute w-2 h-2 rounded-full bg-blue-400 animate-pulse shadow-[0_0_10px_rgba(96,165,250,0.8)]"></div>
           </div>
           <p className="text-zinc-400 text-sm mt-8 font-medium animate-pulse tracking-widest uppercase">
-            Synthesizing Analytics...
+            {t("components.synthesizing")}
           </p>
         </div>
       )}
