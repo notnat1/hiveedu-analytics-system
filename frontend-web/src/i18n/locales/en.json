@@ -164,6 +164,7 @@
     "predictions_stat": "Predictions",
     "mse_stat": "MSE",
     "export_report_btn": "Export Analytics Report",
+    "exporting_report": "Exporting Report...",
     "tutor_unavailable": "Tutor assignment unavailable"
   },
   "tour": {
@@ -346,7 +347,8 @@
     "b3_desc_inline": "— teacher objective contribution = teacher objective coefficient × teacher objective score.",
     "save_config": "Save Configuration",
     "no_fallback": "No fallback used",
-    "export_report_btn": "Export Analytics Report"
+    "export_report_btn": "Export Analytics Report",
+    "exporting_report": "Exporting Report..."
   },
   "tutors": {
     "title": "Tutor Performance Analytics",
@@ -422,7 +424,8 @@
     "create_account_btn": "Create Account",
     "loading_users": "Loading users...",
     "saving_changes": "Saving Changes...",
-    "save_changes_btn": "Save Changes"
+    "save_changes_btn": "Save Changes",
+    "creating_account": "Creating Account..."
   },
   "audit": {
     "title": "Audit Logs",

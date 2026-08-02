@@ -164,6 +164,7 @@
     "predictions_stat": "Prediksi",
     "mse_stat": "MSE",
     "export_report_btn": "Ekspor Laporan Analitik",
+    "exporting_report": "Mengekspor Laporan...",
     "tutor_unavailable": "Penugasan tutor tidak tersedia"
   },
   "tour": {
@@ -354,7 +355,8 @@
     "b3_desc_inline": "— kontribusi nilai guru = koefisien nilai guru × nilai objektif guru.",
     "save_config": "Simpan Konfigurasi",
     "no_fallback": "Tidak ada cadangan yang digunakan",
-    "export_report_btn": "Ekspor Laporan Analitik"
+    "export_report_btn": "Ekspor Laporan Analitik",
+    "exporting_report": "Mengekspor Laporan..."
   },
   "tutors": {
     "title": "Analitik Performa Tutor",
@@ -427,7 +429,11 @@
     "min_8_chars": "Minimal 8 karakter",
     "no_tutor_assigned": "Tidak ada tutor yang ditugaskan",
     "no_teachers_available": "Tidak ada akun guru yang tersedia",
-    "create_account_btn": "Buat Akun"
+    "create_account_btn": "Buat Akun",
+    "loading_users": "Memuat pengguna...",
+    "saving_changes": "Menyimpan Perubahan...",
+    "save_changes_btn": "Simpan Perubahan",
+    "creating_account": "Membuat Akun..."
   },
   "audit": {
     "title": "Log Audit",

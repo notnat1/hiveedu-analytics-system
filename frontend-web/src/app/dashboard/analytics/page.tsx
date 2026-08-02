@@ -521,7 +521,7 @@ export default function AnalyticsEnginePage() {
             >
               <FileSpreadsheet size={18} />
               {isExportingWorkbook
-                ? "Exporting Report..."
+                ? t("analytics.exporting_report")
                 : t("analytics.export_report_btn")}
             </button>
           </div>

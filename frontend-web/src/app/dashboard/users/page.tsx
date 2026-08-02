@@ -624,10 +624,10 @@ export default function UserManagementPage() {
               >
                 {isSubmitting
                   ? editingUserId
-                    ? "Saving Changes..."
-                    : "Creating Account..."
+                    ? t("users.saving_changes")
+                    : t("users.creating_account")
                   : editingUserId
-                    ? "Save Changes"
+                    ? t("users.save_changes_btn")
                     : t("users.create_account_btn")}
               </button>
             </div>

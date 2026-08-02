@@ -1843,7 +1843,7 @@ export default function DashboardPage() {
                 >
                   <FileSpreadsheet size={16} />
                   {isExportingAnalyticsReport
-                    ? "Exporting Report..."
+                    ? t("dashboard.exporting_report")
                     : t("dashboard.export_report_btn")}
                 </button>
               </div>
