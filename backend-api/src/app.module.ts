@@ -47,7 +47,7 @@ import { CronModule } from './cron/cron.module.js';
         password: config.get<string>('DB_PASSWORD', ''),
         database: config.get<string>('DB_NAME', 'hiveedu_eraport'),
         autoLoadEntities: true,
-        synchronize: config.get<string>('APP_ENV') === 'development',
+        synchronize: config.get<string>('APP_ENV') === 'development' || config.get<string>('DB_SYNCHRONIZE') === 'true',
       }),
     }),
 
