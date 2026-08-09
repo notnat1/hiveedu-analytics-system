@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, AlertCircle } from 'lucide-react';
+import { X, AlertCircle, Sparkles } from 'lucide-react';
 
 import { API_BASE } from "@/lib/api";
 
@@ -106,7 +106,7 @@ export default function InterventionModal({
       }
 
       const data = await res.json();
-      setNote(data.draft);
+      setNote(data.data?.draft || data.draft);
     } catch (err) {
       console.error('Error drafting with AI:', err);
       setError('Unable to draft message with AI right now.');
@@ -195,9 +195,10 @@ export default function InterventionModal({
                 type="button"
                 onClick={handleDraftWithAI}
                 disabled={isDrafting}
-                className="flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-500 dark:to-cyan-400 px-5 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(14,165,233,0.3)] dark:shadow-[0_8px_20px_rgba(14,165,233,0.2)] hover:shadow-[0_10px_25px_rgba(14,165,233,0.4)] dark:hover:shadow-[0_10px_25px_rgba(14,165,233,0.3)] transition-all hover:from-blue-500 hover:to-cyan-400 dark:hover:from-blue-400 dark:hover:to-cyan-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isDrafting ? 'Drafting...' : '✨ Draft with AI'}
+                <Sparkles size={16} />
+                {isDrafting ? 'Drafting...' : 'Draft with AI'}
               </button>
             </div>
             <textarea
