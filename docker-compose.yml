@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: hiveedu-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-hiveedu_secret_pass}
+      POSTGRES_DB: ${DB_NAME:-hiveedu_eraport}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - hiveedu_network
+
+  backend:
+    build:
+      context: ./backend-api
+      dockerfile: Dockerfile
+    container_name: hiveedu-backend
+    restart: always
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-hiveedu_secret_pass}
+      - DB_NAME=${DB_NAME:-hiveedu_eraport}
+      - JWT_SECRET=${JWT_SECRET:-super_secret_jwt_key_hiveedu}
+      - JWT_EXPIRES_IN=1d
+      - APP_PORT=3000
+      - APP_ENV=production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    networks:
+      - hiveedu_network
+
+  frontend:
+    build:
+      context: ./frontend-web
+      dockerfile: Dockerfile
+    container_name: hiveedu-frontend
+    restart: always
+    environment:
+      - REACT_APP_API_BASE=https://api.hiveeduanalytics.site
+      - NEXT_PUBLIC_API_URL=https://api.hiveeduanalytics.site
+    ports:
+      - "3001:3000"
+    depends_on:
+      - backend
+    networks:
+      - hiveedu_network
+
+  proxy:
+    image: nginx:alpine
+    container_name: hiveedu-nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - hiveedu_network
+
+  jenkins:
+    build:
+      context: ./jenkins
+      dockerfile: Dockerfile
+    container_name: hiveedu-jenkins
+    restart: always
+    user: root
+    privileged: true
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - hiveedu_network
+
+networks:
+  hiveedu_network:
+    driver: bridge
+
+volumes:
+  db_data:
+  jenkins_data:
