@@ -7,14 +7,18 @@ Jika VPS Anda belum terpasang Docker, jalankan script instalasi resmi dari Docke
 
 ```bash
 # Update sistem
-apt update && apt upgrade -y
+sudo apt update && sudo apt upgrade -y
 
 # Install curl
-apt install curl -y
+sudo apt install curl -y
 
 # Download dan jalankan script instalasi Docker
 curl -fsSL https://get.docker.com -o get-docker.sh
-sh get-docker.sh
+sudo sh get-docker.sh
+
+# Tambahkan user Anda ke grup docker agar bisa pakai docker tanpa sudo (opsional)
+sudo usermod -aG docker $USER
+newgrp docker
 
 # Verifikasi instalasi (pastikan muncul versi Docker dan Docker Compose)
 docker --version
@@ -27,7 +31,7 @@ Jika Anda menggunakan Git (Sangat Direkomendasikan):
 
 ```bash
 # Di VPS Anda
-apt install git -y
+sudo apt install git -y
 git clone <URL_REPO_GITHUB_ANDA> hiveedu-analytics
 cd hiveedu-analytics
 ```

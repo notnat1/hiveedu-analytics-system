@@ -6,7 +6,7 @@ Ikuti panduan berikut untuk melakukan setup awal dan menghubungkannya dengan Git
 ## 1. Dapatkan Password Admin Awal
 Jalankan perintah ini di terminal VPS Anda untuk mendapatkan password Administrator:
 ```bash
-docker exec hiveedu-jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+sudo docker exec hiveedu-jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 ```
 *Copy password yang muncul, buka `http://46.250.231.48:8080` di browser Anda, dan paste password tersebut.*
 
