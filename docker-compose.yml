@@ -44,6 +44,8 @@ services:
     build:
       context: ./frontend-web
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: https://api.hiveeduanalytics.site
     container_name: hiveedu-frontend
     restart: always
     environment:
