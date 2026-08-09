@@ -1093,9 +1093,10 @@ export default function DashboardPage() {
             <div className="flex flex-wrap items-center gap-3 self-start">
               <button
                 onClick={handleGenerateStudyPlan}
-                className="flex items-center justify-center gap-2 rounded-xl bg-sky-500 hover:bg-sky-600 px-5 py-2.5 text-[11px] font-bold tracking-widest uppercase text-white shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 group whitespace-nowrap"
+                disabled={isStudyPlanLoading}
+                className="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 px-4 py-2 text-sm font-semibold rounded-xl flex items-center gap-2 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap"
               >
-                <Sparkles className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
+                <Sparkles className="w-4 h-4" />
                 AI Study Plan
               </button>
 
