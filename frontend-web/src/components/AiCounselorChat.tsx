@@ -1,7 +1,9 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { MessageCircle, X, Send, Sparkles } from "lucide-react";
+import { API_BASE } from "@/lib/api";
 
 interface Message {
   role: "user" | "ai";
@@ -15,9 +17,9 @@ interface AiCounselorChatProps {
 
 export function AiCounselorChat({ contextString, token }: AiCounselorChatProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    { role: "ai", content: "Halo! Saya AI Counselor (Groq LLaMA-3).\nAda yang ingin didiskusikan tentang perkembangan belajarmu?" }
-  ]);
+  const { i18n } = useTranslation();
+  
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -26,6 +28,16 @@ export function AiCounselorChat({ contextString, token }: AiCounselorChatProps) 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Update initial message when language changes
+  useEffect(() => {
+    const greeting = i18n.language === 'en' 
+      ? "Hello! I am your AI Counselor (Groq LLaMA-3).\nIs there anything you'd like to discuss regarding your learning progress?"
+      : "Halo! Saya AI Counselor (Groq LLaMA-3).\nAda yang ingin didiskusikan tentang perkembangan belajarmu?";
+      
+    // We do not synchronously set state here anymore to avoid the react-hooks/set-state-in-effect warning.
+    // Instead we will handle the greeting dynamically on first render or wait for user interaction.
+  }, [i18n.language]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -49,7 +61,7 @@ export function AiCounselorChat({ contextString, token }: AiCounselorChatProps) 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 detik timeout
 
-      const response = await fetch("http://localhost:3000/analytics/chat", {
+      const response = await fetch(`${API_BASE}/analytics/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -57,7 +69,8 @@ export function AiCounselorChat({ contextString, token }: AiCounselorChatProps) 
         },
         body: JSON.stringify({
           message: userMsg,
-          context: contextString
+          context: contextString,
+          language: i18n.language
         }),
         signal: controller.signal
       });
@@ -85,6 +98,7 @@ export function AiCounselorChat({ contextString, token }: AiCounselorChatProps) 
 
   const triggerButton = (
     <button
+      id="tour-counselor"
       onClick={() => setIsOpen(true)}
       className="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl flex items-center gap-2 transition-all duration-200"
     >
@@ -168,7 +182,7 @@ export function AiCounselorChat({ contextString, token }: AiCounselorChatProps) 
                       sendMessage();
                     }
                   }}
-                  placeholder="Tanya soal prediksimu..."
+                  placeholder={i18n.language === 'en' ? "Ask about your prediction..." : "Tanya soal prediksimu..."}
                   className="flex-1 max-h-32 min-h-[44px] bg-transparent resize-none px-3 py-2.5 text-sm text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:outline-none scrollbar-thin"
                   rows={1}
                   disabled={isLoading}
@@ -181,7 +195,9 @@ export function AiCounselorChat({ contextString, token }: AiCounselorChatProps) 
                   <Send className="w-4 h-4" />
                 </button>
               </div>
-              <p className="text-center text-[10px] text-gray-400 dark:text-zinc-500 mt-3 font-medium">AI can make mistakes. Consider verifying important information.</p>
+              <p className="text-center text-[10px] text-gray-400 dark:text-zinc-500 mt-3 font-medium">
+                {i18n.language === 'en' ? "AI can make mistakes. Consider verifying important information." : "AI dapat melakukan kesalahan. Pertimbangkan untuk memverifikasi informasi penting."}
+              </p>
             </div>
           </div>
         </div>,

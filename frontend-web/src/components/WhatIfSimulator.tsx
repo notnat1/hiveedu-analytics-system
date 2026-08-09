@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Calculator, ChevronRight, Info, AlertTriangle } from "lucide-react";
+import { Calculator, Info } from "lucide-react";
+import { API_BASE } from "@/lib/api";
 
 interface WhatIfSimulatorProps {
   initialX1: number;
@@ -30,7 +31,7 @@ export default function WhatIfSimulator({
     const fetchPrediction = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch("http://localhost:3000/analytics/predict-performance", {
+        const response = await fetch(`${API_BASE}/analytics/predict-performance`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -81,7 +82,7 @@ export default function WhatIfSimulator({
   };
 
   return (
-    <div className="md:col-span-2 xl:col-span-4 bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl shadow-2xl rounded-3xl p-8 md:p-10 relative overflow-hidden mt-8">
+    <div id="tour-what-if" className="md:col-span-2 xl:col-span-4 bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl shadow-2xl rounded-3xl p-8 md:p-10 relative overflow-hidden mt-8">
       <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
         <Calculator className="w-32 h-32 text-indigo-500 blur-xl" />
       </div>

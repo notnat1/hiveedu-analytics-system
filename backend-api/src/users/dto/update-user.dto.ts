@@ -34,4 +34,12 @@ export class UpdateUserDto implements Partial<CreateUserDto> {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsUUID()
+  linkedStudentId?: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
 }

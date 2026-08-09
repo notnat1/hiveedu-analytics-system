@@ -15,6 +15,7 @@
   },
   "dashboard": {
     "welcome": "Selamat datang kembali",
+    "monitoring": "Memantau",
     "user_subtitle": "Ini adalah prediksi E-Rapor personal Anda berdasarkan aktivitas terbaru.",
     "teacher_subtitle": "Ini adalah ringkasan akun pengguna yang ditugaskan beserta prediksi analitiknya.",
     "overview": "Ringkasan analitik siswa",
@@ -142,6 +143,11 @@
     "ew_predicted": "Prediksi",
     "ew_suggested": "Saran Intervensi",
     "ew_no_users": "Tidak ada pengguna peringatan dini yang terdeteksi.",
+    "draft_message_btn": "Buat Pesan (AI)",
+    "draft_modal_title": "Draf Intervensi AI",
+    "draft_modal_generating": "Menghasilkan pesan personalisasi melalui Groq LLaMA-3...",
+    "draft_modal_copy": "Salin ke Papan Klip",
+    "draft_modal_copied": "Tersalin!",
     "table_user_name": "Nama Pengguna",
     "table_tutor": "Tutor",
     "table_x2": "X2 Tryout",
@@ -169,14 +175,17 @@
   },
   "tour": {
     "step1": "Selamat datang di HiveEdu Analytics! Mari kita mulai tur singkat untuk mengenali fitur-fitur Enterprise yang tersedia.",
-    "step2": "Ini adalah panel navigasi utama. Anda bisa mengakses semua modul dari sini, seperti Academic Records dan Attendance.",
-    "step3": "Gunakan tombol ini untuk beralih antara Light Mode dan Dark Mode sesuai kenyamanan Anda.",
-    "step4": "Jika sudah selesai, Anda bisa keluar (Logout) melalui tombol ini.",
-    "step5": "Di sinilah semua keajaiban AI terjadi! Panel analitik akan memvisualisasikan data dan memprediksi performa Anda secara real-time."
+    "step2": "Ini adalah navigasi sidebar. Anda dapat mengakses semua modul di sini.",
+    "step3": "Anda dapat beralih antara tema terang dan gelap di sini.",
+    "step4": "Berikut adalah ikhtisar metrik analitik utama.",
+    "step5": "Ini adalah Prediksi AI, dihitung berdasarkan data akademik terbaru.",
+    "step6": "Gunakan Simulator What-If untuk memprakirakan potensi hasil skor dengan menyesuaikan variabel.",
+    "step7": "Temui Konselor Akademik Llama-3 pribadi Anda, yang memberikan wawasan dinamis.",
+    "step8": "Setelah selesai, Anda dapat mengekspor laporan analitik ke PDF di sini."
   },
   "records": {
     "title": "Catatan Akademik",
-    "desc": "Masukkan dan pelihara data performa mata pelajaran untuk setiap pengguna sebelum sintesis analitik.",
+    "desc": "Input dan pertahankan data kinerja mata pelajaran untuk setiap pengguna sebelum sintesis analitik.",
     "select_user": "Pilih Pengguna",
     "select_user_desc": "Akun target untuk entri catatan",
     "read_only_desc": "Akun pengguna dapat melihat catatan di sini, namun entri catatan bersifat baca-saja.",
@@ -184,7 +193,7 @@
     "x1_attendance": "X1 Kehadiran",
     "x2_tryout": "X2 Tryout",
     "latest_average": "Rata-rata Terbaru",
-    "enter_normalized": "Masukkan nilai akademik yang dinormalisasi untuk pengguna terpilih",
+    "enter_normalized": "Masukkan nilai akademik yang dinormalisasi untuk pengguna yang dipilih",
     "cancel_edit": "Batal Edit",
     "math_score": "Nilai Matematika",
     "logic_score": "Nilai Logika",
@@ -198,7 +207,7 @@
     "exam_label": "Label Ujian",
     "teacher_feedback": "Umpan Balik Guru",
     "use_for_mlr": "Gunakan untuk Pelatihan MLR",
-    "use_for_mlr_desc": "Nonaktifkan ini jika catatan tidak boleh digunakan untuk pelatihan atau pemeriksaan kelayakan.",
+    "use_for_mlr_desc": "Nonaktifkan ini ketika catatan tidak boleh digunakan untuk pelatihan atau pemeriksaan kelayakan.",
     "history": "Riwayat Catatan Akademik",
     "loading": "Memuat catatan akademik...",
     "col_user": "Nama Pengguna",
@@ -243,17 +252,6 @@
     "loading_users": "Memuat pengguna...",
     "readonly_note": "Akun pengguna dapat meninjau catatan di sini, namun entri catatan hanya baca.",
     "showing_records_for": "Menampilkan catatan untuk {{name}}",
-    "cancel_edit": "Batal Edit",
-    "enter_normalized": "Masukkan nilai akademik yang dinormalisasi untuk pengguna yang dipilih",
-    "math_score": "Nilai Matematika",
-    "logic_score": "Nilai Logika",
-    "english_score": "Nilai Bahasa Inggris",
-    "teacher_x3_desc": "Opsional untuk catatan lama, disarankan untuk model penelitian akhir.",
-    "use_for_mlr_desc": "Nonaktifkan ini ketika catatan tidak boleh digunakan untuk pelatihan atau pemeriksaan kelayakan.",
-    "no_records_desc": "Simpan catatan akademik pertama untuk mulai membangun riwayat tryout pengguna.",
-    "no_user_desc": "Pilih pengguna terlebih dahulu untuk meninjau catatan akademik dan mengelola riwayat X2.",
-    "select_user_desc": "Akun target untuk entri catatan",
-    "desc": "Input dan pertahankan data kinerja mata pelajaran untuk setiap pengguna sebelum sintesis analitik.",
     "badge_eligible_desc": "Catatan ini memiliki nilai matematika, logika, dan bahasa Inggris yang valid.",
     "badge_ground_truth_desc": "Nilai ujian aktual tersedia untuk validasi.",
     "badge_x3_ready_desc": "Nilai objektif guru telah ditetapkan.",
@@ -302,11 +300,7 @@
     "save_changes": "Simpan Perubahan",
     "x1_formula_value": "Poin kehadiran / catatan kehadiran * 100",
     "attendance_built_from": "Dibangun dari {{records}} catatan kehadiran dan {{points}} poin kehadiran.",
-    "showing_attendance_for": "Menampilkan catatan kehadiran untuk {{name}}",
-    "btn_edit": "Edit",
-    "btn_delete": "Hapus",
-    "no_records_desc": "Simpan catatan kehadiran pertama untuk mulai membangun riwayat X1 pengguna.",
-    "no_user_desc": "Pilih pengguna terlebih dahulu untuk meninjau riwayat kehadiran dan persentasenya."
+    "showing_attendance_for": "Menampilkan catatan kehadiran untuk {{name}}"
   },
   "analytics": {
     "title": "Mesin Analitik",
@@ -433,7 +427,12 @@
     "loading_users": "Memuat pengguna...",
     "saving_changes": "Menyimpan Perubahan...",
     "save_changes_btn": "Simpan Perubahan",
-    "creating_account": "Membuat Akun..."
+    "creating_account": "Membuat Akun...",
+    "assigned_tutor_linked_student": "Tutor / Siswa yang Dihubungkan",
+    "parent": "ORANG TUA",
+    "linked_student": "Siswa yang Dihubungkan",
+    "select_linked_student": "Pilih siswa",
+    "no_students_available": "Tidak ada siswa tersedia"
   },
   "audit": {
     "title": "Log Audit",
@@ -688,5 +687,13 @@
   "meta": {
     "title": "HiveEdu Analytics",
     "description": "Dasbor analitik pembelajaran dan kecerdasan tingkat lanjut untuk pendidikan modern."
+  },
+  "studyPlan": {
+    "title": "AI Study Plan Generator 🤖",
+    "subtitle": "Rencana Belajar 4 Minggu untuk {{studentName}}",
+    "print": "Cetak",
+    "loading": "AI sedang menganalisis riwayat nilai dan menyusun rencana belajar yang optimal...",
+    "empty": "Tidak ada rencana belajar yang tersedia.",
+    "generateButton": "Buat Rencana Belajar"
   }
 }

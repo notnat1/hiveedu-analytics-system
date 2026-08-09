@@ -30,4 +30,12 @@ export class CreateUserDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsUUID()
+  linkedStudentId?: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
 }

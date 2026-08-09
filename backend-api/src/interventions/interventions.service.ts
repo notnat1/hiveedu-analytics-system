@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InterventionNote } from './intervention-note.entity.js';
@@ -18,14 +22,24 @@ export class InterventionsService {
     private readonly auditLogService: AuditLogService,
   ) {}
 
-  async create(createDto: CreateInterventionDto, actor: User): Promise<InterventionNote> {
-    const targetUser = await this.usersRepository.findOne({ where: { userId: createDto.userId } });
+  async create(
+    createDto: CreateInterventionDto,
+    actor: User,
+  ): Promise<InterventionNote> {
+    const targetUser = await this.usersRepository.findOne({
+      where: { userId: createDto.userId },
+    });
     if (!targetUser) {
       throw new NotFoundException('User account not found');
     }
 
-    if (actor.role === Role.TEACHER && targetUser.assignedTutorId !== actor.userId) {
-      throw new ForbiddenException('You can only manage interventions for your assigned user accounts');
+    if (
+      actor.role === Role.TEACHER &&
+      targetUser.assignedTutorId !== actor.userId
+    ) {
+      throw new ForbiddenException(
+        'You can only manage interventions for your assigned user accounts',
+      );
     }
 
     const note = this.interventionsRepository.create({
@@ -68,13 +82,20 @@ export class InterventionsService {
   }
 
   async findByUserId(userId: string, actor: User): Promise<InterventionNote[]> {
-    const targetUser = await this.usersRepository.findOne({ where: { userId: userId } });
+    const targetUser = await this.usersRepository.findOne({
+      where: { userId: userId },
+    });
     if (!targetUser) {
       throw new NotFoundException('User account not found');
     }
 
-    if (actor.role === Role.TEACHER && targetUser.assignedTutorId !== actor.userId) {
-      throw new ForbiddenException('You can only view interventions for your assigned user accounts');
+    if (
+      actor.role === Role.TEACHER &&
+      targetUser.assignedTutorId !== actor.userId
+    ) {
+      throw new ForbiddenException(
+        'You can only view interventions for your assigned user accounts',
+      );
     }
 
     if (actor.role === Role.USER) {
@@ -88,7 +109,11 @@ export class InterventionsService {
     });
   }
 
-  async update(id: string, updateDto: UpdateInterventionDto, actor: User): Promise<InterventionNote> {
+  async update(
+    id: string,
+    updateDto: UpdateInterventionDto,
+    actor: User,
+  ): Promise<InterventionNote> {
     const note = await this.interventionsRepository.findOne({
       where: { userId: id },
       relations: ['user'],
@@ -98,8 +123,13 @@ export class InterventionsService {
       throw new NotFoundException('Intervention note not found');
     }
 
-    if (actor.role === Role.TEACHER && note.user.assignedTutorId !== actor.userId) {
-      throw new ForbiddenException('You can only manage interventions for your assigned user accounts');
+    if (
+      actor.role === Role.TEACHER &&
+      note.user.assignedTutorId !== actor.userId
+    ) {
+      throw new ForbiddenException(
+        'You can only manage interventions for your assigned user accounts',
+      );
     }
 
     Object.assign(note, updateDto);
@@ -112,7 +142,10 @@ export class InterventionsService {
       targetType: 'INTERVENTION',
       targetId: updatedNote.noteId,
       description: `Updated intervention note for user account ${note.user.username}`,
-      metadata: { riskLevel: updatedNote.riskLevel, status: updatedNote.status },
+      metadata: {
+        riskLevel: updatedNote.riskLevel,
+        status: updatedNote.status,
+      },
     });
 
     return updatedNote;
@@ -128,8 +161,13 @@ export class InterventionsService {
       throw new NotFoundException('Intervention note not found');
     }
 
-    if (actor.role === Role.TEACHER && note.user.assignedTutorId !== actor.userId) {
-      throw new ForbiddenException('You can only manage interventions for your assigned user accounts');
+    if (
+      actor.role === Role.TEACHER &&
+      note.user.assignedTutorId !== actor.userId
+    ) {
+      throw new ForbiddenException(
+        'You can only manage interventions for your assigned user accounts',
+      );
     }
 
     await this.interventionsRepository.remove(note);

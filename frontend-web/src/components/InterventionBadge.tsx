@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { API_BASE } from "@/lib/api";
 
 export default function InterventionBadge({ userId }: { userId: string }) {
   const { t } = useTranslation();
@@ -9,7 +10,7 @@ export default function InterventionBadge({ userId }: { userId: string }) {
     const fetchStatus = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`http://localhost:3000/interventions/user/${userId}`, {
+        const res = await fetch(`${API_BASE}/interventions/user/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {

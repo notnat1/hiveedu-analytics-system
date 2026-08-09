@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service.js';
@@ -74,7 +78,11 @@ export class AuthService {
     username: string,
     password: string,
     requestMetadata?: { ipAddress?: string | null; userAgent?: string | null },
-  ): Promise<{ accessToken?: string; requires2FA?: boolean; tempToken?: string }> {
+  ): Promise<{
+    accessToken?: string;
+    requires2FA?: boolean;
+    tempToken?: string;
+  }> {
     const user = await this.usersService.findAuthUserByUsername(username);
     if (!user) {
       await this.auditLogService.createLog({
@@ -151,7 +159,9 @@ export class AuthService {
         role: user.role,
         is2faAuth: true,
       };
-      const tempToken = await this.jwtService.signAsync(payload, { expiresIn: '5m' });
+      const tempToken = await this.jwtService.signAsync(payload, {
+        expiresIn: '5m',
+      });
       return { requires2FA: true, tempToken };
     }
 
@@ -161,17 +171,28 @@ export class AuthService {
   /**
    * Verifies a 2FA code and issues a full access token.
    */
-  async verify2FA(tempToken: string, code: string): Promise<{ accessToken: string }> {
+  async verify2FA(
+    tempToken: string,
+    code: string,
+  ): Promise<{ accessToken: string }> {
     try {
       const payload = await this.jwtService.verifyAsync(tempToken);
-      if (!payload.is2faAuth) throw new UnauthorizedException('Invalid temporary token');
-      
-      const user = await this.usersService.findAuthUserByUsername(payload.username);
+      if (!payload.is2faAuth)
+        throw new UnauthorizedException('Invalid temporary token');
+
+      const user = await this.usersService.findAuthUserByUsername(
+        payload.username,
+      );
       if (!user || !user.isTwoFactorEnabled || !user.twoFactorSecret) {
-        throw new UnauthorizedException('2FA is not properly configured for this user');
+        throw new UnauthorizedException(
+          '2FA is not properly configured for this user',
+        );
       }
 
-      const isValid = this.twoFactorService.verifyTwoFactorToken(code, user.twoFactorSecret);
+      const isValid = this.twoFactorService.verifyTwoFactorToken(
+        code,
+        user.twoFactorSecret,
+      );
       if (!isValid) throw new UnauthorizedException('Invalid 2FA code');
 
       return this.generateAccessToken(user);
@@ -202,7 +223,9 @@ export class AuthService {
    * @param token - The JWT token string to validate.
    * @returns Decoded payload if valid, or null.
    */
-  async validateToken(token: string): Promise<{ sub: string; role: string } | null> {
+  async validateToken(
+    token: string,
+  ): Promise<{ sub: string; role: string } | null> {
     try {
       const payload = await this.jwtService.verifyAsync<{
         sub: string;

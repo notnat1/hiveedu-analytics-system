@@ -31,6 +31,13 @@ type SafeUserResponse = {
   isActive: boolean;
   assignedTutorId: string | null;
   assignedTutor: SafeAssignedTutor | null;
+  linkedStudentId: string | null;
+  linkedStudent?: {
+    userId: string;
+    fullName: string;
+    username: string;
+  } | null;
+  isTwoFactorEnabled: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -70,6 +77,15 @@ export class UsersService {
             username: user.assignedTutor.username,
           }
         : null,
+      linkedStudentId: user.linkedStudentId ?? null,
+      linkedStudent: user.linkedStudent
+        ? {
+            userId: user.linkedStudent.userId,
+            fullName: user.linkedStudent.fullName,
+            username: user.linkedStudent.username,
+          }
+        : null,
+      isTwoFactorEnabled: user.isTwoFactorEnabled ?? false,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
@@ -80,6 +96,7 @@ export class UsersService {
       where: { userId: id },
       relations: {
         assignedTutor: true,
+        linkedStudent: true,
       },
     });
   }
@@ -107,6 +124,31 @@ export class UsersService {
     }
 
     return assignedTutor.userId;
+  }
+
+  private async resolveLinkedStudentId(
+    role: Role,
+    linkedStudentId: string | null | undefined,
+  ): Promise<string | null> {
+    if (role !== Role.PARENT) {
+      return null;
+    }
+
+    if (typeof linkedStudentId === 'undefined' || linkedStudentId === null) {
+      return null;
+    }
+
+    const linkedStudent = await this.userRepository.findOne({
+      where: { userId: linkedStudentId, role: Role.USER },
+    });
+
+    if (!linkedStudent) {
+      throw new BadRequestException(
+        'linkedStudentId must reference an existing USER account.',
+      );
+    }
+
+    return linkedStudent.userId;
   }
 
   private async hashPassword(password: string): Promise<string> {
@@ -212,6 +254,8 @@ export class UsersService {
         password: true,
         role: true,
         isActive: true,
+        isTwoFactorEnabled: true,
+        twoFactorSecret: true,
         assignedTutorId: true,
         createdAt: true,
         updatedAt: true,
@@ -228,6 +272,7 @@ export class UsersService {
         username: true,
         role: true,
         isActive: true,
+        isTwoFactorEnabled: true,
         assignedTutorId: true,
         createdAt: true,
         updatedAt: true,
@@ -270,6 +315,7 @@ export class UsersService {
         username: true,
         role: true,
         isActive: true,
+        isTwoFactorEnabled: true,
         assignedTutorId: true,
         createdAt: true,
         updatedAt: true,
@@ -313,12 +359,24 @@ export class UsersService {
       throw new NotFoundException(`User with ID "${userId}" was not found.`);
     }
 
+    let isParentOfUser = false;
+    if (actor.actorRole === Role.PARENT && actor.actorId) {
+      const parentUser = await this.userRepository.findOne({
+        where: { userId: actor.actorId },
+      });
+      if (parentUser && parentUser.linkedStudentId === user.userId) {
+        isParentOfUser = true;
+      }
+    }
+
     if (
       actor.actorRole !== Role.ADMIN &&
       !(
-        actor.actorRole === Role.TEACHER && user.assignedTutorId === actor.actorId
+        actor.actorRole === Role.TEACHER &&
+        user.assignedTutorId === actor.actorId
       ) &&
-      !(actor.actorRole === Role.USER && actor.actorId === user.userId)
+      !(actor.actorRole === Role.USER && actor.actorId === user.userId) &&
+      !isParentOfUser
     ) {
       throw new ForbiddenException(
         'You are not allowed to access feature data for this user account.',
@@ -339,7 +397,7 @@ export class UsersService {
     const attendancePercentage =
       attendanceRecords.length === 0
         ? 0
-        : totalAttendancePoints / attendanceRecords.length * 100;
+        : (totalAttendancePoints / attendanceRecords.length) * 100;
     const validTrainingRecords = records
       .map((record) => ({
         record,
@@ -383,9 +441,7 @@ export class UsersService {
       englishScore: latestEnglishScore ?? 0,
       latestRecordDate:
         latestRecord?.examDate ??
-        (latestRecord?.createdAt
-          ? latestRecord.createdAt.toISOString()
-          : null),
+        (latestRecord?.createdAt ? latestRecord.createdAt.toISOString() : null),
     };
   }
 
@@ -399,6 +455,10 @@ export class UsersService {
       createUserDto.role,
       createUserDto.assignedTutorId ?? null,
     );
+    const linkedStudentId = await this.resolveLinkedStudentId(
+      createUserDto.role,
+      createUserDto.linkedStudentId ?? null,
+    );
 
     const user = this.userRepository.create({
       fullName: createUserDto.fullName,
@@ -407,13 +467,16 @@ export class UsersService {
       role: createUserDto.role,
       isActive: createUserDto.isActive ?? true,
       assignedTutorId,
+      linkedStudentId,
     });
 
     const savedUser = await this.userRepository.save(user);
     const hydratedUser = await this.findHydratedById(savedUser.userId);
 
     if (!hydratedUser) {
-      throw new NotFoundException(`User with ID "${savedUser.userId}" was not found.`);
+      throw new NotFoundException(
+        `User with ID "${savedUser.userId}" was not found.`,
+      );
     }
 
     await this.logUserAuditEvent({
@@ -426,6 +489,7 @@ export class UsersService {
         role: hydratedUser.role,
         isActive: hydratedUser.isActive,
         assignedTutorId: hydratedUser.assignedTutorId,
+        linkedStudentId: hydratedUser.linkedStudentId,
       },
     });
 
@@ -445,6 +509,7 @@ export class UsersService {
     const originalRole = existingUser.role;
     const originalIsActive = existingUser.isActive;
     const originalAssignedTutorId = existingUser.assignedTutorId;
+    const originalLinkedStudentId = existingUser.linkedStudentId;
 
     if (!updateUserDto.password || updateUserDto.password.trim() === '') {
       delete updateUserDto.password;
@@ -487,11 +552,27 @@ export class UsersService {
       existingUser.assignedTutorId = null;
     }
 
+    if (
+      typeof updateUserDto.linkedStudentId !== 'undefined' ||
+      nextRole !== existingUser.role
+    ) {
+      existingUser.linkedStudentId = await this.resolveLinkedStudentId(
+        nextRole,
+        typeof updateUserDto.linkedStudentId !== 'undefined'
+          ? updateUserDto.linkedStudentId
+          : existingUser.linkedStudentId,
+      );
+    } else if (nextRole !== Role.PARENT) {
+      existingUser.linkedStudentId = null;
+    }
+
     const savedUser = await this.userRepository.save(existingUser);
     const hydratedUser = await this.findHydratedById(savedUser.userId);
 
     if (!hydratedUser) {
-      throw new NotFoundException(`User with ID "${savedUser.userId}" was not found.`);
+      throw new NotFoundException(
+        `User with ID "${savedUser.userId}" was not found.`,
+      );
     }
 
     const changedFields = [
@@ -503,6 +584,10 @@ export class UsersService {
       ...(typeof updateUserDto.assignedTutorId !== 'undefined' ||
       originalAssignedTutorId !== hydratedUser.assignedTutorId
         ? ['assignedTutorId']
+        : []),
+      ...(typeof updateUserDto.linkedStudentId !== 'undefined' ||
+      originalLinkedStudentId !== hydratedUser.linkedStudentId
+        ? ['linkedStudentId']
         : []),
     ];
 
@@ -517,6 +602,7 @@ export class UsersService {
         role: hydratedUser.role,
         isActive: hydratedUser.isActive,
         assignedTutorId: hydratedUser.assignedTutorId,
+        linkedStudentId: hydratedUser.linkedStudentId,
       },
     });
 
@@ -608,7 +694,9 @@ export class UsersService {
     const hydratedUser = await this.findHydratedById(savedUser.userId);
 
     if (!hydratedUser) {
-      throw new NotFoundException(`User with ID "${savedUser.userId}" was not found.`);
+      throw new NotFoundException(
+        `User with ID "${savedUser.userId}" was not found.`,
+      );
     }
 
     const changedFields = [
@@ -655,9 +743,9 @@ export class UsersService {
     if (!existingUser) {
       throw new NotFoundException(`User with ID "${userId}" was not found.`);
     }
-    
+
     await this.userRepository.update(userId, { warningAcknowledged: true });
-    
+
     await this.logUserAuditEvent({
       action: 'USER_UPDATED',
       actorId: userId,
@@ -709,5 +797,14 @@ export class UsersService {
   async enableTwoFactor(userId: string): Promise<void> {
     await this.userRepository.update(userId, { isTwoFactorEnabled: true });
   }
-}
 
+  /**
+   * Disables 2FA for a user.
+   */
+  async disableTwoFactor(userId: string): Promise<void> {
+    await this.userRepository.update(userId, {
+      isTwoFactorEnabled: false,
+      twoFactorSecret: null,
+    });
+  }
+}

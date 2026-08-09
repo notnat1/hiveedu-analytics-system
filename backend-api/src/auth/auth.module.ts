@@ -30,7 +30,7 @@ import { AuditLogModule } from '../audit-log/audit-log.module.js';
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    
+
     UsersModule,
     AuditLogModule,
 
@@ -41,7 +41,10 @@ import { AuditLogModule } from '../audit-log/audit-log.module.js';
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('JWT_SECRET', 'hiveedu_default_secret'),
         signOptions: {
-          expiresIn: config.get<string>('JWT_EXPIRES_IN', '1d') as `${number}${'s' | 'm' | 'h' | 'd'}`,
+          expiresIn: config.get<string>(
+            'JWT_EXPIRES_IN',
+            '1d',
+          ) as `${number}${'s' | 'm' | 'h' | 'd'}`,
         },
       }),
     }),

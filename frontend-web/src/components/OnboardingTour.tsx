@@ -38,14 +38,29 @@ export default function OnboardingTour({ theme = "dark" }: { theme?: "light" | "
       placement: "bottom",
     },
     {
-      target: "#tour-logout",
+      target: "#tour-overview",
       content: t("tour.step4"),
       placement: "bottom",
     },
     {
-      target: "main",
+      target: "#tour-predictions",
       content: t("tour.step5"),
       placement: "top",
+    },
+    {
+      target: "#tour-what-if",
+      content: t("tour.step6"),
+      placement: "top",
+    },
+    {
+      target: "#tour-counselor",
+      content: t("tour.step7"),
+      placement: "left",
+    },
+    {
+      target: "#tour-export",
+      content: t("tour.step8"),
+      placement: "bottom",
     }
   ];
 
@@ -88,9 +103,13 @@ export default function OnboardingTour({ theme = "dark" }: { theme?: "light" | "
         },
         buttonNext: {
           backgroundColor: "#06b6d4",
+          color: "#ffffff"
         },
         buttonBack: {
-          color: "#a1a1aa", // Zinc 400
+          color: theme === "light" ? "#71717a" : "#a1a1aa", // Zinc 500 / Zinc 400
+        },
+        buttonClose: {
+          color: theme === "light" ? "#71717a" : "#a1a1aa", // Visible close button across modes
         }
       }}
     />

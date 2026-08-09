@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, AlertCircle } from 'lucide-react';
+
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
 
 interface InterventionNote {
   id: string;
@@ -25,7 +27,6 @@ interface InterventionModalProps {
 }
 
 export default function InterventionModal({
-
   isOpen,
   onClose,
   userId,
@@ -43,38 +44,40 @@ export default function InterventionModal({
   const [existingId, setExistingId] = useState<string | null>(null);
 
   useEffect(() => {
+    const fetchExistingIntervention = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_BASE}/interventions/user/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const responseJson = await res.json();
+          const data: InterventionNote[] = responseJson.data || responseJson;
+          if (data && data.length > 0) {
+            const latest = data[0]; // Assuming ordered by createdAt DESC
+            setNote(latest.note);
+            setActionPlan(latest.actionPlan || '');
+            setStatus(latest.status);
+            setExistingId(latest.id);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch existing intervention:', err);
+      }
+    };
+
     if (isOpen) {
-      fetchExistingIntervention();
+      void fetchExistingIntervention();
     } else {
-      setNote('');
-      setActionPlan('');
-      setStatus('OPEN');
-      setExistingId(null);
-      setError('');
+      setTimeout(() => {
+        setNote('');
+        setActionPlan('');
+        setStatus('OPEN');
+        setExistingId(null);
+        setError('');
+      }, 0);
     }
   }, [isOpen, userId]);
-
-  const fetchExistingIntervention = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:3000/interventions/user/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const responseJson = await res.json().then(r => r.data ?? r);
-        const data: InterventionNote[] = responseJson.data || responseJson;
-        if (data && data.length > 0) {
-          const latest = data[0]; // Assuming ordered by createdAt DESC
-          setNote(latest.note);
-          setActionPlan(latest.actionPlan || '');
-          setStatus(latest.status);
-          setExistingId(latest.id);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to fetch existing intervention:', err);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

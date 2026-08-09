@@ -1,0 +1,1 @@
+deep scan lagi sebelum kita memulai tahap production. pastikan semuanya berjalan lancar. perbaiki bug-bug yang ada. 

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { API_BASE } from "@/lib/api";
 
 interface UserProfile {
   id: string;
@@ -18,6 +19,7 @@ interface UserProfile {
   } | null;
   createdAt?: string;
   updatedAt?: string;
+  isTwoFactorEnabled?: boolean;
 }
 
 interface ToastState {
@@ -42,6 +44,11 @@ export default function SettingsPage() {
     tone: "success",
   });
 
+  // 2FA States
+  const [qrCodeData, setQrCodeData] = useState<string | null>(null);
+  const [otpCode, setOtpCode] = useState("");
+  const [isProcessing2FA, setIsProcessing2FA] = useState(false);
+
   const showToast = (message: string, tone: ToastState["tone"] = "success") => {
     setToast({ show: true, message, tone });
     setTimeout(() => {
@@ -62,7 +69,7 @@ export default function SettingsPage() {
         setIsLoadingProfile(true);
         setErrorMessage("");
 
-        const response = await fetch("http://localhost:3000/users/me", {
+        const response = await fetch(`${API_BASE}/users/me`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -87,6 +94,48 @@ export default function SettingsPage() {
 
     void fetchCurrentUserProfile();
   }, []);
+
+    const handleEnable2FA = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      setIsProcessing2FA(true);
+      const res = await fetch(`${API_BASE}/auth/2fa/generate`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to generate 2FA");
+      const data = await res.json().then(r => r.data ?? r);
+      setQrCodeData(data.qrCode);
+      showToast("2FA QR Code generated. Please scan it.");
+    } catch (err: any) {
+      showToast(err.message || "Failed to generate 2FA", "error");
+    } finally {
+      setIsProcessing2FA(false);
+    }
+  };
+
+  const handleVerify2FA = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      setIsProcessing2FA(true);
+      const res = await fetch(`${API_BASE}/auth/2fa/verify-setup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ code: otpCode })
+      });
+      if (!res.ok) throw new Error("Invalid 2FA code");
+      setProfile(prev => prev ? { ...prev, isTwoFactorEnabled: true } : prev);
+      setQrCodeData(null);
+      setOtpCode("");
+      showToast("2FA enabled successfully.");
+    } catch (err: any) {
+      showToast(err.message || "Failed to verify 2FA", "error");
+    } finally {
+      setIsProcessing2FA(false);
+    }
+  };
 
   const handleSaveChanges = async () => {
     const token = localStorage.getItem("token");
@@ -115,7 +164,7 @@ export default function SettingsPage() {
         payload.password = newPassword;
       }
 
-      const response = await fetch("http://localhost:3000/users/me", {
+      const response = await fetch(`${API_BASE}/users/me`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -257,6 +306,63 @@ export default function SettingsPage() {
               placeholder={t("settings.placeholder_confirm_password")}
             />
           </div>
+                </div>
+
+        {/* 2FA Section */}
+        <div className="mt-12 space-y-2 mb-6">
+          <h2 className="text-lg font-semibold text-zinc-100">Two-Factor Authentication</h2>
+          <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+            Secure your account
+          </p>
+        </div>
+        
+        <div className="bg-[#09090b] border border-white/10 rounded-2xl p-6">
+          {profile?.isTwoFactorEnabled ? (
+            <div className="flex items-center gap-3 text-emerald-400">
+              <CheckCircle2 size={24} />
+              <span className="font-medium text-sm">Two-Factor Authentication is active</span>
+            </div>
+          ) : (
+            <div>
+              {!qrCodeData ? (
+                <button
+                  type="button"
+                  onClick={handleEnable2FA}
+                  disabled={isProcessing2FA}
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-all disabled:opacity-50"
+                >
+                  {isProcessing2FA ? "Generating..." : "Enable 2FA"}
+                </button>
+              ) : (
+                <div className="space-y-6">
+                  <div className="bg-white p-4 rounded-xl inline-block">
+                    <img src={qrCodeData} alt="2FA QR Code" className="w-48 h-48" />
+                  </div>
+                  <div className="space-y-2 max-w-xs">
+                    <label className="text-sm text-zinc-400">Enter the 6-digit code from your authenticator app</label>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <input
+                        type="text"
+                        value={otpCode}
+                        onChange={e => setOtpCode(e.target.value)}
+                        placeholder="000000"
+                        maxLength={6}
+                        className="flex-1 rounded-xl bg-[#18181b] border border-white/10 text-zinc-100 px-4 py-3 text-center tracking-widest font-mono focus:outline-none focus:border-blue-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleVerify2FA}
+                        disabled={isProcessing2FA || otpCode.length < 6}
+                        className="px-5 py-3 sm:py-0 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all disabled:opacity-50"
+                      >
+                        Verify
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="mt-10 flex justify-end">

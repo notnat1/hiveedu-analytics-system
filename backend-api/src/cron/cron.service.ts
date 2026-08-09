@@ -12,7 +12,7 @@ export class CronService {
     private readonly analyticsService: AnalyticsService,
     private readonly auditLogService: AuditLogService,
     private readonly eventEmitter: EventEmitter2,
-  ) { }
+  ) {}
 
   @Cron('0 8 * * *')
   async handleAutomatedEarlyWarning() {
@@ -40,7 +40,9 @@ export class CronService {
         this.eventEmitter.emit('intervention.alert', { user });
       }
 
-      this.logger.log(`Early warning job completed. Triggered alerts for ${atRiskUsers.length} users.`);
+      this.logger.log(
+        `Early warning job completed. Triggered alerts for ${atRiskUsers.length} users.`,
+      );
 
       // Log the cron job run itself
       await this.auditLogService.createLog({
@@ -49,9 +51,10 @@ export class CronService {
         actorRole: 'SYSTEM',
         description: `Automated early warning cron job ran successfully. Found ${atRiskUsers.length} at-risk users.`,
       });
-
     } catch (error: any) {
-      this.logger.error(`Failed to run automated early warning job: ${error.message}`);
+      this.logger.error(
+        `Failed to run automated early warning job: ${error.message}`,
+      );
     }
   }
 }

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, RefreshCcw, ShieldCheck, Download, Activity, AlertTriangle, Fingerprint, Database } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
+import { API_BASE } from "@/lib/api";
 
 interface DecodedToken {
   sub: string;
@@ -115,7 +116,7 @@ export default function AuditLogsPage() {
       }
 
       const response = await fetch(
-        `http://localhost:3000/audit-logs${params.toString() ? `?${params.toString()}` : ""}`,
+        `${API_BASE}/audit-logs${params.toString() ? `?${params.toString()}` : ""}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

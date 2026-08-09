@@ -30,9 +30,9 @@ describe('MlrService', () => {
     it('should calculate correctly for late and absent', () => {
       const records = [
         { status: AttendanceStatus.PRESENT }, // 1
-        { status: AttendanceStatus.LATE },    // 0.5
-        { status: AttendanceStatus.ABSENT },  // 0
-        { status: AttendanceStatus.EXCUSED }, // 0
+        { status: AttendanceStatus.LATE }, // 0.5
+        { status: AttendanceStatus.ABSENT }, // 0
+        { status: AttendanceStatus.ABSENT }, // 0
       ];
       // total = 1.5 out of 4 = 37.5%
       expect(service.calculateAttendancePercentage(records as any)).toBe(37.5);
@@ -45,7 +45,7 @@ describe('MlrService', () => {
         { mathematicsScore: 80, logicalReasoningScore: 70, englishScore: 90 }, // avg = 80
         { mathematicsScore: 90, logicalReasoningScore: 90, englishScore: 90 }, // avg = 90
       ];
-      const result = service.calculateAverageTryoutScore(records as any);
+      const result = service.calculateAverageTryoutScore(records);
       expect(result.averageTryoutScore).toBe(85);
       expect(result.completeTryoutCount).toBe(2);
       expect(result.hasNullScoreValues).toBe(false);
@@ -56,7 +56,7 @@ describe('MlrService', () => {
         { mathematicsScore: 80, logicalReasoningScore: 70, englishScore: 90 },
         { mathematicsScore: 90, logicalReasoningScore: null, englishScore: 90 },
       ];
-      const result = service.calculateAverageTryoutScore(records as any);
+      const result = service.calculateAverageTryoutScore(records);
       expect(result.hasNullScoreValues).toBe(true);
       expect(result.completeTryoutCount).toBe(1); // Only one complete
     });
@@ -92,8 +92,8 @@ describe('MlrService', () => {
         b2: 0.2,
         b3: 0.3,
         x1: 100, // 50
-        x2: 80,  // 16
-        x3: 90,  // 27
+        x2: 80, // 16
+        x3: 90, // 27
       });
       // Raw: 10 + 50 + 16 + 27 = 103
       expect(result.rawScore).toBe(103);
@@ -112,7 +112,7 @@ describe('MlrService', () => {
       ];
 
       const coefficients = service.fitCoefficients(samples);
-      
+
       expect(coefficients).toBeDefined();
       expect(coefficients!.intercept).toBeCloseTo(10, 5);
       expect(coefficients!.attendanceCoefficient).toBeCloseTo(2, 5);

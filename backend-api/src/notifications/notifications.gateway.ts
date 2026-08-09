@@ -18,7 +18,9 @@ import { DataSource } from 'typeorm';
     origin: '*',
   },
 })
-export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class NotificationsGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -35,8 +37,10 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
 
   async handleConnection(client: Socket) {
     try {
-      const token = client.handshake.auth.token || client.handshake.headers['authorization']?.split(' ')[1];
-      
+      const token =
+        client.handshake.auth.token ||
+        client.handshake.headers['authorization']?.split(' ')[1];
+
       if (!token) {
         this.logger.warn(`Client connected without token: ${client.id}`);
         return; // Allow anonymous connection but don't map to a user
@@ -48,7 +52,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
 
       const userId = decoded.sub;
       this.connectedClients.set(userId, client.id);
-      
+
       // If the user is an admin or teacher, join them to a specific room for staff notifications
       if (decoded.role === 'ADMIN' || decoded.role === 'TEACHER') {
         client.join('staff_room');
@@ -59,29 +63,33 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
       if (decoded.role === 'ADMIN') {
         let dbStatus = 'Disconnected';
         try {
-           dbStatus = this.dataSource.isInitialized ? 'Connected' : 'Disconnected';
+          dbStatus = this.dataSource.isInitialized
+            ? 'Connected'
+            : 'Disconnected';
         } catch (e) {
-           dbStatus = 'Error';
+          dbStatus = 'Error';
         }
 
         if (dbStatus === 'Connected') {
           this.server.to(client.id).emit('notification', {
             title: 'System Health: OPTIMAL 🟢',
             message: `Seluruh model MLR, Cron Job, dan lapisan keamanan beroperasi dengan stabil. Database: ${dbStatus}.`,
-            type: 'success'
+            type: 'success',
           });
         } else {
           this.server.to(client.id).emit('notification', {
             title: 'System Health: DEGRADED 🔴',
             message: `Peringatan: Sistem mendeteksi adanya kegagalan komponen. Database Status: ${dbStatus}. Segera periksa log server!`,
-            type: 'warning'
+            type: 'warning',
           });
         }
       }
 
       this.logger.log(`Client connected: ${userId} (${client.id})`);
     } catch (error) {
-      this.logger.error(`WebSocket authentication failed for client ${client.id}: ${error.message}`);
+      this.logger.error(
+        `WebSocket authentication failed for client ${client.id}: ${error.message}`,
+      );
       client.disconnect();
     }
   }

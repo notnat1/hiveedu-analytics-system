@@ -1,4 +1,11 @@
-import { BadRequestException, Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { AuditLogService } from './audit-log.service.js';
 

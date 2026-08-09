@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -49,9 +59,7 @@ export class UsersController {
   }
 
   @Get('me')
-  async getCurrentProfile(
-    @Req() req: { user: { userId: string } },
-  ) {
+  async getCurrentProfile(@Req() req: { user: { userId: string } }) {
     const user = await this.usersService.getCurrentUserProfile(req.user.userId);
     return this.usersService.toSafeUserResponse(user);
   }

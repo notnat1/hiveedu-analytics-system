@@ -18,9 +18,11 @@ async function bootstrap() {
             winston.format.timestamp(),
             winston.format.ms(),
             winston.format.colorize(),
-            winston.format.printf(({ timestamp, level, message, context, ms }) => {
-              return `[HiveEdu] ${timestamp} [${level}] [${context || 'App'}] ${message} ${ms}`;
-            }),
+            winston.format.printf(
+              ({ timestamp, level, message, context, ms }) => {
+                return `[HiveEdu] ${timestamp} [${level}] [${context || 'App'}] ${message} ${ms}`;
+              },
+            ),
           ),
         }),
         new winston.transports.DailyRotateFile({
@@ -37,13 +39,13 @@ async function bootstrap() {
       ],
     }),
   });
-  
+
   // Security Hardening: HTTP Headers
   app.use(helmet());
-  
+
   // Security Hardening: CORS
-  const allowedOrigins = process.env.FRONTEND_URL 
-    ? process.env.FRONTEND_URL.split(',') 
+  const allowedOrigins = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',')
     : '*';
 
   app.enableCors({

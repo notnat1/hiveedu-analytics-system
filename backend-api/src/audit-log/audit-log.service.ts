@@ -49,7 +49,10 @@ export class AuditLogService {
             'authorization',
           ].includes(normalizedKey);
         })
-        .map(([key, nestedValue]) => [key, this.sanitizeMetadataValue(nestedValue)]);
+        .map(([key, nestedValue]) => [
+          key,
+          this.sanitizeMetadataValue(nestedValue),
+        ]);
 
       return Object.fromEntries(sanitizedEntries);
     }
@@ -98,11 +101,15 @@ export class AuditLogService {
     const queryBuilder = this.auditLogRepository.createQueryBuilder('auditLog');
 
     if (options.action) {
-      queryBuilder.andWhere('auditLog.action = :action', { action: options.action });
+      queryBuilder.andWhere('auditLog.action = :action', {
+        action: options.action,
+      });
     }
 
     if (options.actorId) {
-      queryBuilder.andWhere('auditLog.actorId = :actorId', { actorId: options.actorId });
+      queryBuilder.andWhere('auditLog.actorId = :actorId', {
+        actorId: options.actorId,
+      });
     }
 
     if (options.targetType) {

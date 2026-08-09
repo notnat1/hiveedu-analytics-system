@@ -64,10 +64,12 @@ import { CronModule } from './cron/cron.module.js';
     NotificationsModule,
     CronModule,
     // Security Hardening: Rate Limiting
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 60,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 60,
+      },
+    ]),
     // Performance: Caching
     CacheModule.register({
       isGlobal: true,

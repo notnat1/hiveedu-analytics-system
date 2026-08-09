@@ -1,4 +1,13 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, UseGuards, BadRequestException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  UseGuards,
+  BadRequestException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { TwoFactorService } from './2fa.service.js';
 import { UsersService } from '../users/users.service.js';
@@ -29,7 +38,12 @@ export class AuthController {
    */
   @Post('register')
   async register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto.username, dto.password, dto.fullName, dto.role);
+    return this.authService.register(
+      dto.username,
+      dto.password,
+      dto.fullName,
+      dto.role,
+    );
   }
 
   /**
@@ -40,7 +54,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async login(
     @Body() dto: LoginDto,
-    @Req() req: { ip?: string; headers?: Record<string, string | string[] | undefined> },
+    @Req()
+    req: {
+      ip?: string;
+      headers?: Record<string, string | string[] | undefined>;
+    },
   ) {
     return this.authService.login(dto.username, dto.password, {
       ipAddress: req.ip ?? null,
@@ -68,13 +86,18 @@ export class AuthController {
   @Post('2fa/generate')
   @UseGuards(JwtAuthGuard)
   async generate2fa(@Req() req: any) {
-    const user = req.user; // from JWT payload
-    const { secret, otpauthUrl } = this.twoFactorService.generateTwoFactorSecret(user.username);
-    
+    const user = await this.usersService.findById(req.user.userId);
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+    const { secret, otpauthUrl } =
+      this.twoFactorService.generateTwoFactorSecret(user.username);
+
     // Save the secret temporarily to the user (but don't enable yet)
-    await this.usersService.updateTwoFactorSecret(user.sub, secret);
-    
-    const qrCode = await this.twoFactorService.generateQrCodeDataUrl(otpauthUrl);
+    await this.usersService.updateTwoFactorSecret(user.userId, secret);
+
+    const qrCode =
+      await this.twoFactorService.generateQrCodeDataUrl(otpauthUrl);
     return { qrCode, secret };
   }
 
@@ -85,15 +108,29 @@ export class AuthController {
   @Post('2fa/verify-setup')
   @UseGuards(JwtAuthGuard)
   async verifySetup2fa(@Req() req: any, @Body() dto: { code: string }) {
-    const user = await this.usersService.findById(req.user.sub);
+    const user = await this.usersService.findById(req.user.userId);
     if (!user || !user.twoFactorSecret) {
       throw new BadRequestException('User or 2FA secret not found');
     }
-    const isValid = this.twoFactorService.verifyTwoFactorToken(dto.code, user.twoFactorSecret);
+    const isValid = this.twoFactorService.verifyTwoFactorToken(
+      dto.code,
+      user.twoFactorSecret,
+    );
     if (isValid) {
       await this.usersService.enableTwoFactor(user.userId);
       return { success: true, message: '2FA enabled successfully' };
     }
     return { success: false, message: 'Invalid 2FA code' };
+  }
+
+  /**
+   * POST /auth/2fa/disable
+   * Disables 2FA for the authenticated user.
+   */
+  @Post('2fa/disable')
+  @UseGuards(JwtAuthGuard)
+  async disable2fa(@Req() req: any) {
+    await this.usersService.disableTwoFactor(req.user.userId);
+    return { success: true, message: '2FA disabled successfully' };
   }
 }

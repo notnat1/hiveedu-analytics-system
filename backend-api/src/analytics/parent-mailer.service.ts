@@ -23,7 +23,9 @@ export class ParentMailerService {
     });
 
     for (const user of users) {
-      const snapshot = await this.analyticsService.getUserMlrSnapshot(user.userId);
+      const snapshot = await this.analyticsService.getUserMlrSnapshot(
+        user.userId,
+      );
 
       const mockEmailPayload = {
         to: `${user.username}@parent.hiveedu.app`,
@@ -53,7 +55,10 @@ export class ParentMailerService {
         generatedAt: new Date().toISOString(),
       };
 
-      console.log('[ParentMailerService] Weekly mailer preview payload:', mockEmailPayload);
+      console.log(
+        '[ParentMailerService] Weekly mailer preview payload:',
+        mockEmailPayload,
+      );
     }
   }
 }

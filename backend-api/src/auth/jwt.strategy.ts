@@ -29,7 +29,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET', 'hiveedu_default_secret'),
+      secretOrKey: configService.get<string>(
+        'JWT_SECRET',
+        'hiveedu_default_secret',
+      ),
     });
   }
 
@@ -37,7 +40,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    * Called by Passport after JWT is verified.
    * The returned object is attached to `request.user`.
    */
-  async validate(payload: JwtPayload): Promise<{ userId: string; role: string }> {
+  async validate(
+    payload: JwtPayload,
+  ): Promise<{ userId: string; role: string }> {
     return { userId: payload.sub, role: payload.role };
   }
 }

@@ -13,6 +13,7 @@ import { User } from '../users/user.entity.js';
 import { Role } from '../users/role.enum.js';
 import { AuditLogService } from '../audit-log/audit-log.service.js';
 import { XaiService } from '../xai/xai.service.js';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as ExcelJS from 'exceljs';
 
 /**
@@ -30,6 +31,7 @@ export class RecordsService {
     private readonly userRepository: Repository<User>,
     private readonly auditLogService: AuditLogService,
     private readonly xaiService: XaiService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   private async findTargetUser(userId: string): Promise<User> {
@@ -54,7 +56,10 @@ export class RecordsService {
       return;
     }
 
-    if (actor.actorRole === Role.TEACHER && user.assignedTutorId === actor.actorId) {
+    if (
+      actor.actorRole === Role.TEACHER &&
+      user.assignedTutorId === actor.actorId
+    ) {
       return;
     }
 
@@ -75,7 +80,10 @@ export class RecordsService {
       return;
     }
 
-    if (actor.actorRole === Role.TEACHER && user.assignedTutorId === actor.actorId) {
+    if (
+      actor.actorRole === Role.TEACHER &&
+      user.assignedTutorId === actor.actorId
+    ) {
       return;
     }
 
@@ -108,7 +116,7 @@ export class RecordsService {
           assignedTutorId: actor.actorId,
         },
         select: {
-        userId: true,
+          userId: true,
         },
       });
 
@@ -126,7 +134,9 @@ export class RecordsService {
       });
     }
 
-    throw new ForbiddenException('You are not allowed to access academic records.');
+    throw new ForbiddenException(
+      'You are not allowed to access academic records.',
+    );
   }
 
   async create(
@@ -146,7 +156,10 @@ export class RecordsService {
       createRecordDto.logicalReasoningScore,
       'logicScore',
     );
-    const englishScore = this.validateScore(createRecordDto.englishScore, 'englishScore');
+    const englishScore = this.validateScore(
+      createRecordDto.englishScore,
+      'englishScore',
+    );
     const actualExamScore = this.resolveOptionalScore(
       createRecordDto.actualExamScore,
       'actualExamScore',
@@ -195,6 +208,11 @@ export class RecordsService {
         teacherObjectiveScore: savedRecord.teacherObjectiveScore,
       },
     });
+
+    this.eventEmitter.emit('user.academic.updated', {
+      userId: savedRecord.userId,
+    });
+
     return savedRecord;
   }
 
@@ -209,7 +227,7 @@ export class RecordsService {
     let success = 0;
     let failed = 0;
     const errors: string[] = [];
-    
+
     // Process rows starting from row 2 (assuming row 1 is header)
     for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
       const row = worksheet.getRow(rowNumber);
@@ -220,8 +238,11 @@ export class RecordsService {
       const logicScore = Number(row.getCell(3).value);
       const englishScore = Number(row.getCell(4).value);
       const x3ScoreRaw = row.getCell(5).value;
-      const x3Score = x3ScoreRaw !== null && x3ScoreRaw !== undefined && x3ScoreRaw !== '' ? Number(x3ScoreRaw) : undefined;
-      
+      const x3Score =
+        x3ScoreRaw !== null && x3ScoreRaw !== undefined && x3ScoreRaw !== ''
+          ? Number(x3ScoreRaw)
+          : undefined;
+
       if (!username) {
         failed++;
         errors.push(`Row ${rowNumber}: Username is empty.`);
@@ -229,7 +250,9 @@ export class RecordsService {
       }
 
       try {
-        const user = await this.userRepository.findOne({ where: { username, role: Role.USER } });
+        const user = await this.userRepository.findOne({
+          where: { username, role: Role.USER },
+        });
         if (!user) {
           failed++;
           errors.push(`Row ${rowNumber}: User "${username}" not found.`);
@@ -240,18 +263,23 @@ export class RecordsService {
           this.assertCanManageUserRecords(actor, user);
         } catch (e) {
           failed++;
-          errors.push(`Row ${rowNumber}: Unauthorized to manage "${username}".`);
+          errors.push(
+            `Row ${rowNumber}: Unauthorized to manage "${username}".`,
+          );
           continue;
         }
 
-        await this.create({
-          userId: user.userId,
-          mathematicsScore: mathScore,
-          logicalReasoningScore: logicScore,
-          englishScore: englishScore,
-          teacherObjectiveScore: x3Score,
-          isUsedForTraining: true,
-        }, actor);
+        await this.create(
+          {
+            userId: user.userId,
+            mathematicsScore: mathScore,
+            logicalReasoningScore: logicScore,
+            englishScore: englishScore,
+            teacherObjectiveScore: x3Score,
+            isUsedForTraining: true,
+          },
+          actor,
+        );
 
         success++;
       } catch (err: any) {
@@ -268,10 +296,14 @@ export class RecordsService {
     updateRecordDto: UpdateRecordDto,
     actor: { actorId?: string | null; actorRole?: string | null },
   ): Promise<RecordEntity> {
-    const record = await this.recordRepository.findOne({ where: { userId: id } });
+    const record = await this.recordRepository.findOne({
+      where: { userId: id },
+    });
 
     if (!record) {
-      throw new NotFoundException(`Academic record with ID "${id}" was not found.`);
+      throw new NotFoundException(
+        `Academic record with ID "${id}" was not found.`,
+      );
     }
 
     const user = await this.findTargetUser(record.userId);
@@ -366,6 +398,10 @@ export class RecordsService {
       },
     });
 
+    this.eventEmitter.emit('user.academic.updated', {
+      userId: savedRecord.userId,
+    });
+
     return savedRecord;
   }
 
@@ -374,7 +410,20 @@ export class RecordsService {
     actor: { actorId?: string | null; actorRole?: string | null },
   ): Promise<(RecordEntity & { xaiExplanation: string | null })[]> {
     const user = await this.findTargetUser(userId);
-    this.assertCanReadUserRecords(actor, user);
+
+    let isParentOfUser = false;
+    if (actor.actorRole === Role.PARENT && actor.actorId) {
+      const parentUser = await this.userRepository.findOne({
+        where: { userId: actor.actorId },
+      });
+      if (parentUser && parentUser.linkedStudentId === user.userId) {
+        isParentOfUser = true;
+      }
+    }
+
+    if (!isParentOfUser) {
+      this.assertCanReadUserRecords(actor, user);
+    }
 
     const records = await this.recordRepository.find({
       where: { userId },
@@ -391,12 +440,13 @@ export class RecordsService {
       // Admin tidak memerlukan xaiExplanation saat batch fetch, hindari rate limit.
       const shouldGenerateDynamic = i < 2 && actor.actorRole === 'USER';
       if (shouldGenerateDynamic) {
-        explanation = await this.xaiService.generateDynamicExamScoreExplanationAsync(
-          record.mathScore,
-          record.logicScore,
-          record.englishScore,
-          record.actualExamScore,
-        );
+        explanation =
+          await this.xaiService.generateDynamicExamScoreExplanationAsync(
+            record.mathScore,
+            record.logicScore,
+            record.englishScore,
+            record.actualExamScore,
+          );
       } else {
         explanation = this.xaiService.generateExamScoreExplanation(
           record.mathScore,
@@ -415,7 +465,9 @@ export class RecordsService {
     return results;
   }
 
-  async findValidTrainingRecordsByUserId(userId: string): Promise<RecordEntity[]> {
+  async findValidTrainingRecordsByUserId(
+    userId: string,
+  ): Promise<RecordEntity[]> {
     return this.recordRepository.find({
       where: {
         userId,
@@ -428,7 +480,9 @@ export class RecordsService {
     });
   }
 
-  isTeacherObjectiveScoreReady(record: Pick<RecordEntity, 'teacherObjectiveScore'>): boolean {
+  isTeacherObjectiveScoreReady(
+    record: Pick<RecordEntity, 'teacherObjectiveScore'>,
+  ): boolean {
     const score = Number(record.teacherObjectiveScore);
 
     return Number.isFinite(score) && score >= 0 && score <= 100;
@@ -438,10 +492,14 @@ export class RecordsService {
     id: string,
     actor: { actorId?: string | null; actorRole?: string | null },
   ): Promise<void> {
-    const record = await this.recordRepository.findOne({ where: { userId: id } });
+    const record = await this.recordRepository.findOne({
+      where: { userId: id },
+    });
 
     if (!record) {
-      throw new NotFoundException(`Academic record with ID "${id}" was not found.`);
+      throw new NotFoundException(
+        `Academic record with ID "${id}" was not found.`,
+      );
     }
 
     const user = await this.findTargetUser(record.userId);
@@ -462,6 +520,8 @@ export class RecordsService {
         examLabel: record.examLabel,
       },
     });
+
+    this.eventEmitter.emit('user.academic.updated', { userId: record.userId });
   }
 
   private calculateAverageScore(
@@ -514,13 +574,21 @@ export class RecordsService {
 
   private validateScore(score: number | null, fieldName: string): number {
     if (score === null) {
-      throw new BadRequestException(`${fieldName} must be a number from 0 to 100.`);
+      throw new BadRequestException(
+        `${fieldName} must be a number from 0 to 100.`,
+      );
     }
 
     const numericScore = Number(score);
 
-    if (!Number.isFinite(numericScore) || numericScore < 0 || numericScore > 100) {
-      throw new BadRequestException(`${fieldName} must be a number from 0 to 100.`);
+    if (
+      !Number.isFinite(numericScore) ||
+      numericScore < 0 ||
+      numericScore > 100
+    ) {
+      throw new BadRequestException(
+        `${fieldName} must be a number from 0 to 100.`,
+      );
     }
 
     return numericScore;

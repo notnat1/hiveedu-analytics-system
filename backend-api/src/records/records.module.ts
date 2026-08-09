@@ -14,7 +14,11 @@ import { XaiModule } from '../xai/xai.module.js';
  * in the USER role.
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([RecordEntity, User]), AuditLogModule, XaiModule],
+  imports: [
+    TypeOrmModule.forFeature([RecordEntity, User]),
+    AuditLogModule,
+    XaiModule,
+  ],
   controllers: [RecordsController],
   providers: [RecordsService],
   exports: [RecordsService],

@@ -15,17 +15,17 @@ export class AuditLogInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const ctx = context.switchToHttp();
     const request = ctx.getRequest();
-    
+
     // Extract user data if available (e.g. from JWT auth guard)
     const user = request.user;
     const actorId = user?.userId ?? null;
     const actorRole = user?.role ?? null;
-    
+
     const method = request.method;
     const url = request.url;
     const ipAddress = request.ip || request.connection?.remoteAddress;
     const userAgent = request.headers['user-agent'];
-    
+
     // Only log mutations (POST, PUT, PATCH, DELETE) for DATA_UPDATE
     const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
 

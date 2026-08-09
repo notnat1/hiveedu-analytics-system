@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, OnModuleInit, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as ExcelJS from 'exceljs';
@@ -424,7 +429,9 @@ export class AnalyticsService implements OnModuleInit {
       return 'Inactive user account.';
     }
 
-    if (context.completeTryoutCount < this.mlrService.minimumTryoutHistoryCount) {
+    if (
+      context.completeTryoutCount < this.mlrService.minimumTryoutHistoryCount
+    ) {
       return 'Insufficient complete tryout history.';
     }
 
@@ -458,7 +465,8 @@ export class AnalyticsService implements OnModuleInit {
           }),
         ]);
 
-        const x1 = this.mlrService.calculateAttendancePercentage(attendanceRecords);
+        const x1 =
+          this.mlrService.calculateAttendancePercentage(attendanceRecords);
         const tryoutSummary =
           this.mlrService.calculateAverageTryoutScore(tryoutRecords);
         const teacherObjectiveSummary =
@@ -520,8 +528,12 @@ export class AnalyticsService implements OnModuleInit {
   private buildDatasetQualityStats(
     contexts: UserDatasetContext[],
   ): DatasetQualityStats {
-    const activeUserCount = contexts.filter((context) => context.user.isActive).length;
-    const eligibleUserCount = contexts.filter((context) => context.isEligible).length;
+    const activeUserCount = contexts.filter(
+      (context) => context.user.isActive,
+    ).length;
+    const eligibleUserCount = contexts.filter(
+      (context) => context.isEligible,
+    ).length;
     const excludedInactiveCount = contexts.filter(
       (context) => !context.user.isActive,
     ).length;
@@ -533,7 +545,8 @@ export class AnalyticsService implements OnModuleInit {
     const excludedNullScoreCount = contexts.filter(
       (context) =>
         context.user.isActive &&
-        context.completeTryoutCount >= this.mlrService.minimumTryoutHistoryCount &&
+        context.completeTryoutCount >=
+          this.mlrService.minimumTryoutHistoryCount &&
         (context.hasNullScoreValues || context.hasMissingTeacherObjectiveScore),
     ).length;
     const excludedUserCount =
@@ -552,7 +565,9 @@ export class AnalyticsService implements OnModuleInit {
     };
   }
 
-  private buildTrainingSamples(contexts: UserDatasetContext[]): TrainingSample[] {
+  private buildTrainingSamples(
+    contexts: UserDatasetContext[],
+  ): TrainingSample[] {
     return contexts
       .filter(
         (context) =>
@@ -628,7 +643,10 @@ export class AnalyticsService implements OnModuleInit {
         trainingSampleCount,
         fallbackUsed,
         fallbackReason,
-        mse: this.buildMseFromTrainingSamples(trainingSamples, effectiveCoefficients),
+        mse: this.buildMseFromTrainingSamples(
+          trainingSamples,
+          effectiveCoefficients,
+        ),
         predictionCount: stats.eligibleUserCount,
         stats,
       },
@@ -654,7 +672,28 @@ export class AnalyticsService implements OnModuleInit {
       coefficientMode: config.coefficientMode,
     };
 
-    if (user.role !== Role.USER) {
+    let targetUserId = user.userId;
+    if (user.role === Role.PARENT) {
+      if (!user.linkedStudentId) {
+        return {
+          userId: user.userId,
+          attendancePercentage: 0,
+          averageTryoutScore: 0,
+          avgTryoutScore: 0,
+          teacherObjectiveScore: 0,
+          x3: 0,
+          tryoutCount: 0,
+          predictedScore: null,
+          riskLevel: 'PENDING',
+          suggestedIntervention: 'No linked student account is assigned.',
+          recommendation: 'No linked student account is assigned.',
+          explanation: null,
+          xaiExplanation: null,
+          ...baseResponse,
+        };
+      }
+      targetUserId = user.linkedStudentId;
+    } else if (user.role !== Role.USER) {
       return {
         userId: user.userId,
         attendancePercentage: 0,
@@ -665,8 +704,10 @@ export class AnalyticsService implements OnModuleInit {
         tryoutCount: 0,
         predictedScore: null,
         riskLevel: 'PENDING',
-        suggestedIntervention: 'Personal analytics are available for user accounts.',
-        recommendation: 'Personal analytics are available for user accounts.',
+        suggestedIntervention:
+          'Personal analytics are available for user or parent accounts.',
+        recommendation:
+          'Personal analytics are available for user or parent accounts.',
         explanation: null,
         xaiExplanation: null,
         ...baseResponse,
@@ -675,7 +716,7 @@ export class AnalyticsService implements OnModuleInit {
 
     const batchRunDataset = await this.buildBatchRunDataset();
     const context = batchRunDataset.contexts.find(
-      (datasetContext) => datasetContext.user.userId === user.userId,
+      (datasetContext) => datasetContext.user.userId === targetUserId,
     );
     const attendancePercentage = this.roundMetric(context?.x1 ?? 0);
     const averageTryoutScore = this.roundMetric(context?.x2 ?? 0);
@@ -684,12 +725,10 @@ export class AnalyticsService implements OnModuleInit {
     const prediction =
       context?.isEligible === true
         ? this.mlrService.calculatePredictedScore({
-            intercept:
-              batchRunDataset.summary.effectiveCoefficients.intercept,
+            intercept: batchRunDataset.summary.effectiveCoefficients.intercept,
             b1: batchRunDataset.summary.effectiveCoefficients
               .attendanceCoefficient,
-            b2: batchRunDataset.summary.effectiveCoefficients
-              .tryoutCoefficient,
+            b2: batchRunDataset.summary.effectiveCoefficients.tryoutCoefficient,
             b3: batchRunDataset.summary.effectiveCoefficients
               .teacherObjectiveCoefficient,
             x1: context.x1,
@@ -730,9 +769,15 @@ export class AnalyticsService implements OnModuleInit {
       formula: baseResponse.formula,
       coefficientMode: batchRunDataset.summary.coefficientMode,
       explanation,
-      xaiExplanation: context?.isEligible === true && predictedScore !== null
-        ? await this.xaiService.generateDynamicExplanationAsync(attendancePercentage, averageTryoutScore, teacherObjectiveScore, predictedScore)
-        : null,
+      xaiExplanation:
+        context?.isEligible === true && predictedScore !== null
+          ? await this.xaiService.generateDynamicExplanationAsync(
+              attendancePercentage,
+              averageTryoutScore,
+              teacherObjectiveScore,
+              predictedScore,
+            )
+          : null,
     };
   }
 
@@ -844,7 +889,10 @@ export class AnalyticsService implements OnModuleInit {
           ? null
           : this.roundMetric(context.actualExamScoreAverage),
       riskLevel: this.getRiskLevel(predictedScore),
-      suggestedIntervention: this.getSuggestedIntervention(context.x1, context.x2),
+      suggestedIntervention: this.getSuggestedIntervention(
+        context.x1,
+        context.x2,
+      ),
       feedbackCompleted: context.feedbackCompleted,
       explanation: this.buildExplanation(
         coefficients,
@@ -856,7 +904,7 @@ export class AnalyticsService implements OnModuleInit {
         this.roundMetric(context.x1),
         this.roundMetric(context.x2),
         this.roundMetric(context.x3),
-        predictedScore
+        predictedScore,
       ),
     };
   }
@@ -955,8 +1003,7 @@ export class AnalyticsService implements OnModuleInit {
           intercept: savedConfig.intercept,
           attendanceCoefficient: savedConfig.attendanceCoefficient,
           tryoutCoefficient: savedConfig.tryoutCoefficient,
-          teacherObjectiveCoefficient:
-            savedConfig.teacherObjectiveCoefficient,
+          teacherObjectiveCoefficient: savedConfig.teacherObjectiveCoefficient,
           coefficientMode: savedConfig.coefficientMode,
         },
       },
@@ -1043,7 +1090,8 @@ export class AnalyticsService implements OnModuleInit {
     const tutorAnalyticsRows = tutors.map((tutor) => {
       const activeAssignedContexts = batchRunDataset.contexts.filter(
         (context) =>
-          context.user.isActive && context.user.assignedTutorId === tutor.userId,
+          context.user.isActive &&
+          context.user.assignedTutorId === tutor.userId,
       );
       const userPredictions = activeAssignedContexts
         .map((context) =>
@@ -1053,7 +1101,8 @@ export class AnalyticsService implements OnModuleInit {
           ),
         )
         .filter(
-          (prediction): prediction is TutorUserPrediction => prediction !== null,
+          (prediction): prediction is TutorUserPrediction =>
+            prediction !== null,
         );
       const atRiskUserCount = userPredictions.filter(
         (prediction) => prediction.predictedScore < 75,
@@ -1110,10 +1159,14 @@ export class AnalyticsService implements OnModuleInit {
       0,
     );
 
-    await this.persistBatchRunHistory(actor, 'Tutor analytics batch generation.', {
-      ...batchRunDataset.summary,
-      predictionCount,
-    });
+    await this.persistBatchRunHistory(
+      actor,
+      'Tutor analytics batch generation.',
+      {
+        ...batchRunDataset.summary,
+        predictionCount,
+      },
+    );
 
     return tutorAnalyticsRows;
   }
@@ -1153,10 +1206,14 @@ export class AnalyticsService implements OnModuleInit {
       .map((context) => {
         const prediction = context.isEligible
           ? this.mlrService.calculatePredictedScore({
-              intercept: batchRunDataset.summary.effectiveCoefficients.intercept,
-              b1: batchRunDataset.summary.effectiveCoefficients.attendanceCoefficient,
-              b2: batchRunDataset.summary.effectiveCoefficients.tryoutCoefficient,
-              b3: batchRunDataset.summary.effectiveCoefficients.teacherObjectiveCoefficient,
+              intercept:
+                batchRunDataset.summary.effectiveCoefficients.intercept,
+              b1: batchRunDataset.summary.effectiveCoefficients
+                .attendanceCoefficient,
+              b2: batchRunDataset.summary.effectiveCoefficients
+                .tryoutCoefficient,
+              b3: batchRunDataset.summary.effectiveCoefficients
+                .teacherObjectiveCoefficient,
               x1: context.x1,
               x2: context.x2,
               x3: context.x3,
@@ -1201,15 +1258,26 @@ export class AnalyticsService implements OnModuleInit {
       relations: ['assignedUsers'],
       order: { fullName: 'ASC', username: 'ASC' },
     });
+
+    // Filter contexts if actor is TEACHER
+    const relevantContexts =
+      actor.role === Role.TEACHER
+        ? batchRunDataset.contexts.filter(
+            (c) => c.user.assignedTutorId === actor.userId,
+          )
+        : batchRunDataset.contexts;
+
     const formula = 'Y = a + b1X1 + b2X2 + b3X3';
-    const eligibleRows = batchRunDataset.contexts
+    const eligibleRows = relevantContexts
       .filter((context) => context.isEligible)
       .map((context) => {
         const predictedScore = this.mlrService.calculatePredictedScore({
           intercept: batchRunDataset.summary.effectiveCoefficients.intercept,
-          b1: batchRunDataset.summary.effectiveCoefficients.attendanceCoefficient,
+          b1: batchRunDataset.summary.effectiveCoefficients
+            .attendanceCoefficient,
           b2: batchRunDataset.summary.effectiveCoefficients.tryoutCoefficient,
-          b3: batchRunDataset.summary.effectiveCoefficients.teacherObjectiveCoefficient,
+          b3: batchRunDataset.summary.effectiveCoefficients
+            .teacherObjectiveCoefficient,
           x1: context.x1,
           x2: context.x2,
           x3: context.x3,
@@ -1227,13 +1295,14 @@ export class AnalyticsService implements OnModuleInit {
           predictedScore: Number(predictedScore.toFixed(2)),
         };
       });
-    const excludedRows = batchRunDataset.contexts
+    const excludedRows = relevantContexts
       .filter((context) => !context.isEligible)
       .map((context) => ({
         userId: context.user.userId,
         fullName: context.user.fullName,
         username: context.user.username,
-        reason: this.getExclusionReason(context) ?? 'Excluded from eligibility.',
+        reason:
+          this.getExclusionReason(context) ?? 'Excluded from eligibility.',
       }));
     const predictionRows = eligibleRows.map((row) => ({
       userId: row.userId,
@@ -1264,7 +1333,7 @@ export class AnalyticsService implements OnModuleInit {
         ),
       }));
     const tutorRows = tutors.map((tutor) => {
-      const assignedContexts = batchRunDataset.contexts.filter(
+      const assignedContexts = relevantContexts.filter(
         (context) => context.user.assignedTutorId === tutor.userId,
       );
       const assignedPredictionRows = predictionRows.filter(
@@ -1295,8 +1364,10 @@ export class AnalyticsService implements OnModuleInit {
             ? 0
             : Number(
                 (
-                  assignedContexts.reduce((sum, context) => sum + context.x1, 0) /
-                  assignedContexts.length
+                  assignedContexts.reduce(
+                    (sum, context) => sum + context.x1,
+                    0,
+                  ) / assignedContexts.length
                 ).toFixed(2),
               ),
         averageTryoutScore:
@@ -1304,8 +1375,10 @@ export class AnalyticsService implements OnModuleInit {
             ? 0
             : Number(
                 (
-                  assignedContexts.reduce((sum, context) => sum + context.x2, 0) /
-                  assignedContexts.length
+                  assignedContexts.reduce(
+                    (sum, context) => sum + context.x2,
+                    0,
+                  ) / assignedContexts.length
                 ).toFixed(2),
               ),
         averageTeacherObjectiveScore:
@@ -1313,8 +1386,10 @@ export class AnalyticsService implements OnModuleInit {
             ? 0
             : Number(
                 (
-                  assignedContexts.reduce((sum, context) => sum + context.x3, 0) /
-                  assignedContexts.length
+                  assignedContexts.reduce(
+                    (sum, context) => sum + context.x3,
+                    0,
+                  ) / assignedContexts.length
                 ).toFixed(2),
               ),
       };
@@ -1325,208 +1400,358 @@ export class AnalyticsService implements OnModuleInit {
     workbook.created = new Date();
     workbook.modified = new Date();
 
-    this.addWorksheet(workbook, 'Overview Summary', [
-      { header: 'generatedAt', key: 'generatedAt', width: 24 },
-      { header: 'coefficientMode', key: 'coefficientMode', width: 18 },
-      { header: 'intercept', key: 'intercept', width: 16 },
-      { header: 'attendanceCoefficient', key: 'attendanceCoefficient', width: 22 },
-      { header: 'tryoutCoefficient', key: 'tryoutCoefficient', width: 20 },
-      { header: 'teacherObjectiveCoefficient', key: 'teacherObjectiveCoefficient', width: 28 },
-      { header: 'mse', key: 'mse', width: 14 },
-      { header: 'totalUserCount', key: 'totalUserCount', width: 16 },
-      { header: 'activeUserCount', key: 'activeUserCount', width: 16 },
-      { header: 'eligibleUserCount', key: 'eligibleUserCount', width: 17 },
-      { header: 'excludedUserCount', key: 'excludedUserCount', width: 17 },
-      { header: 'trainingSampleCount', key: 'trainingSampleCount', width: 18 },
-      { header: 'predictionCount', key: 'predictionCount', width: 16 },
-      { header: 'fallbackUsed', key: 'fallbackUsed', width: 14 },
-      { header: 'fallbackReason', key: 'fallbackReason', width: 28 },
-    ], [
-      {
-        generatedAt: savedRunHistory.generatedAt.toISOString(),
-        coefficientMode: savedRunHistory.coefficientMode,
-        intercept: savedRunHistory.intercept,
-        attendanceCoefficient: savedRunHistory.attendanceCoefficient,
-        tryoutCoefficient: savedRunHistory.tryoutCoefficient,
-        teacherObjectiveCoefficient: savedRunHistory.teacherObjectiveCoefficient,
-        mse: savedRunHistory.mse ?? '',
-        totalUserCount: savedRunHistory.totalUserCount,
-        activeUserCount: savedRunHistory.activeUserCount,
-        eligibleUserCount: savedRunHistory.eligibleUserCount,
-        excludedUserCount: savedRunHistory.excludedUserCount,
-        trainingSampleCount: savedRunHistory.trainingSampleCount,
-        predictionCount: savedRunHistory.predictionCount,
-        fallbackUsed: savedRunHistory.fallbackUsed,
-        fallbackReason: savedRunHistory.fallbackReason ?? '',
-      },
-    ]);
+    this.addWorksheet(
+      workbook,
+      'Overview Summary',
+      [
+        { header: 'generatedAt', key: 'generatedAt', width: 24 },
+        { header: 'coefficientMode', key: 'coefficientMode', width: 18 },
+        { header: 'intercept', key: 'intercept', width: 16 },
+        {
+          header: 'attendanceCoefficient',
+          key: 'attendanceCoefficient',
+          width: 22,
+        },
+        { header: 'tryoutCoefficient', key: 'tryoutCoefficient', width: 20 },
+        {
+          header: 'teacherObjectiveCoefficient',
+          key: 'teacherObjectiveCoefficient',
+          width: 28,
+        },
+        { header: 'mse', key: 'mse', width: 14 },
+        { header: 'totalUserCount', key: 'totalUserCount', width: 16 },
+        { header: 'activeUserCount', key: 'activeUserCount', width: 16 },
+        { header: 'eligibleUserCount', key: 'eligibleUserCount', width: 17 },
+        { header: 'excludedUserCount', key: 'excludedUserCount', width: 17 },
+        {
+          header: 'trainingSampleCount',
+          key: 'trainingSampleCount',
+          width: 18,
+        },
+        { header: 'predictionCount', key: 'predictionCount', width: 16 },
+        { header: 'fallbackUsed', key: 'fallbackUsed', width: 14 },
+        { header: 'fallbackReason', key: 'fallbackReason', width: 28 },
+      ],
+      [
+        {
+          generatedAt: savedRunHistory.generatedAt.toISOString(),
+          coefficientMode: savedRunHistory.coefficientMode,
+          intercept: savedRunHistory.intercept,
+          attendanceCoefficient: savedRunHistory.attendanceCoefficient,
+          tryoutCoefficient: savedRunHistory.tryoutCoefficient,
+          teacherObjectiveCoefficient:
+            savedRunHistory.teacherObjectiveCoefficient,
+          mse: savedRunHistory.mse ?? '',
+          totalUserCount: savedRunHistory.totalUserCount,
+          activeUserCount: savedRunHistory.activeUserCount,
+          eligibleUserCount: savedRunHistory.eligibleUserCount,
+          excludedUserCount: savedRunHistory.excludedUserCount,
+          trainingSampleCount: savedRunHistory.trainingSampleCount,
+          predictionCount: savedRunHistory.predictionCount,
+          fallbackUsed: savedRunHistory.fallbackUsed,
+          fallbackReason: savedRunHistory.fallbackReason ?? '',
+        },
+      ],
+    );
 
-    this.addWorksheet(workbook, 'Eligible Users', [
-      { header: 'userId', key: 'userId', width: 38 },
-      { header: 'fullName', key: 'fullName', width: 24 },
-      { header: 'username', key: 'username', width: 20 },
-      { header: 'assignedTutorId', key: 'assignedTutorId', width: 38 },
-      { header: 'attendancePercentage', key: 'attendancePercentage', width: 20 },
-      { header: 'averageTryoutScore', key: 'averageTryoutScore', width: 20 },
-      { header: 'teacherObjectiveScore', key: 'teacherObjectiveScore', width: 24 },
-      { header: 'tryoutCount', key: 'tryoutCount', width: 14 },
-      { header: 'predictedScore', key: 'predictedScore', width: 16 },
-    ], eligibleRows);
+    this.addWorksheet(
+      workbook,
+      'Eligible Users',
+      [
+        { header: 'userId', key: 'userId', width: 38 },
+        { header: 'fullName', key: 'fullName', width: 24 },
+        { header: 'username', key: 'username', width: 20 },
+        { header: 'assignedTutorId', key: 'assignedTutorId', width: 38 },
+        {
+          header: 'attendancePercentage',
+          key: 'attendancePercentage',
+          width: 20,
+        },
+        { header: 'averageTryoutScore', key: 'averageTryoutScore', width: 20 },
+        {
+          header: 'teacherObjectiveScore',
+          key: 'teacherObjectiveScore',
+          width: 24,
+        },
+        { header: 'tryoutCount', key: 'tryoutCount', width: 14 },
+        { header: 'predictedScore', key: 'predictedScore', width: 16 },
+      ],
+      eligibleRows,
+    );
 
-    this.addWorksheet(workbook, 'Excluded Users', [
-      { header: 'userId', key: 'userId', width: 38 },
-      { header: 'fullName', key: 'fullName', width: 24 },
-      { header: 'username', key: 'username', width: 20 },
-      { header: 'reason', key: 'reason', width: 32 },
-    ], excludedRows);
+    this.addWorksheet(
+      workbook,
+      'Excluded Users',
+      [
+        { header: 'userId', key: 'userId', width: 38 },
+        { header: 'fullName', key: 'fullName', width: 24 },
+        { header: 'username', key: 'username', width: 20 },
+        { header: 'reason', key: 'reason', width: 32 },
+      ],
+      excludedRows,
+    );
 
-    this.addWorksheet(workbook, 'Prediction Results', [
-      { header: 'userId', key: 'userId', width: 38 },
-      { header: 'fullName', key: 'fullName', width: 24 },
-      { header: 'username', key: 'username', width: 20 },
-      { header: 'assignedTutorId', key: 'assignedTutorId', width: 38 },
-      { header: 'attendancePercentage', key: 'attendancePercentage', width: 20 },
-      { header: 'averageTryoutScore', key: 'averageTryoutScore', width: 20 },
-      { header: 'teacherObjectiveScore', key: 'teacherObjectiveScore', width: 24 },
-      { header: 'predictedScore', key: 'predictedScore', width: 16 },
-      { header: 'riskLevel', key: 'riskLevel', width: 12 },
-    ], predictionRows);
+    this.addWorksheet(
+      workbook,
+      'Prediction Results',
+      [
+        { header: 'userId', key: 'userId', width: 38 },
+        { header: 'fullName', key: 'fullName', width: 24 },
+        { header: 'username', key: 'username', width: 20 },
+        { header: 'assignedTutorId', key: 'assignedTutorId', width: 38 },
+        {
+          header: 'attendancePercentage',
+          key: 'attendancePercentage',
+          width: 20,
+        },
+        { header: 'averageTryoutScore', key: 'averageTryoutScore', width: 20 },
+        {
+          header: 'teacherObjectiveScore',
+          key: 'teacherObjectiveScore',
+          width: 24,
+        },
+        { header: 'predictedScore', key: 'predictedScore', width: 16 },
+        { header: 'riskLevel', key: 'riskLevel', width: 12 },
+      ],
+      predictionRows,
+    );
 
-    this.addWorksheet(workbook, 'Early Warning', [
-      { header: 'userId', key: 'userId', width: 38 },
-      { header: 'fullName', key: 'fullName', width: 24 },
-      { header: 'username', key: 'username', width: 20 },
-      { header: 'assignedTutorId', key: 'assignedTutorId', width: 38 },
-      { header: 'attendancePercentage', key: 'attendancePercentage', width: 20 },
-      { header: 'averageTryoutScore', key: 'averageTryoutScore', width: 20 },
-      { header: 'teacherObjectiveScore', key: 'teacherObjectiveScore', width: 24 },
-      { header: 'predictedScore', key: 'predictedScore', width: 16 },
-      { header: 'riskLevel', key: 'riskLevel', width: 12 },
-      { header: 'suggestedIntervention', key: 'suggestedIntervention', width: 32 },
-    ], earlyWarningRows);
+    this.addWorksheet(
+      workbook,
+      'Early Warning',
+      [
+        { header: 'userId', key: 'userId', width: 38 },
+        { header: 'fullName', key: 'fullName', width: 24 },
+        { header: 'username', key: 'username', width: 20 },
+        { header: 'assignedTutorId', key: 'assignedTutorId', width: 38 },
+        {
+          header: 'attendancePercentage',
+          key: 'attendancePercentage',
+          width: 20,
+        },
+        { header: 'averageTryoutScore', key: 'averageTryoutScore', width: 20 },
+        {
+          header: 'teacherObjectiveScore',
+          key: 'teacherObjectiveScore',
+          width: 24,
+        },
+        { header: 'predictedScore', key: 'predictedScore', width: 16 },
+        { header: 'riskLevel', key: 'riskLevel', width: 12 },
+        {
+          header: 'suggestedIntervention',
+          key: 'suggestedIntervention',
+          width: 32,
+        },
+      ],
+      earlyWarningRows,
+    );
 
-    this.addWorksheet(workbook, 'Tutor Analytics', [
-      { header: 'tutorId', key: 'tutorId', width: 38 },
-      { header: 'tutorName', key: 'tutorName', width: 24 },
-      { header: 'assignedUserCount', key: 'assignedUserCount', width: 18 },
-      { header: 'averagePredictedScore', key: 'averagePredictedScore', width: 22 },
-      { header: 'atRiskUserCount', key: 'atRiskUserCount', width: 16 },
-      { header: 'averageAttendance', key: 'averageAttendance', width: 18 },
-      { header: 'averageTryoutScore', key: 'averageTryoutScore', width: 20 },
-      { header: 'averageTeacherObjectiveScore', key: 'averageTeacherObjectiveScore', width: 28 },
-    ], tutorRows);
+    this.addWorksheet(
+      workbook,
+      'Tutor Analytics',
+      [
+        { header: 'tutorId', key: 'tutorId', width: 38 },
+        { header: 'tutorName', key: 'tutorName', width: 24 },
+        { header: 'assignedUserCount', key: 'assignedUserCount', width: 18 },
+        {
+          header: 'averagePredictedScore',
+          key: 'averagePredictedScore',
+          width: 22,
+        },
+        { header: 'atRiskUserCount', key: 'atRiskUserCount', width: 16 },
+        { header: 'averageAttendance', key: 'averageAttendance', width: 18 },
+        { header: 'averageTryoutScore', key: 'averageTryoutScore', width: 20 },
+        {
+          header: 'averageTeacherObjectiveScore',
+          key: 'averageTeacherObjectiveScore',
+          width: 28,
+        },
+      ],
+      tutorRows,
+    );
 
-    this.addWorksheet(workbook, 'MLR Coefficients', [
-      { header: 'formula', key: 'formula', width: 24 },
-      { header: 'coefficientMode', key: 'coefficientMode', width: 18 },
-      { header: 'intercept', key: 'intercept', width: 16 },
-      { header: 'attendanceCoefficient', key: 'attendanceCoefficient', width: 22 },
-      { header: 'tryoutCoefficient', key: 'tryoutCoefficient', width: 20 },
-      { header: 'teacherObjectiveCoefficient', key: 'teacherObjectiveCoefficient', width: 28 },
-      { header: 'fallbackUsed', key: 'fallbackUsed', width: 14 },
-      { header: 'fallbackReason', key: 'fallbackReason', width: 28 },
-    ], [
-      {
-        formula,
-        coefficientMode: batchRunDataset.summary.coefficientMode,
-        intercept: batchRunDataset.summary.effectiveCoefficients.intercept,
-        attendanceCoefficient:
-          batchRunDataset.summary.effectiveCoefficients.attendanceCoefficient,
-        tryoutCoefficient:
-          batchRunDataset.summary.effectiveCoefficients.tryoutCoefficient,
-        teacherObjectiveCoefficient:
-          batchRunDataset.summary.effectiveCoefficients.teacherObjectiveCoefficient,
-        fallbackUsed: batchRunDataset.summary.fallbackUsed,
-        fallbackReason: batchRunDataset.summary.fallbackReason ?? '',
-      },
-    ]);
+    this.addWorksheet(
+      workbook,
+      'MLR Coefficients',
+      [
+        { header: 'formula', key: 'formula', width: 24 },
+        { header: 'coefficientMode', key: 'coefficientMode', width: 18 },
+        { header: 'intercept', key: 'intercept', width: 16 },
+        {
+          header: 'attendanceCoefficient',
+          key: 'attendanceCoefficient',
+          width: 22,
+        },
+        { header: 'tryoutCoefficient', key: 'tryoutCoefficient', width: 20 },
+        {
+          header: 'teacherObjectiveCoefficient',
+          key: 'teacherObjectiveCoefficient',
+          width: 28,
+        },
+        { header: 'fallbackUsed', key: 'fallbackUsed', width: 14 },
+        { header: 'fallbackReason', key: 'fallbackReason', width: 28 },
+      ],
+      [
+        {
+          formula,
+          coefficientMode: batchRunDataset.summary.coefficientMode,
+          intercept: batchRunDataset.summary.effectiveCoefficients.intercept,
+          attendanceCoefficient:
+            batchRunDataset.summary.effectiveCoefficients.attendanceCoefficient,
+          tryoutCoefficient:
+            batchRunDataset.summary.effectiveCoefficients.tryoutCoefficient,
+          teacherObjectiveCoefficient:
+            batchRunDataset.summary.effectiveCoefficients
+              .teacherObjectiveCoefficient,
+          fallbackUsed: batchRunDataset.summary.fallbackUsed,
+          fallbackReason: batchRunDataset.summary.fallbackReason ?? '',
+        },
+      ],
+    );
 
-    this.addWorksheet(workbook, 'MSE Validation', [
-      { header: 'mse', key: 'mse', width: 16 },
-      { header: 'validationSampleCount', key: 'validationSampleCount', width: 22 },
-      { header: 'formula', key: 'formula', width: 24 },
-      { header: 'description', key: 'description', width: 48 },
-    ], [
-      {
-        mse: batchRunDataset.summary.mse ?? '',
-        validationSampleCount: batchRunDataset.summary.trainingSampleCount,
-        formula,
-        description: '3-variable MLR prediction: Y = a + b1*X1 + b2*X2 + b3*X3',
-      },
-    ]);
+    this.addWorksheet(
+      workbook,
+      'MSE Validation',
+      [
+        { header: 'mse', key: 'mse', width: 16 },
+        {
+          header: 'validationSampleCount',
+          key: 'validationSampleCount',
+          width: 22,
+        },
+        { header: 'formula', key: 'formula', width: 24 },
+        { header: 'description', key: 'description', width: 48 },
+      ],
+      [
+        {
+          mse: batchRunDataset.summary.mse ?? '',
+          validationSampleCount: batchRunDataset.summary.trainingSampleCount,
+          formula,
+          description:
+            '3-variable MLR prediction: Y = a + b1*X1 + b2*X2 + b3*X3',
+        },
+      ],
+    );
 
-    this.addWorksheet(workbook, 'Raw Attendance Aggregates', [
-      { header: 'userId', key: 'userId', width: 38 },
-      { header: 'fullName', key: 'fullName', width: 24 },
-      { header: 'totalAttendanceRecords', key: 'totalAttendanceRecords', width: 22 },
-      { header: 'attendancePoints', key: 'attendancePoints', width: 18 },
-      { header: 'attendancePercentage', key: 'attendancePercentage', width: 20 },
-    ], batchRunDataset.contexts.map((context) => ({
-      userId: context.user.userId,
-      fullName: context.user.fullName,
-      totalAttendanceRecords: context.totalAttendanceRecords,
-      attendancePoints: Number(context.attendancePoints.toFixed(2)),
-      attendancePercentage: Number(context.x1.toFixed(2)),
-    })));
+    this.addWorksheet(
+      workbook,
+      'Raw Attendance Aggregates',
+      [
+        { header: 'userId', key: 'userId', width: 38 },
+        { header: 'fullName', key: 'fullName', width: 24 },
+        {
+          header: 'totalAttendanceRecords',
+          key: 'totalAttendanceRecords',
+          width: 22,
+        },
+        { header: 'attendancePoints', key: 'attendancePoints', width: 18 },
+        {
+          header: 'attendancePercentage',
+          key: 'attendancePercentage',
+          width: 20,
+        },
+      ],
+      batchRunDataset.contexts.map((context) => ({
+        userId: context.user.userId,
+        fullName: context.user.fullName,
+        totalAttendanceRecords: context.totalAttendanceRecords,
+        attendancePoints: Number(context.attendancePoints.toFixed(2)),
+        attendancePercentage: Number(context.x1.toFixed(2)),
+      })),
+    );
 
-    this.addWorksheet(workbook, 'Raw Tryout Aggregates', [
-      { header: 'userId', key: 'userId', width: 38 },
-      { header: 'fullName', key: 'fullName', width: 24 },
-      { header: 'tryoutCount', key: 'tryoutCount', width: 14 },
-      { header: 'averageTryoutScore', key: 'averageTryoutScore', width: 20 },
-      { header: 'averageTeacherObjectiveScore', key: 'averageTeacherObjectiveScore', width: 28 },
-      { header: 'validActualExamScoreCount', key: 'validActualExamScoreCount', width: 24 },
-      { header: 'averageActualExamScore', key: 'averageActualExamScore', width: 22 },
-    ], batchRunDataset.contexts.map((context) => ({
-      userId: context.user.userId,
-      fullName: context.user.fullName,
-      tryoutCount: context.completeTryoutCount,
-      averageTryoutScore: Number(context.x2.toFixed(2)),
-      averageTeacherObjectiveScore: Number(context.x3.toFixed(2)),
-      validActualExamScoreCount: context.validActualExamScoreCount,
-      averageActualExamScore:
-        context.actualExamScoreAverage === null
-          ? ''
-          : Number(context.actualExamScoreAverage.toFixed(2)),
-    })));
+    this.addWorksheet(
+      workbook,
+      'Raw Tryout Aggregates',
+      [
+        { header: 'userId', key: 'userId', width: 38 },
+        { header: 'fullName', key: 'fullName', width: 24 },
+        { header: 'tryoutCount', key: 'tryoutCount', width: 14 },
+        { header: 'averageTryoutScore', key: 'averageTryoutScore', width: 20 },
+        {
+          header: 'averageTeacherObjectiveScore',
+          key: 'averageTeacherObjectiveScore',
+          width: 28,
+        },
+        {
+          header: 'validActualExamScoreCount',
+          key: 'validActualExamScoreCount',
+          width: 24,
+        },
+        {
+          header: 'averageActualExamScore',
+          key: 'averageActualExamScore',
+          width: 22,
+        },
+      ],
+      batchRunDataset.contexts.map((context) => ({
+        userId: context.user.userId,
+        fullName: context.user.fullName,
+        tryoutCount: context.completeTryoutCount,
+        averageTryoutScore: Number(context.x2.toFixed(2)),
+        averageTeacherObjectiveScore: Number(context.x3.toFixed(2)),
+        validActualExamScoreCount: context.validActualExamScoreCount,
+        averageActualExamScore:
+          context.actualExamScoreAverage === null
+            ? ''
+            : Number(context.actualExamScoreAverage.toFixed(2)),
+      })),
+    );
 
-    this.addWorksheet(workbook, 'MLR Run History', [
-      { header: 'generatedAt', key: 'generatedAt', width: 24 },
-      { header: 'generatedById', key: 'generatedById', width: 38 },
-      { header: 'coefficientMode', key: 'coefficientMode', width: 18 },
-      { header: 'intercept', key: 'intercept', width: 16 },
-      { header: 'attendanceCoefficient', key: 'attendanceCoefficient', width: 22 },
-      { header: 'tryoutCoefficient', key: 'tryoutCoefficient', width: 20 },
-      { header: 'teacherObjectiveCoefficient', key: 'teacherObjectiveCoefficient', width: 28 },
-      { header: 'mse', key: 'mse', width: 14 },
-      { header: 'totalUserCount', key: 'totalUserCount', width: 16 },
-      { header: 'activeUserCount', key: 'activeUserCount', width: 16 },
-      { header: 'eligibleUserCount', key: 'eligibleUserCount', width: 17 },
-      { header: 'excludedUserCount', key: 'excludedUserCount', width: 17 },
-      { header: 'trainingSampleCount', key: 'trainingSampleCount', width: 18 },
-      { header: 'predictionCount', key: 'predictionCount', width: 16 },
-      { header: 'fallbackUsed', key: 'fallbackUsed', width: 14 },
-      { header: 'fallbackReason', key: 'fallbackReason', width: 28 },
-      { header: 'notes', key: 'notes', width: 28 },
-    ], latestRunHistory.map((history) => ({
-      generatedAt: history.generatedAt.toISOString(),
-      generatedById: history.generatedById ?? '',
-      coefficientMode: history.coefficientMode,
-      intercept: history.intercept,
-      attendanceCoefficient: history.attendanceCoefficient,
-      tryoutCoefficient: history.tryoutCoefficient,
-      teacherObjectiveCoefficient: history.teacherObjectiveCoefficient,
-      mse: history.mse ?? '',
-      totalUserCount: history.totalUserCount,
-      activeUserCount: history.activeUserCount,
-      eligibleUserCount: history.eligibleUserCount,
-      excludedUserCount: history.excludedUserCount,
-      trainingSampleCount: history.trainingSampleCount,
-      predictionCount: history.predictionCount,
-      fallbackUsed: history.fallbackUsed,
-      fallbackReason: history.fallbackReason ?? '',
-      notes: history.notes ?? '',
-    })));
+    this.addWorksheet(
+      workbook,
+      'MLR Run History',
+      [
+        { header: 'generatedAt', key: 'generatedAt', width: 24 },
+        { header: 'generatedById', key: 'generatedById', width: 38 },
+        { header: 'coefficientMode', key: 'coefficientMode', width: 18 },
+        { header: 'intercept', key: 'intercept', width: 16 },
+        {
+          header: 'attendanceCoefficient',
+          key: 'attendanceCoefficient',
+          width: 22,
+        },
+        { header: 'tryoutCoefficient', key: 'tryoutCoefficient', width: 20 },
+        {
+          header: 'teacherObjectiveCoefficient',
+          key: 'teacherObjectiveCoefficient',
+          width: 28,
+        },
+        { header: 'mse', key: 'mse', width: 14 },
+        { header: 'totalUserCount', key: 'totalUserCount', width: 16 },
+        { header: 'activeUserCount', key: 'activeUserCount', width: 16 },
+        { header: 'eligibleUserCount', key: 'eligibleUserCount', width: 17 },
+        { header: 'excludedUserCount', key: 'excludedUserCount', width: 17 },
+        {
+          header: 'trainingSampleCount',
+          key: 'trainingSampleCount',
+          width: 18,
+        },
+        { header: 'predictionCount', key: 'predictionCount', width: 16 },
+        { header: 'fallbackUsed', key: 'fallbackUsed', width: 14 },
+        { header: 'fallbackReason', key: 'fallbackReason', width: 28 },
+        { header: 'notes', key: 'notes', width: 28 },
+      ],
+      latestRunHistory.map((history) => ({
+        generatedAt: history.generatedAt.toISOString(),
+        generatedById: history.generatedById ?? '',
+        coefficientMode: history.coefficientMode,
+        intercept: history.intercept,
+        attendanceCoefficient: history.attendanceCoefficient,
+        tryoutCoefficient: history.tryoutCoefficient,
+        teacherObjectiveCoefficient: history.teacherObjectiveCoefficient,
+        mse: history.mse ?? '',
+        totalUserCount: history.totalUserCount,
+        activeUserCount: history.activeUserCount,
+        eligibleUserCount: history.eligibleUserCount,
+        excludedUserCount: history.excludedUserCount,
+        trainingSampleCount: history.trainingSampleCount,
+        predictionCount: history.predictionCount,
+        fallbackUsed: history.fallbackUsed,
+        fallbackReason: history.fallbackReason ?? '',
+        notes: history.notes ?? '',
+      })),
+    );
 
     const workbookBuffer = await workbook.xlsx.writeBuffer();
 
@@ -1576,7 +1801,10 @@ export class AnalyticsService implements OnModuleInit {
   }
 
   computeMSE(
-    records: Array<{ predictedScore: number | null; actualExamScore: number | null }>,
+    records: Array<{
+      predictedScore: number | null;
+      actualExamScore: number | null;
+    }>,
   ): number | null {
     return this.mlrService.calculateMse(records);
   }
@@ -1666,7 +1894,9 @@ export class AnalyticsService implements OnModuleInit {
     });
 
     if (!history) {
-      throw new NotFoundException(`MLR run history with ID "${id}" was not found.`);
+      throw new NotFoundException(
+        `MLR run history with ID "${id}" was not found.`,
+      );
     }
 
     return history;
@@ -1694,7 +1924,7 @@ export class AnalyticsService implements OnModuleInit {
   @OnEvent('auth.login.success')
   async handleUserLogin(user: User) {
     if (user.role !== Role.USER) return;
-    
+
     try {
       const analytics = await this.getMyAnalytics(user);
       if (analytics.riskLevel === 'MEDIUM' || analytics.riskLevel === 'HIGH') {
@@ -1704,41 +1934,162 @@ export class AnalyticsService implements OnModuleInit {
             riskLevel: analytics.riskLevel,
             predictedScore: analytics.predictedScore,
             prescriptions: [
-              { action: 'Recommendation', module: analytics.recommendation }
-            ]
-          }
+              { action: 'Recommendation', module: analytics.recommendation },
+            ],
+          },
         });
       }
     } catch (e) {
-      Logger.error(`Error processing login analytics for user ${user.userId}: ${e}`);
+      Logger.error(
+        `Error processing login analytics for user ${user.userId}: ${e}`,
+      );
     }
   }
 
   async getAtRiskUsers(): Promise<{ user: User; predictedScore: number }[]> {
     const batchRunDataset = await this.buildBatchRunDataset();
-    const eligibleContexts = batchRunDataset.contexts.filter((c) => c.isEligible);
-    
+    const eligibleContexts = batchRunDataset.contexts.filter(
+      (c) => c.isEligible,
+    );
+
     const atRiskUsers = [];
     for (const context of eligibleContexts) {
       const predictedScore = this.mlrService.calculatePredictedScore({
         intercept: batchRunDataset.summary.effectiveCoefficients.intercept,
         b1: batchRunDataset.summary.effectiveCoefficients.attendanceCoefficient,
         b2: batchRunDataset.summary.effectiveCoefficients.tryoutCoefficient,
-        b3: batchRunDataset.summary.effectiveCoefficients.teacherObjectiveCoefficient,
+        b3: batchRunDataset.summary.effectiveCoefficients
+          .teacherObjectiveCoefficient,
         x1: context.x1,
         x2: context.x2,
         x3: context.x3,
       }).predictedScore;
-      
+
       if (predictedScore < 70) {
-        atRiskUsers.push({ user: context.user, predictedScore: this.roundMetric(predictedScore) });
+        atRiskUsers.push({
+          user: context.user,
+          predictedScore: this.roundMetric(predictedScore),
+        });
       }
     }
-    
+
     return atRiskUsers;
   }
 
-  async chatWithCounselor(message: string, context: string): Promise<string> {
-    return this.xaiService.chatWithCounselor(message, context);
+  async chatWithCounselor(
+    message: string,
+    context: string,
+    language?: string,
+  ): Promise<string> {
+    return this.xaiService.chatWithCounselor(message, context, language);
+  }
+
+  async draftInterventionMessage(
+    studentName: string,
+    riskLevel: string,
+    attendancePercentage: number,
+    averageTryoutScore: number,
+    teacherObjectiveScore: number | null,
+    predictedScore: number | null,
+    language?: string,
+  ): Promise<string> {
+    return this.xaiService.draftInterventionMessage(
+      studentName,
+      riskLevel,
+      attendancePercentage,
+      averageTryoutScore,
+      teacherObjectiveScore,
+      predictedScore,
+      language,
+    );
+  }
+
+  async generateStudyPlan(userId: string, language?: string): Promise<string> {
+    const user = await this.userRepository.findOne({ where: { userId } });
+    if (!user) {
+      throw new Error('User not found.');
+    }
+
+    const analyticsRecord = await this.analyticsRecordRepository.findOne({
+      where: { user: { userId } },
+    });
+    const records = await this.recordRepository.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+    });
+
+    const avgTryoutScore = analyticsRecord
+      ? Number(analyticsRecord.avgTryoutScore)
+      : 0;
+    const teacherObjectiveScore =
+      analyticsRecord && analyticsRecord.teacherObjectiveScore !== null
+        ? Number(analyticsRecord.teacherObjectiveScore)
+        : null;
+
+    // Calculate weakest subjects from recent records
+    const weakestSubjects = [];
+    if (records.length > 0) {
+      let mathSum = 0;
+      let logicSum = 0;
+      let engSum = 0;
+      let count = 0;
+
+      for (const record of records) {
+        // Use mathematicsScore if mathScore is null, logicScore vs logicalReasoningScore
+        const m = record.mathScore ?? record.mathematicsScore ?? 0;
+        const l = record.logicScore ?? record.logicalReasoningScore ?? 0;
+        const e = record.englishScore ?? 0;
+
+        mathSum += m;
+        logicSum += l;
+        engSum += e;
+        count++;
+      }
+
+      const mathAvg = mathSum / count;
+      const logicAvg = logicSum / count;
+      const engAvg = engSum / count;
+
+      if (mathAvg < 70) weakestSubjects.push('Mathematics');
+      if (logicAvg < 70) weakestSubjects.push('Logical Reasoning');
+      if (engAvg < 70) weakestSubjects.push('English');
+    }
+
+    return this.xaiService.generateStudyPlanAsync(
+      user.fullName || user.username,
+      avgTryoutScore,
+      teacherObjectiveScore,
+      weakestSubjects,
+      language,
+    );
+  }
+
+  @OnEvent('user.academic.updated')
+  async handleUserAcademicUpdated(payload: { userId: string }) {
+    try {
+      const { userId } = payload;
+
+      const user = await this.userRepository.findOne({
+        where: { userId, role: Role.USER },
+      });
+
+      if (!user) return;
+
+      const snapshot = await this.getUserMlrSnapshot(userId);
+
+      if (snapshot && snapshot.predictedScore !== null) {
+        if (snapshot.predictedScore < 70) {
+          this.eventEmitter.emit('intervention.alert', {
+            user,
+            predictionData: snapshot,
+          });
+        }
+      }
+    } catch (e: any) {
+      Logger.error(
+        `Error handling user.academic.updated for ${payload?.userId}: ${e.message}`,
+        'AnalyticsService',
+      );
+    }
   }
 }

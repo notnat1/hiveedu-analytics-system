@@ -15,14 +15,19 @@ export class InterventionNote {
   @PrimaryGeneratedColumn('uuid')
   noteId!: string;
 
-  @ManyToOne(() => User, (user) => user.interventionNotes, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.interventionNotes, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'userId' })
   user!: User;
 
   @Column({ type: 'uuid' })
   userId!: string;
 
-  @ManyToOne(() => User, (user) => user.createdInterventions, { onDelete: 'SET NULL', nullable: true })
+  @ManyToOne(() => User, (user) => user.createdInterventions, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
   @JoinColumn({ name: 'createdById' })
   createdBy!: User | null;
 

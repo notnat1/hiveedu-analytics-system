@@ -48,22 +48,24 @@ export class SeederService {
     examPrefix: string,
     scoreRows: Array<[number, number, number, number | null, string | null]>,
   ) {
-    return scoreRows.map(([math, logic, english, actualExamScore, feedback], index) => ({
-      math,
-      logic,
-      english,
-      teacherObjectiveScore: this.deriveTeacherObjectiveScore(
+    return scoreRows.map(
+      ([math, logic, english, actualExamScore, feedback], index) => ({
         math,
         logic,
         english,
-        index,
-      ),
-      actualExamScore,
-      feedback,
-      examLabel: `${examPrefix} ${index + 1}`,
-      examDate: `2026-0${Math.min(index + 1, 9)}-${String(10 + index).padStart(2, '0')}`,
-      isUsedForTraining: true,
-    }));
+        teacherObjectiveScore: this.deriveTeacherObjectiveScore(
+          math,
+          logic,
+          english,
+          index,
+        ),
+        actualExamScore,
+        feedback,
+        examLabel: `${examPrefix} ${index + 1}`,
+        examDate: `2026-0${Math.min(index + 1, 9)}-${String(10 + index).padStart(2, '0')}`,
+        isUsedForTraining: true,
+      }),
+    );
   }
 
   private deriveTeacherObjectiveScore(
@@ -90,7 +92,13 @@ export class SeederService {
         isActive: true,
         assignedTutorUsername: 'teacher1',
         tryoutScores: this.buildTryoutSet('Diagnostic', [
-          [91, 90, 88, 89, 'Excellent consistency and strong analytical focus.'],
+          [
+            91,
+            90,
+            88,
+            89,
+            'Excellent consistency and strong analytical focus.',
+          ],
           [90, 92, 89, 90, 'Keeps strong momentum across all competencies.'],
           [93, 91, 90, 92, 'Feedback is complete and performance is stable.'],
           [92, 90, 91, 91, 'Shows reliable exam readiness.'],
@@ -200,9 +208,27 @@ export class SeederService {
         isActive: true,
         assignedTutorUsername: 'teacher2',
         tryoutScores: this.buildTryoutSet('Practice', [
-          [73, 75, 74, null, 'Feedback completed while monitoring improvement.'],
-          [74, 73, 75, null, 'Ground truth pending but complete training sample.'],
-          [76, 74, 75, null, 'Useful eligible sample without actual exam score.'],
+          [
+            73,
+            75,
+            74,
+            null,
+            'Feedback completed while monitoring improvement.',
+          ],
+          [
+            74,
+            73,
+            75,
+            null,
+            'Ground truth pending but complete training sample.',
+          ],
+          [
+            76,
+            74,
+            75,
+            null,
+            'Useful eligible sample without actual exam score.',
+          ],
           [75, 76, 74, null, 'Can support tutor averages and eligibility.'],
           [77, 75, 76, null, 'Stable, moderate demo sample.'],
         ]),
@@ -223,9 +249,21 @@ export class SeederService {
         assignedTutorUsername: 'teacher2',
         tryoutScores: this.buildTryoutSet('Support', [
           [70, 68, 69, null, 'Needs closer tryout support.'],
-          [71, 69, 70, null, 'Feedback keeps the user inside monitoring scope.'],
+          [
+            71,
+            69,
+            70,
+            null,
+            'Feedback keeps the user inside monitoring scope.',
+          ],
           [69, 70, 68, null, 'Scores are complete and training-ready.'],
-          [72, 71, 70, null, 'Valid but at-risk sample without actual exam score.'],
+          [
+            72,
+            71,
+            70,
+            null,
+            'Valid but at-risk sample without actual exam score.',
+          ],
           [70, 69, 71, null, 'Supports early warning demonstration.'],
         ]),
         attendanceStatuses: [
@@ -244,9 +282,21 @@ export class SeederService {
         isActive: false,
         assignedTutorUsername: 'teacher2',
         tryoutScores: this.buildTryoutSet('Inactive', [
-          [82, 81, 80, 81, 'Inactive sample should be excluded by eligibility.'],
+          [
+            82,
+            81,
+            80,
+            81,
+            'Inactive sample should be excluded by eligibility.',
+          ],
           [81, 80, 82, 82, 'Complete records remain useful for audit.'],
-          [83, 82, 81, 82, 'Inactive account stays out of final prediction set.'],
+          [
+            83,
+            82,
+            81,
+            82,
+            'Inactive account stays out of final prediction set.',
+          ],
           [80, 81, 79, 80, 'Demo support for inactive exclusion count.'],
           [82, 83, 81, 83, 'Inactive but complete records.'],
         ]),
@@ -267,10 +317,28 @@ export class SeederService {
         assignedTutorUsername: 'teacher1',
         tryoutScores: [
           ...this.buildTryoutSet('Incomplete', [
-            [79, 78, 77, null, 'Eligible-looking start but incomplete total count.'],
+            [
+              79,
+              78,
+              77,
+              null,
+              'Eligible-looking start but incomplete total count.',
+            ],
             [80, 79, 78, null, 'Below minimum complete tryout requirement.'],
-            [78, 77, 79, null, 'Used to demonstrate insufficient tryout exclusion.'],
-            [81, 80, 79, null, 'Still under the minimum 5 complete tryout rule.'],
+            [
+              78,
+              77,
+              79,
+              null,
+              'Used to demonstrate insufficient tryout exclusion.',
+            ],
+            [
+              81,
+              80,
+              79,
+              null,
+              'Still under the minimum 5 complete tryout rule.',
+            ],
           ]),
           {
             math: 82,
@@ -306,7 +374,8 @@ export class SeederService {
             english: 82,
             teacherObjectiveScore: null,
             actualExamScore: null,
-            feedback: 'Contains one valid record but also null-score rows for exclusion demo.',
+            feedback:
+              'Contains one valid record but also null-score rows for exclusion demo.',
             examLabel: 'Null Mix 1',
             examDate: '2026-01-10',
             isUsedForTraining: true,
@@ -373,7 +442,9 @@ export class SeederService {
       'TRUNCATE TABLE "analytics_records" CASCADE',
     );
     await this.recordRepository.query('TRUNCATE TABLE "records" CASCADE');
-    await this.attendanceRepository.query('TRUNCATE TABLE "attendance" CASCADE');
+    await this.attendanceRepository.query(
+      'TRUNCATE TABLE "attendance" CASCADE',
+    );
     await this.userRepository.query('TRUNCATE TABLE "users" CASCADE');
   }
 
@@ -428,12 +499,15 @@ export class SeederService {
         fullName: profile.fullName,
         role: Role.USER,
         isActive: profile.isActive,
-        assignedTutorId: tutorMap.get(profile.assignedTutorUsername)?.userId ?? null,
+        assignedTutorId:
+          tutorMap.get(profile.assignedTutorUsername)?.userId ?? null,
       }),
     );
 
     const savedUsers = await this.userRepository.save(userEntities);
-    const savedUserMap = new Map(savedUsers.map((user) => [user.username, user]));
+    const savedUserMap = new Map(
+      savedUsers.map((user) => [user.username, user]),
+    );
 
     const records: RecordEntity[] = [];
     const attendanceRecords: Attendance[] = [];
@@ -496,7 +570,8 @@ export class SeederService {
           ? Number(
               (
                 trainingRecords.reduce(
-                  (sum, entry) => sum + (entry.math + entry.logic + entry.english) / 3,
+                  (sum, entry) =>
+                    sum + (entry.math + entry.logic + entry.english) / 3,
                   0,
                 ) / trainingRecords.length
               ).toFixed(2),
@@ -509,27 +584,33 @@ export class SeederService {
         validTeacherObjectiveScores.length > 0
           ? Number(
               (
-                validTeacherObjectiveScores.reduce((sum, score) => sum + score, 0) /
-                validTeacherObjectiveScores.length
+                validTeacherObjectiveScores.reduce(
+                  (sum, score) => sum + score,
+                  0,
+                ) / validTeacherObjectiveScores.length
               ).toFixed(2),
             )
           : 0;
-      const attendancePoints = profile.attendanceStatuses.reduce((sum, status) => {
-        if (status === AttendanceStatus.PRESENT) {
-          return sum + 1;
-        }
+      const attendancePoints = profile.attendanceStatuses.reduce(
+        (sum, status) => {
+          if (status === AttendanceStatus.PRESENT) {
+            return sum + 1;
+          }
 
-        if (status === AttendanceStatus.LATE) {
-          return sum + 0.5;
-        }
+          if (status === AttendanceStatus.LATE) {
+            return sum + 0.5;
+          }
 
-        return sum;
-      }, 0);
+          return sum;
+        },
+        0,
+      );
       const attendancePercentage =
         profile.attendanceStatuses.length > 0
           ? Number(
               (
-                (attendancePoints / profile.attendanceStatuses.length) * 100
+                (attendancePoints / profile.attendanceStatuses.length) *
+                100
               ).toFixed(2),
             )
           : 0;

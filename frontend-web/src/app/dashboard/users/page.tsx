@@ -4,8 +4,9 @@ import { useTranslation } from "react-i18next";
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, CheckCircle2, Edit, Plus, Trash2, X, Search } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
+import { API_BASE } from "@/lib/api";
 
-type UserRole = "ADMIN" | "TEACHER" | "USER";
+type UserRole = "ADMIN" | "TEACHER" | "USER" | "PARENT";
 type StatusFilter = "ALL" | "ACTIVE" | "INACTIVE";
 
 interface DecodedToken {
@@ -21,6 +22,8 @@ interface UserRecord {
   role: UserRole;
   isActive?: boolean;
   assignedTutorId?: string | null;
+  linkedStudentId?: string | null;
+  phone?: string | null;
   createdAt?: string;
 }
 
@@ -38,6 +41,7 @@ export default function UserManagementPage() {
   const [currentUser, setCurrentUser] = useState<DecodedToken | null>(null);
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [teachers, setTeachers] = useState<UserRecord[]>([]);
+  const [students, setStudents] = useState<UserRecord[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,7 +51,9 @@ export default function UserManagementPage() {
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<UserRole>("USER");
   const [newIsActive, setNewIsActive] = useState(true);
+  const [newPhone, setNewPhone] = useState("");
   const [assignedTutorId, setAssignedTutorId] = useState<string | null>(null);
+  const [linkedStudentId, setLinkedStudentId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<"ALL" | UserRole>("ALL");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
@@ -74,7 +80,9 @@ export default function UserManagementPage() {
     setNewPassword("");
     setNewRole("USER");
     setNewIsActive(true);
+    setNewPhone("");
     setAssignedTutorId(null);
+    setLinkedStudentId(null);
   };
 
   const closeModal = () => {
@@ -105,7 +113,7 @@ export default function UserManagementPage() {
       setIsLoadingUsers(true);
       setPageError("");
 
-      const response = await fetch("http://localhost:3000/users", {
+      const response = await fetch(`${API_BASE}/users`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -118,10 +126,12 @@ export default function UserManagementPage() {
       const data = (await response.json().then(r => r.data ?? r)) as UserRecord[];
       setUsers(data);
       setTeachers(data.filter((user) => user.role === "TEACHER"));
+      setStudents(data.filter((user) => user.role === "USER"));
     } catch (error) {
       console.error("Error fetching users:", error);
       setUsers([]);
       setTeachers([]);
+      setStudents([]);
       setPageError(t("errors.unable_load_accounts"));
       showToast(t("errors.unable_load_accounts"), "error");
     } finally {
@@ -159,7 +169,9 @@ export default function UserManagementPage() {
     setNewUsername(user.username);
     setNewRole(user.role);
     setNewIsActive(getSafeIsActive(user));
+    setNewPhone(user.phone ?? "");
     setAssignedTutorId(user.assignedTutorId ?? null);
+    setLinkedStudentId(user.linkedStudentId ?? null);
     setNewPassword("");
     setIsModalOpen(true);
   };
@@ -193,13 +205,17 @@ export default function UserManagementPage() {
       role: UserRole;
       isActive: boolean;
       password?: string;
+      phone?: string;
       assignedTutorId?: string | null;
+      linkedStudentId?: string | null;
     } = {
       fullName: newFullName.trim(),
       username: newUsername.trim(),
       role: newRole,
       isActive: newIsActive,
+      phone: newPhone.trim() || undefined,
       assignedTutorId: newRole === "USER" ? assignedTutorId ?? null : null,
+      linkedStudentId: newRole === "PARENT" ? linkedStudentId ?? null : null,
     };
 
     if (!isEditing || newPassword.trim() !== "") {
@@ -211,8 +227,8 @@ export default function UserManagementPage() {
 
       const response = await fetch(
         isEditing
-          ? `http://localhost:3000/users/${editingUserId}`
-          : "http://localhost:3000/users",
+          ? `${API_BASE}/users/${editingUserId}`
+          : `${API_BASE}/users`,
         {
           method: isEditing ? "PATCH" : "POST",
           headers: {
@@ -246,7 +262,7 @@ export default function UserManagementPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/users/${id}`, {
+      const response = await fetch(`${API_BASE}/users/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -272,6 +288,15 @@ export default function UserManagementPage() {
 
     const assignedTutor = teachers.find((teacher) => teacher.userId === user.assignedTutorId);
     return assignedTutor?.fullName || assignedTutor?.username || "N/A";
+  };
+
+  const getLinkedStudentName = (user: UserRecord) => {
+    if (user.role !== "PARENT") {
+      return "N/A";
+    }
+
+    const linkedStudent = students.find((student) => student.userId === user.linkedStudentId);
+    return linkedStudent?.fullName || linkedStudent?.username || "N/A";
   };
 
   const filteredUsers = useMemo(() => {
@@ -308,7 +333,7 @@ export default function UserManagementPage() {
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-500 dark:to-cyan-400 hover:from-blue-500 hover:to-cyan-400 dark:hover:from-blue-400 dark:hover:to-cyan-300 rounded-xl shadow-[0_8px_20px_rgba(14,165,233,0.3)] dark:shadow-[0_8px_20px_rgba(14,165,233,0.2)] hover:shadow-[0_10px_25px_rgba(14,165,233,0.4)] dark:hover:shadow-[0_10px_25px_rgba(14,165,233,0.3)] hover:-translate-y-0.5 transition-all"
           >
             <Plus size={18} />
-            Add New Account
+            {t("users.add_new_account")}
           </button>
         )}
       </div>
@@ -353,6 +378,9 @@ export default function UserManagementPage() {
           <option value="USER" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
             {t("users.user")}
           </option>
+          <option value="PARENT" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
+            {t("users.parent")}
+          </option>
         </select>
 
         <select
@@ -378,22 +406,25 @@ export default function UserManagementPage() {
             <thead>
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider border-b border-white/[0.05]">
-                  Full Name
+                  {t("users.full_name")}
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider border-b border-white/[0.05]">
-                  Username
+                  {t("users.username")}
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider border-b border-white/[0.05]">
-                  Role
+                  {t("users.role")}
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider border-b border-white/[0.05]">
-                  Assigned Tutor
+                  Nomor WA
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider border-b border-white/[0.05]">
-                  Status
+                  {t("users.assigned_tutor_linked_student")}
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider border-b border-white/[0.05]">
+                  {t("users.status")}
                 </th>
                 <th className="px-6 py-4 text-right text-xs font-medium text-zinc-500 uppercase tracking-wider border-b border-white/[0.05]">
-                  Actions
+                  {t("users.actions")}
                 </th>
               </tr>
             </thead>
@@ -424,7 +455,10 @@ export default function UserManagementPage() {
                       {user.role === "ADMIN" ? t("users.admin") : user.role === "TEACHER" ? t("users.teacher") : user.role === "USER" ? t("users.user") : user.role}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">
-                      {getAssignedTutorName(user)}
+                      {user.phone || "-"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">
+                      {user.role === "PARENT" ? getLinkedStudentName(user) : getAssignedTutorName(user)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
@@ -532,6 +566,17 @@ export default function UserManagementPage() {
               </div>
 
               <div className="space-y-2">
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Nomor WhatsApp (Opsional)</label>
+                <input
+                  type="text"
+                  placeholder="Contoh: 08123456789"
+                  value={newPhone}
+                  onChange={(event) => setNewPhone(event.target.value.replace(/\D/g, ""))}
+                  className={inputClassName}
+                />
+              </div>
+
+              <div className="space-y-2">
                 <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("users.role")}</label>
                 <select
                   value={newRole}
@@ -540,6 +585,9 @@ export default function UserManagementPage() {
                     setNewRole(nextRole);
                     if (nextRole !== "USER") {
                       setAssignedTutorId(null);
+                    }
+                    if (nextRole !== "PARENT") {
+                      setLinkedStudentId(null);
                     }
                   }}
                   className={inputClassName}
@@ -552,6 +600,9 @@ export default function UserManagementPage() {
                   </option>
                   <option value="USER" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
                     {t("users.user")}
+                  </option>
+                  <option value="PARENT" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
+                    {t("users.parent")}
                   </option>
                 </select>
               </div>
@@ -608,6 +659,33 @@ export default function UserManagementPage() {
                   </select>
                 </div>
               )}
+
+              {newRole === "PARENT" && (
+                <div className="space-y-2">
+                  <label htmlFor="linked-student" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    {t("users.linked_student")}
+                  </label>
+                  <select
+                    id="linked-student"
+                    value={linkedStudentId ?? ""}
+                    onChange={(event) => setLinkedStudentId(event.target.value || null)}
+                    className={inputClassName}
+                  >
+                    <option value="" className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
+                      {students.length > 0 ? t("users.select_linked_student") : t("users.no_students_available")}
+                    </option>
+                    {students.map((student) => (
+                      <option
+                        key={student.userId}
+                        value={student.userId}
+                        className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100"
+                      >
+                        {student.fullName || student.username}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             <div className="mt-6 flex justify-end gap-4">
@@ -615,7 +693,7 @@ export default function UserManagementPage() {
                 onClick={closeModal}
                 className="px-4 py-2 text-sm font-semibold text-zinc-400 hover:text-zinc-200"
               >
-                Cancel
+                {t("users.cancel")}
               </button>
               <button
                 onClick={() => void handleSubmit()}

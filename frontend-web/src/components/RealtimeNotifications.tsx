@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { io, Socket } from "socket.io-client";
+import { io } from "socket.io-client";
 import { Bell, X, AlertTriangle, MessageSquare, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { API_BASE } from "@/lib/api";
 
 interface Notification {
   id: string;
@@ -15,7 +16,6 @@ interface Notification {
 
 export default function RealtimeNotifications({ token }: { token: string }) {
   const { t } = useTranslation();
-  const [socket, setSocket] = useState<Socket | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -23,25 +23,22 @@ export default function RealtimeNotifications({ token }: { token: string }) {
     if (!token) return;
 
     // Connect to WebSocket Gateway
-    const newSocket = io("http://localhost:3000", {
+    const newSocket = io(API_BASE, {
       auth: {
         token: token,
       },
       transports: ["websocket"],
     });
 
-    setSocket(newSocket);
-
     newSocket.on("connect", () => {
-      console.log("Connected to Realtime Notification System");
+      // Socket connected
     });
 
-    newSocket.on("notification", (payload: any) => {
-      console.log("New Notification Received:", payload);
+    newSocket.on("notification", (payload: Partial<Notification>) => {
       const newNotif: Notification = {
         id: Math.random().toString(36).substring(7),
         title: payload.title || t("notifications.new_notice"),
-        message: payload.message,
+        message: payload.message || "",
         type: payload.type || "info",
         timestamp: new Date(),
       };
@@ -52,7 +49,11 @@ export default function RealtimeNotifications({ token }: { token: string }) {
       // Auto hide after 10s if not intervention
       if (newNotif.type !== "intervention") {
          setTimeout(() => {
-            removeNotification(newNotif.id);
+            setNotifications((prev) => {
+              const updated = prev.filter((n) => n.id !== newNotif.id);
+              if (updated.length === 0) setIsVisible(false);
+              return updated;
+            });
          }, 10000);
       }
     });
@@ -60,13 +61,14 @@ export default function RealtimeNotifications({ token }: { token: string }) {
     return () => {
       newSocket.disconnect();
     };
-  }, [token]);
+  }, [token, t]);
 
   const removeNotification = (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-    if (notifications.length <= 1) {
-      setIsVisible(false);
-    }
+    setNotifications((prev) => {
+      const updated = prev.filter((n) => n.id !== id);
+      if (updated.length === 0) setIsVisible(false);
+      return updated;
+    });
   };
 
   const getIcon = (type: string) => {

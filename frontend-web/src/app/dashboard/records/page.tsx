@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, CheckCircle2, Pencil } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
+import { API_BASE } from "@/lib/api";
 
 interface DecodedToken {
   sub: string;
@@ -105,7 +106,7 @@ export default function AcademicRecordsPage() {
     formData.append('file', importFile);
 
     try {
-      const response = await fetch("http://localhost:3000/records/bulk-import", {
+      const response = await fetch(`${API_BASE}/records/bulk-import`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -139,7 +140,7 @@ export default function AcademicRecordsPage() {
     }, 3000);
   };
 
-  const isReadOnly = currentUser?.role === "USER";
+  const isReadOnly = currentUser?.role === "USER" || currentUser?.role === "PARENT";
   const selectedUser = userOptions.find((user) => user.userId === selectedUserId) ?? null;
 
   const localAveragePreview = useMemo(() => {
@@ -299,10 +300,10 @@ export default function AcademicRecordsPage() {
 
       const usersEndpoint =
         decoded.role === "ADMIN"
-          ? "http://localhost:3000/users"
+          ? `${API_BASE}/users`
           : decoded.role === "TEACHER"
-            ? "http://localhost:3000/users/role/user"
-            : "http://localhost:3000/users/me";
+            ? `${API_BASE}/users/role/user`
+            : `${API_BASE}/users/me`;
 
       const response = await fetch(usersEndpoint, {
         headers: {
@@ -315,27 +316,39 @@ export default function AcademicRecordsPage() {
       }
 
       const responseData = await response.json().then(r => r.data ?? r);
-      const data: UserOption[] =
-        decoded.role === "USER"
-          ? [
-              {
-                userId: (responseData as CurrentProfileResponse).userId,
-                username: (responseData as CurrentProfileResponse).username,
-                fullName:
-                  (responseData as CurrentProfileResponse).fullName ?? undefined,
-                role: (responseData as CurrentProfileResponse).role,
-                assignedTutorId:
-                  (responseData as CurrentProfileResponse).assignedTutorId ?? null,
-              },
-            ]
-          : (responseData as UserOption[]);
+      const profile = responseData as CurrentProfileResponse & { linkedStudentId?: string | null };
+      let data: UserOption[];
+      
+      if (decoded.role === "USER") {
+        data = [
+          {
+            userId: profile.userId,
+            username: profile.username,
+            fullName: profile.fullName ?? undefined,
+            role: profile.role,
+            assignedTutorId: profile.assignedTutorId ?? null,
+          }
+        ];
+      } else if (decoded.role === "PARENT") {
+        data = profile.linkedStudentId ? [
+          {
+            userId: profile.linkedStudentId,
+            username: (profile as any).linkedStudent?.username || "linked_student",
+            fullName: (profile as any).linkedStudent?.fullName || (t("users.linked_student") ?? "Linked Student"),
+            role: "USER",
+            assignedTutorId: null,
+          } as UserOption,
+        ] : [];
+      } else {
+        data = responseData as UserOption[];
+      }
       const roleUsers = data.filter((user) => user.role === "USER");
       const filteredUsers =
         decoded.role === "ADMIN"
           ? roleUsers
           : decoded.role === "TEACHER"
             ? roleUsers.filter((user) => user.assignedTutorId === decoded.sub)
-            : roleUsers.filter((user) => user.userId === decoded.sub);
+            : roleUsers;
 
       setUserOptions(filteredUsers);
       setSelectedUserId((previousSelectedUserId) => {
@@ -346,8 +359,8 @@ export default function AcademicRecordsPage() {
           return previousSelectedUserId;
         }
 
-        if (decoded.role === "USER") {
-          return decoded.sub;
+        if (decoded.role === "USER" || decoded.role === "PARENT") {
+          return filteredUsers[0]?.userId ?? "";
         }
 
         return filteredUsers[0]?.userId ?? "";
@@ -369,7 +382,7 @@ export default function AcademicRecordsPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/users/${userId}/features`, {
+      const response = await fetch(`${API_BASE}/users/${userId}/features`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -395,7 +408,7 @@ export default function AcademicRecordsPage() {
 
     try {
       setIsLoadingRecords(true);
-      const response = await fetch(`http://localhost:3000/records/user/${userId}`, {
+      const response = await fetch(`${API_BASE}/records/user/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -560,8 +573,8 @@ export default function AcademicRecordsPage() {
       setIsSubmitting(true);
       const response = await fetch(
         editingRecordId
-          ? `http://localhost:3000/records/${editingRecordId}`
-          : "http://localhost:3000/records",
+          ? `${API_BASE}/records/${editingRecordId}`
+          : `${API_BASE}/records`,
         {
           method: editingRecordId ? "PATCH" : "POST",
           headers: {

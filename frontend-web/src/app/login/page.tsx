@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
+import { API_BASE } from "@/lib/api";
 
 // === LOGO BARU: THE ASCENDANT MONOGRAM (H & A) ===
 const HiveEduLogo = () => (
@@ -128,7 +129,7 @@ export default function LoginPage() {
 
     try {
       if (is2FA) {
-        const res = await fetch("http://localhost:3000/auth/login/2fa", {
+        const res = await fetch(`${API_BASE}/auth/login/2fa`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ tempToken, code: otpToken }),
@@ -150,7 +151,7 @@ export default function LoginPage() {
         return;
       }
 
-      const res = await fetch("http://localhost:3000/auth/login", {
+      const res = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -42,6 +42,7 @@ import {
   Legend,
 } from "recharts";
 import { jwtDecode } from "jwt-decode";
+import { API_BASE } from "@/lib/api";
 
 interface DecodedToken {
   sub: string;
@@ -395,7 +396,7 @@ export default function DashboardPage() {
     try {
       setIsExportingAnalyticsReport(true);
 
-      const response = await fetch("http://localhost:3000/analytics/export", {
+      const response = await fetch(`${API_BASE}/analytics/export`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -638,22 +639,22 @@ export default function DashboardPage() {
 
   const fetchUserAnalytics = async (userId: string, token: string) => {
     const [featureResponse, recordsResponse, selfAnalyticsResponse, attendanceResponse] = await Promise.all([
-      fetch(`http://localhost:3000/users/${userId}/features`, {
+      fetch(`${API_BASE}/users/${userId}/features`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       }),
-      fetch(`http://localhost:3000/records/user/${userId}`, {
+      fetch(`${API_BASE}/records/user/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       }),
-      fetch("http://localhost:3000/analytics/me", {
+      fetch(`${API_BASE}/analytics/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       }),
-      fetch(`http://localhost:3000/attendance/user/${userId}`, {
+      fetch(`${API_BASE}/attendance/user/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -774,19 +775,19 @@ export default function DashboardPage() {
 
   const fetchAdminDashboardData = async (token: string) => {
     // Automatically trigger MLR generation by requesting the dashboard analytics first
-    await fetch("http://localhost:3000/analytics/dashboard", {
+    await fetch(`${API_BASE}/analytics/dashboard`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     }).catch(console.error);
 
     const [usersResponse, runHistoryResponse] = await Promise.all([
-      fetch("http://localhost:3000/users", {
+      fetch(`${API_BASE}/users`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       }),
-      fetch("http://localhost:3000/analytics/mlr-run-history", {
+      fetch(`${API_BASE}/analytics/mlr-run-history`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -817,12 +818,12 @@ export default function DashboardPage() {
     const userRows = await Promise.all(
       userAccounts.map(async (user) => {
         const [featureResponse, recordsResponse] = await Promise.all([
-          fetch(`http://localhost:3000/users/${user.userId}/features`, {
+          fetch(`${API_BASE}/users/${user.userId}/features`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           }),
-          fetch(`http://localhost:3000/records/user/${user.userId}`, {
+          fetch(`${API_BASE}/records/user/${user.userId}`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -864,7 +865,7 @@ export default function DashboardPage() {
 
         if (featureData.tryoutCount >= 5 && teacherObjectiveScore !== null) {
           const predictionResponse = await fetch(
-            "http://localhost:3000/analytics/predict-performance",
+            `${API_BASE}/analytics/predict-performance`,
             {
               method: "POST",
               headers: {
@@ -917,7 +918,7 @@ export default function DashboardPage() {
   };
 
   const fetchGlobalAnalytics = async (token: string) => {
-    const response = await fetch("http://localhost:3000/analytics/global", {
+    const response = await fetch(`${API_BASE}/analytics/global`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -934,7 +935,7 @@ export default function DashboardPage() {
 
   const fetchTeacherDashboardData = async (token: string, userId: string) => {
     try {
-      const response = await fetch("http://localhost:3000/analytics/tutors", {
+      const response = await fetch(`${API_BASE}/analytics/tutors`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
@@ -1050,6 +1051,7 @@ export default function DashboardPage() {
             </div>
 
             <button
+              id="tour-export"
               onClick={handleDownloadPDF}
               disabled={isGeneratingPDF || isUserDownloadDisabled}
               className="flex items-center gap-2 px-5 py-2.5 bg-white/[0.03] border border-white/10 hover:border-white/20 hover:bg-white/[0.05] disabled:opacity-50 disabled:cursor-not-allowed text-zinc-200 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all shadow-xl group whitespace-nowrap self-start"
@@ -1068,7 +1070,7 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+          <div id="tour-overview" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
             {userAnalytics ? (
               <>
                 <div className="bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl shadow-2xl rounded-2xl p-6 group transition-all duration-500 hover:bg-white/[0.03]">
@@ -1121,7 +1123,7 @@ export default function DashboardPage() {
                   <p className="mt-3 text-xs text-zinc-500">{t("dashboard.risk_desc")}</p>
                 </div>
 
-                <div className="md:col-span-2 xl:col-span-4 bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl shadow-2xl rounded-3xl p-8 md:p-10 relative overflow-hidden">
+                <div id="tour-predictions" className="md:col-span-2 xl:col-span-4 bg-white/[0.01] border border-white/[0.04] backdrop-blur-3xl shadow-2xl rounded-3xl p-8 md:p-10 relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-violet-500/5 to-transparent opacity-60 pointer-events-none"></div>
                   <div className="relative z-10">
                     <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">

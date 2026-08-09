@@ -48,17 +48,20 @@ export class MlrService {
       return 0;
     }
 
-    const totalAttendancePoints = attendanceRecords.reduce((sum, attendance) => {
-      if (attendance.status === AttendanceStatus.PRESENT) {
-        return sum + 1;
-      }
+    const totalAttendancePoints = attendanceRecords.reduce(
+      (sum, attendance) => {
+        if (attendance.status === AttendanceStatus.PRESENT) {
+          return sum + 1;
+        }
 
-      if (attendance.status === AttendanceStatus.LATE) {
-        return sum + 0.5;
-      }
+        if (attendance.status === AttendanceStatus.LATE) {
+          return sum + 0.5;
+        }
 
-      return sum;
-    }, 0);
+        return sum;
+      },
+      0,
+    );
 
     return (totalAttendancePoints / attendanceRecords.length) * 100;
   }
@@ -164,7 +167,8 @@ export class MlrService {
     if (validSamples.length < 4) {
       return {
         success: false,
-        reason: 'At least 4 valid training samples are required for coefficient fitting.',
+        reason:
+          'At least 4 valid training samples are required for coefficient fitting.',
         validTrainingSampleCount: validSamples.length,
         coefficients: null,
       };
@@ -217,7 +221,8 @@ export class MlrService {
     if (!solution) {
       return {
         success: false,
-        reason: 'Coefficient fitting failed because the training matrix is singular.',
+        reason:
+          'Coefficient fitting failed because the training matrix is singular.',
         validTrainingSampleCount: validSamples.length,
         coefficients: null,
       };
@@ -304,9 +309,12 @@ export class MlrService {
 
       const pivotValue = augmentedMatrix[pivotIndex][pivotIndex];
 
-      for (let columnIndex = pivotIndex; columnIndex <= size; columnIndex += 1) {
-        augmentedMatrix[pivotIndex][columnIndex] /=
-          pivotValue;
+      for (
+        let columnIndex = pivotIndex;
+        columnIndex <= size;
+        columnIndex += 1
+      ) {
+        augmentedMatrix[pivotIndex][columnIndex] /= pivotValue;
       }
 
       for (let rowIndex = 0; rowIndex < size; rowIndex += 1) {

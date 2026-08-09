@@ -24,7 +24,10 @@ export class InterventionsController {
 
   @Post()
   @Roles(Role.ADMIN, Role.TEACHER)
-  create(@Body() createInterventionDto: CreateInterventionDto, @Request() req: { user: User }) {
+  create(
+    @Body() createInterventionDto: CreateInterventionDto,
+    @Request() req: { user: User },
+  ) {
     return this.interventionsService.create(createInterventionDto, req.user);
   }
 
@@ -36,7 +39,10 @@ export class InterventionsController {
 
   @Get('user/:userId')
   @Roles(Role.ADMIN, Role.TEACHER)
-  findByUserId(@Param('userId') userId: string, @Request() req: { user: User }) {
+  findByUserId(
+    @Param('userId') userId: string,
+    @Request() req: { user: User },
+  ) {
     return this.interventionsService.findByUserId(userId, req.user);
   }
 
@@ -47,7 +53,11 @@ export class InterventionsController {
     @Body() updateInterventionDto: UpdateInterventionDto,
     @Request() req: { user: User },
   ) {
-    return this.interventionsService.update(id, updateInterventionDto, req.user);
+    return this.interventionsService.update(
+      id,
+      updateInterventionDto,
+      req.user,
+    );
   }
 
   @Delete(':id')

@@ -7,10 +7,7 @@ import { User } from '../users/user.entity.js';
 import { AuditLogModule } from '../audit-log/audit-log.module.js';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([InterventionNote, User]),
-    AuditLogModule,
-  ],
+  imports: [TypeOrmModule.forFeature([InterventionNote, User]), AuditLogModule],
   controllers: [InterventionsController],
   providers: [InterventionsService],
   exports: [InterventionsService],

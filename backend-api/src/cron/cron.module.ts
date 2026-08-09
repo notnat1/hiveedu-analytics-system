@@ -4,10 +4,7 @@ import { AnalyticsModule } from '../analytics/analytics.module.js';
 import { AuditLogModule } from '../audit-log/audit-log.module.js';
 
 @Module({
-  imports: [
-    AnalyticsModule,
-    AuditLogModule,
-  ],
+  imports: [AnalyticsModule, AuditLogModule],
   providers: [CronService],
 })
 export class CronModule {}

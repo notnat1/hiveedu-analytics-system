@@ -18,7 +18,10 @@ import { AuditLogModule } from '../audit-log/audit-log.module.js';
  * the entire codebase â€” keep USER role wording consistent.
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([User, RecordEntity, Attendance]), AuditLogModule],
+  imports: [
+    TypeOrmModule.forFeature([User, RecordEntity, Attendance]),
+    AuditLogModule,
+  ],
   controllers: [UsersController],
   providers: [UsersService],
   exports: [UsersService],

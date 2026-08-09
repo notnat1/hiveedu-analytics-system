@@ -14,6 +14,7 @@ import { Role } from '../users/role.enum.js';
 import { AttendanceStatus } from './attendance-status.enum.js';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto.js';
 import { AuditLogService } from '../audit-log/audit-log.service.js';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 type AttendanceActor = {
   userId: string;
@@ -28,6 +29,7 @@ export class AttendanceService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly auditLogService: AuditLogService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   normalizeAttendanceDate(value: string): string {
@@ -91,7 +93,8 @@ export class AttendanceService {
 
     if (
       existingAttendance &&
-      (!excludeAttendanceId || existingAttendance.attendanceId !== excludeAttendanceId)
+      (!excludeAttendanceId ||
+        existingAttendance.attendanceId !== excludeAttendanceId)
     ) {
       throw new ConflictException(
         `Attendance for user "${userId}" on "${date}" already exists.`,
@@ -117,7 +120,10 @@ export class AttendanceService {
     }
   }
 
-  private assertCanReadUserAttendance(actor: AttendanceActor, user: User): void {
+  private assertCanReadUserAttendance(
+    actor: AttendanceActor,
+    user: User,
+  ): void {
     if (actor.role === Role.ADMIN) {
       return;
     }
@@ -156,7 +162,9 @@ export class AttendanceService {
     const user = await this.findTargetUser(createAttendanceDto.userId);
     this.assertCanManageUserAttendance(actor, user);
 
-    const normalizedDate = this.normalizeAttendanceDate(createAttendanceDto.date);
+    const normalizedDate = this.normalizeAttendanceDate(
+      createAttendanceDto.date,
+    );
     await this.assertNoDuplicateAttendance(user.userId, normalizedDate);
 
     const attendance = this.attendanceRepository.create({
@@ -181,12 +189,32 @@ export class AttendanceService {
       },
     });
 
+    this.eventEmitter.emit('user.academic.updated', {
+      userId: savedAttendance.userId,
+    });
+
     return savedAttendance;
   }
 
-  async findByUserId(userId: string, actor: AttendanceActor): Promise<Attendance[]> {
+  async findByUserId(
+    userId: string,
+    actor: AttendanceActor,
+  ): Promise<Attendance[]> {
     const user = await this.findTargetUser(userId);
-    this.assertCanReadUserAttendance(actor, user);
+
+    let isParentOfUser = false;
+    if (actor.role === Role.PARENT && actor.userId) {
+      const parentUser = await this.userRepository.findOne({
+        where: { userId: actor.userId },
+      });
+      if (parentUser && parentUser.linkedStudentId === user.userId) {
+        isParentOfUser = true;
+      }
+    }
+
+    if (!isParentOfUser) {
+      this.assertCanReadUserAttendance(actor, user);
+    }
 
     return this.attendanceRepository.find({
       where: { userId },
@@ -220,7 +248,11 @@ export class AttendanceService {
       updateAttendanceDto.date ?? attendance.date,
     );
 
-    await this.assertNoDuplicateAttendance(user.userId, nextDate, attendance.attendanceId);
+    await this.assertNoDuplicateAttendance(
+      user.userId,
+      nextDate,
+      attendance.attendanceId,
+    );
 
     attendance.userId = user.userId;
     attendance.date = nextDate;
@@ -246,6 +278,10 @@ export class AttendanceService {
         nextDate: savedAttendance.date,
         nextStatus: savedAttendance.status,
       },
+    });
+
+    this.eventEmitter.emit('user.academic.updated', {
+      userId: savedAttendance.userId,
     });
 
     return savedAttendance;
@@ -279,6 +315,10 @@ export class AttendanceService {
         date: attendance.date,
         status: attendance.status,
       },
+    });
+
+    this.eventEmitter.emit('user.academic.updated', {
+      userId: attendance.userId,
     });
   }
 }

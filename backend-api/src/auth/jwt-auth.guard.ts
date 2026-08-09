@@ -25,7 +25,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
    */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     // First, run the standard JWT validation
-    const isAuthenticated = await (super.canActivate(context) as Promise<boolean>);
+    const isAuthenticated = await (super.canActivate(
+      context,
+    ) as Promise<boolean>);
     if (!isAuthenticated) {
       return false;
     }
@@ -41,7 +43,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<{ user: { role: string } }>();
+    const request = context
+      .switchToHttp()
+      .getRequest<{ user: { role: string } }>();
     const userRole = request.user?.role;
 
     return requiredRoles.some((role) => role === userRole);

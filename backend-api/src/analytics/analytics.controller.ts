@@ -66,7 +66,7 @@ export class AnalyticsController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  @Roles(Role.ADMIN, Role.TEACHER, Role.USER)
+  @Roles(Role.ADMIN, Role.TEACHER, Role.USER, Role.PARENT)
   getMyAnalytics(@Req() req: any) {
     return this.analyticsService.getMyAnalytics(req.user);
   }
@@ -95,14 +95,14 @@ export class AnalyticsController {
 
   @UseGuards(JwtAuthGuard)
   @Get('export')
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.TEACHER)
   async exportAnalytics(
     @Req() req: any,
     @Res({ passthrough: true }) res: Response,
   ): Promise<StreamableFile> {
-    if (req.user.role !== 'ADMIN') {
+    if (req.user.role !== 'ADMIN' && req.user.role !== 'TEACHER') {
       throw new ForbiddenException(
-        'Only ADMIN can export the analytics workbook.',
+        'Only ADMIN or TEACHER can export the analytics workbook.',
       );
     }
 
@@ -147,9 +147,14 @@ export class AnalyticsController {
   @UseGuards(JwtAuthGuard)
   @Patch('config')
   @Roles(Role.ADMIN)
-  async updateConfig(@Req() req: any, @Body() updateConfigDto: UpdateAnalyticsConfigDto) {
+  async updateConfig(
+    @Req() req: any,
+    @Body() updateConfigDto: UpdateAnalyticsConfigDto,
+  ) {
     if (req.user.role !== 'ADMIN') {
-      throw new BadRequestException('Unauthorized to update analytics configuration.');
+      throw new BadRequestException(
+        'Unauthorized to update analytics configuration.',
+      );
     }
 
     return this.analyticsService.updateConfig(req.user, updateConfigDto);
@@ -179,18 +184,92 @@ export class AnalyticsController {
       await this.analyticsService.updateUserAnalytics(id, body);
       return { success: true };
     } catch (error) {
-      throw new BadRequestException(error instanceof Error ? error.message : 'Update failed.');
+      throw new BadRequestException(
+        error instanceof Error ? error.message : 'Update failed.',
+      );
     }
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('chat')
-  @Roles(Role.USER)
-  async chatWithCounselor(@Body() body: { message: string; context: string }) {
+  @Roles(Role.USER, Role.PARENT)
+  async chatWithCounselor(
+    @Body() body: { message: string; context: string; language?: string },
+  ) {
     if (!body.message || !body.context) {
       throw new BadRequestException('Message and context are required.');
     }
-    const reply = await this.analyticsService.chatWithCounselor(body.message, body.context);
+    const reply = await this.analyticsService.chatWithCounselor(
+      body.message,
+      body.context,
+      body.language,
+    );
     return { reply };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('draft-intervention')
+  @Roles(Role.ADMIN, Role.TEACHER)
+  async draftInterventionMessage(
+    @Req() req: any,
+    @Body()
+    body: {
+      studentName: string;
+      riskLevel: string;
+      attendancePercentage: number;
+      averageTryoutScore: number;
+      teacherObjectiveScore?: number | null;
+      predictedScore?: number | null;
+      language?: string;
+    },
+  ) {
+    if (req.user.role !== 'ADMIN' && req.user.role !== 'TEACHER') {
+      throw new ForbiddenException(
+        'Only ADMIN or TEACHER can draft intervention messages.',
+      );
+    }
+    if (!body.studentName || !body.riskLevel) {
+      throw new BadRequestException('studentName and riskLevel are required.');
+    }
+
+    const draft = await this.analyticsService.draftInterventionMessage(
+      body.studentName,
+      body.riskLevel,
+      body.attendancePercentage ?? 0,
+      body.averageTryoutScore ?? 0,
+      body.teacherObjectiveScore ?? null,
+      body.predictedScore ?? null,
+      body.language,
+    );
+    return { draft };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('study-plan')
+  @Roles(Role.ADMIN, Role.TEACHER, Role.USER, Role.PARENT)
+  async generateStudyPlan(
+    @Req() req: any,
+    @Body() body: { userId?: string; language?: string },
+  ) {
+    let targetUserId = body.userId;
+
+    // If no userId provided, or if the user is a USER/PARENT, they can only generate for themselves
+    if (
+      !targetUserId ||
+      req.user.role === 'USER' ||
+      req.user.role === 'PARENT'
+    ) {
+      targetUserId = req.user.userId;
+    }
+
+    if (!targetUserId) {
+      throw new BadRequestException('userId is required.');
+    }
+
+    const plan = await this.analyticsService.generateStudyPlan(
+      targetUserId,
+      body.language,
+    );
+    return { plan };
   }
 }

@@ -59,11 +59,15 @@ export class User {
   @Column({ default: true })
   isActive!: boolean;
 
+  /** WhatsApp number for notifications */
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  phone!: string | null;
+
   @Column({ default: false })
   isTwoFactorEnabled!: boolean;
 
-  @Column({ nullable: true })
-  twoFactorSecret!: string;
+  @Column({ type: 'varchar', nullable: true })
+  twoFactorSecret!: string | null;
 
   /** Indicates if the user has acknowledged an early warning alert */
   @Column({ type: 'boolean', default: false })
@@ -108,4 +112,19 @@ export class User {
   /** Timestamp of last update */
   @UpdateDateColumn()
   updatedAt!: Date;
+
+  /**
+   * Linked student ID for PARENT role accounts.
+   * References the USER account that this parent is monitoring.
+   */
+  @Column({ type: 'uuid', nullable: true })
+  linkedStudentId!: string | null;
+
+  /** Reference to the linked student user entity */
+  @ManyToOne(() => User, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'linkedStudentId' })
+  linkedStudent!: User | null;
 }

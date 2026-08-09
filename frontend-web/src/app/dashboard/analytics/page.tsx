@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2, FileSpreadsheet } from "lucide-react";
+import { API_BASE } from "@/lib/api";
 
 type CoefficientMode = "AUTO_TRAINED" | "MANUAL_OVERRIDE";
 
@@ -85,12 +86,12 @@ export default function AnalyticsEnginePage() {
       setConfigError("");
 
       const [configResponse, runHistoryResponse] = await Promise.all([
-        fetch("http://localhost:3000/analytics/config", {
+        fetch(`${API_BASE}/analytics/config`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }),
-        fetch("http://localhost:3000/analytics/mlr-run-history", {
+        fetch(`${API_BASE}/analytics/mlr-run-history`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -159,7 +160,7 @@ export default function AnalyticsEnginePage() {
     try {
       setIsSavingConfig(true);
 
-      const response = await fetch("http://localhost:3000/analytics/config", {
+      const response = await fetch(`${API_BASE}/analytics/config`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -199,7 +200,7 @@ export default function AnalyticsEnginePage() {
     try {
       setIsExportingWorkbook(true);
 
-      const response = await fetch("http://localhost:3000/analytics/export", {
+      const response = await fetch(`${API_BASE}/analytics/export`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

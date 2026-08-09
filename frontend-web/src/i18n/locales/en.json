@@ -15,6 +15,7 @@
   },
   "dashboard": {
     "welcome": "Welcome back",
+    "monitoring": "Monitoring",
     "user_subtitle": "Here is your personalized E-Raport prediction based on your recent activities.",
     "teacher_subtitle": "Here is your overview of assigned user accounts and their predictive analytics.",
     "overview": "Overview of student analytics",
@@ -142,6 +143,11 @@
     "ew_predicted": "Predicted",
     "ew_suggested": "Suggested Intervention",
     "ew_no_users": "No early warning users detected.",
+    "draft_message_btn": "Draft Message (AI)",
+    "draft_modal_title": "AI Intervention Draft",
+    "draft_modal_generating": "Generating personalized message via Groq LLaMA-3...",
+    "draft_modal_copy": "Copy to Clipboard",
+    "draft_modal_copied": "Copied!",
     "table_user_name": "User Name",
     "table_tutor": "Tutor",
     "table_x2": "X2 Tryout",
@@ -168,11 +174,14 @@
     "tutor_unavailable": "Tutor assignment unavailable"
   },
   "tour": {
-    "step1": "Welcome to HiveEdu Analytics! Let's take a quick tour to explore the Enterprise features available.",
-    "step2": "This is the main navigation panel. You can access all modules from here, such as Academic Records and Attendance.",
-    "step3": "Use this button to switch between Light Mode and Dark Mode according to your preference.",
-    "step4": "When you are done, you can safely Logout using this button.",
-    "step5": "This is where all the AI magic happens! The analytics panel will visualize your data and predict your performance in real-time."
+    "step1": "Welcome to HiveEdu Analytics! Let's start a quick tour to familiarize you with the available Enterprise features.",
+    "step2": "This is the sidebar navigation. You can access all modules here.",
+    "step3": "You can toggle between light and dark themes here.",
+    "step4": "Here is an overview of the key analytics metrics for your institution.",
+    "step5": "These are the AI Predictions, calculated based on the latest academic data.",
+    "step6": "Use the What-If Simulator to forecast potential score outcomes by adjusting variables.",
+    "step7": "Meet your personalized Llama-3 Academic Counselor, providing dynamic insights.",
+    "step8": "When you are done, you can export your analytics report to a PDF here."
   },
   "records": {
     "title": "Academic Records",
@@ -285,19 +294,12 @@
     "present": "PRESENT",
     "late": "LATE",
     "absent": "ABSENT",
-    "active_user": "Active User",
-    "cancel_edit": "Cancel Edit",
     "saving_changes": "Saving Changes...",
     "saving_attendance": "Saving Attendance...",
     "save_changes": "Save Changes",
-    "read_only_desc": "User accounts can review attendance here, but create, update, and delete actions are disabled.",
     "x1_formula_value": "Attendance points / attendance records * 100",
     "attendance_built_from": "Built from {{records}} attendance records and {{points}} attendance points.",
     "showing_attendance_for": "Showing attendance records for {{name}}",
-    "btn_edit": "Edit",
-    "btn_delete": "Delete",
-    "no_records_desc": "Save the first attendance record to start building the user's X1 history.",
-    "no_user_desc": "Select a user first to review attendance history and attendance percentage.",
     "loading_users": "Loading users..."
   },
   "analytics": {
@@ -425,7 +427,12 @@
     "loading_users": "Loading users...",
     "saving_changes": "Saving Changes...",
     "save_changes_btn": "Save Changes",
-    "creating_account": "Creating Account..."
+    "creating_account": "Creating Account...",
+    "assigned_tutor_linked_student": "Assigned Tutor / Linked Student",
+    "parent": "Parent",
+    "linked_student": "Linked Student",
+    "select_linked_student": "Select linked student",
+    "no_students_available": "No students available"
   },
   "audit": {
     "title": "Audit Logs",
@@ -682,5 +689,13 @@
   "meta": {
     "title": "HiveEdu Analytics",
     "description": "Advanced intelligence and learning analytics dashboard for modern education."
+  },
+  "studyPlan": {
+    "title": "AI Study Plan Generator 🤖",
+    "subtitle": "4-Week Study Plan for {{studentName}}",
+    "print": "Print",
+    "loading": "AI is analyzing grade history and composing an optimal study plan...",
+    "empty": "No study plan available.",
+    "generateButton": "Generate Study Plan"
   }
 }

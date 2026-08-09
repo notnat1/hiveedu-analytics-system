@@ -45,7 +45,26 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        {/* Inline script to apply theme BEFORE React hydration — prevents flash of wrong theme */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var t = localStorage.getItem('hiveedu-theme');
+                if (t === 'light') {
+                  document.documentElement.classList.add('light');
+                  document.documentElement.classList.remove('dark');
+                } else {
+                  document.documentElement.classList.remove('light');
+                }
+              } catch(e) {}
+            `,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
         <I18nProvider>{children}</I18nProvider>
       </body>
