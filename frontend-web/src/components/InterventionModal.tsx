@@ -195,7 +195,7 @@ export default function InterventionModal({
                 type="button"
                 onClick={handleDraftWithAI}
                 disabled={isDrafting}
-                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-500 dark:to-cyan-400 px-5 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(14,165,233,0.3)] dark:shadow-[0_8px_20px_rgba(14,165,233,0.2)] hover:shadow-[0_10px_25px_rgba(14,165,233,0.4)] dark:hover:shadow-[0_10px_25px_rgba(14,165,233,0.3)] transition-all hover:from-blue-500 hover:to-cyan-400 dark:hover:from-blue-400 dark:hover:to-cyan-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex items-center gap-2 rounded-xl bg-sky-500 hover:bg-sky-600 px-5 py-2 text-sm font-semibold text-white shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Sparkles size={16} />
                 {isDrafting ? 'Drafting...' : 'Draft with AI'}
@@ -245,7 +245,7 @@ export default function InterventionModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-500 dark:to-cyan-400 px-5 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(14,165,233,0.3)] dark:shadow-[0_8px_20px_rgba(14,165,233,0.2)] hover:shadow-[0_10px_25px_rgba(14,165,233,0.4)] dark:hover:shadow-[0_10px_25px_rgba(14,165,233,0.3)] transition-all hover:from-blue-500 hover:to-cyan-400 dark:hover:from-blue-400 dark:hover:to-cyan-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-xl bg-sky-500 hover:bg-sky-600 px-5 py-2 text-sm font-semibold text-white shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? 'Saving...' : existingId ? 'Update Follow-up' : 'Save Follow-up'}
             </button>
