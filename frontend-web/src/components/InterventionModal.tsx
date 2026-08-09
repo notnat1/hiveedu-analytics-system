@@ -40,6 +40,7 @@ export default function InterventionModal({
   const [actionPlan, setActionPlan] = useState('');
   const [status, setStatus] = useState<'OPEN' | 'IN_PROGRESS' | 'RESOLVED'>('OPEN');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDrafting, setIsDrafting] = useState(false);
   const [error, setError] = useState('');
   const [existingId, setExistingId] = useState<string | null>(null);
 
@@ -78,6 +79,41 @@ export default function InterventionModal({
       }, 0);
     }
   }, [isOpen, userId]);
+
+  const handleDraftWithAI = async () => {
+    try {
+      setIsDrafting(true);
+      setError('');
+      const token = localStorage.getItem('token');
+      
+      const payload = {
+        studentName: userName,
+        riskLevel,
+        predictedScore,
+      };
+
+      const res = await fetch(`${API_BASE}/analytics/draft-intervention`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to draft intervention');
+      }
+
+      const data = await res.json();
+      setNote(data.draft);
+    } catch (err) {
+      console.error('Error drafting with AI:', err);
+      setError('Unable to draft message with AI right now.');
+    } finally {
+      setIsDrafting(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,7 +189,17 @@ export default function InterventionModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("components.followup_note")}</label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("components.followup_note")}</label>
+              <button
+                type="button"
+                onClick={handleDraftWithAI}
+                disabled={isDrafting}
+                className="flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+              >
+                {isDrafting ? 'Drafting...' : '✨ Draft with AI'}
+              </button>
+            </div>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}

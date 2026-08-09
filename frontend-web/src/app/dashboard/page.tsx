@@ -21,6 +21,7 @@ import InterventionModal from "@/components/InterventionModal";
 import InterventionBadge from "@/components/InterventionBadge";
 import WhatIfSimulator from "@/components/WhatIfSimulator";
 import { AiCounselorChat } from "@/components/AiCounselorChat";
+import { StudyPlanModal } from "@/components/StudyPlanModal";
 import QRCode from "qrcode";
 import {
   AreaChart,
@@ -234,6 +235,9 @@ export default function DashboardPage() {
   const [userAttendanceRecords, setUserAttendanceRecords] = useState<AttendanceRecordResponse[]>([]);
   const [globalAnalytics, setGlobalAnalytics] = useState<GlobalAnalyticsSnapshot | null>(null);
   const [latestRunHistory, setLatestRunHistory] = useState<RunHistoryItem | null>(null);
+  const [isStudyPlanOpen, setIsStudyPlanOpen] = useState(false);
+  const [isStudyPlanLoading, setIsStudyPlanLoading] = useState(false);
+  const [studyPlanContent, setStudyPlanContent] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState>({
     show: false,
     message: "",
@@ -246,6 +250,42 @@ export default function DashboardPage() {
     setTimeout(() => {
       setToast({ show: false, message: "", tone: "success" });
     }, 3000);
+  };
+
+  const handleGenerateStudyPlan = async () => {
+    try {
+      setIsStudyPlanOpen(true);
+      setIsStudyPlanLoading(true);
+      
+      const token = localStorage.getItem('token');
+      const payload = {
+        attendancePercentage: userAnalytics?.x1 || 0,
+        averageTryoutScore: userAnalytics?.x2 || 0,
+        teacherObjectiveScore: userAnalytics?.x3 || userAnalytics?.teacherObjectiveScore || 0,
+      };
+
+      const res = await fetch(`${API_BASE}/analytics/study-plan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to generate study plan');
+      }
+
+      const data = await res.json();
+      setStudyPlanContent(data.plan);
+    } catch (err) {
+      console.error('Error generating study plan:', err);
+      showToast("Unable to generate AI Study Plan right now.", "error");
+      setIsStudyPlanOpen(false);
+    } finally {
+      setIsStudyPlanLoading(false);
+    }
   };
 
   function getSafeNumber(value: number | string | null | undefined): number | null {
@@ -1050,24 +1090,34 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            <button
-              id="tour-export"
-              onClick={handleDownloadPDF}
-              disabled={isGeneratingPDF || isUserDownloadDisabled}
-              className="flex items-center gap-2 px-5 py-2.5 bg-white/[0.03] border border-white/10 hover:border-white/20 hover:bg-white/[0.05] disabled:opacity-50 disabled:cursor-not-allowed text-zinc-200 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all shadow-xl group whitespace-nowrap self-start"
-            >
-              {isGeneratingPDF ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
-                  Generating PDF...
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4 text-blue-400 group-hover:translate-y-0.5 transition-transform" />
-                  {t("dashboard.download_pdf")}
-                </>
-              )}
-            </button>
+            <div className="flex flex-wrap items-center gap-3 self-start">
+              <button
+                onClick={handleGenerateStudyPlan}
+                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600/20 to-indigo-500/20 border border-blue-500/30 hover:border-blue-400/50 hover:bg-blue-500/20 text-blue-300 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all shadow-xl group whitespace-nowrap"
+              >
+                <Sparkles className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform" />
+                ✨ AI Study Plan
+              </button>
+
+              <button
+                id="tour-export"
+                onClick={handleDownloadPDF}
+                disabled={isGeneratingPDF || isUserDownloadDisabled}
+                className="flex items-center gap-2 px-5 py-2.5 bg-white/[0.03] border border-white/10 hover:border-white/20 hover:bg-white/[0.05] disabled:opacity-50 disabled:cursor-not-allowed text-zinc-200 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all shadow-xl group whitespace-nowrap"
+              >
+                {isGeneratingPDF ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+                    Generating PDF...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 text-blue-400 group-hover:translate-y-0.5 transition-transform" />
+                    {t("dashboard.download_pdf")}
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           <div id="tour-overview" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
@@ -2277,6 +2327,14 @@ export default function DashboardPage() {
           token={typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}
         />
       )}
+
+      <StudyPlanModal
+        isOpen={isStudyPlanOpen}
+        onClose={() => setIsStudyPlanOpen(false)}
+        isLoading={isStudyPlanLoading}
+        markdownContent={studyPlanContent}
+        studentName={currentUser?.username}
+      />
     </div>
   );
 }
