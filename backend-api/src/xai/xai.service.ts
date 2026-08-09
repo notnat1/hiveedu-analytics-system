@@ -417,10 +417,11 @@ ${langInstruction}`;
         {
           messages: [{ role: 'user', content: prompt }],
           model: 'llama-3.1-8b-instant',
+          max_tokens: 3000,
         },
         {
-          maxRetries: 0,
-          timeout: 20000,
+          maxRetries: 1,
+          timeout: 45000,
         },
       );
 
