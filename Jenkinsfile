@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        // Defines the docker compose command
-        DOCKER_COMPOSE = 'docker compose'
+        // Defines the docker compose command with a fixed project name to avoid conflicts
+        DOCKER_COMPOSE = 'docker compose -p hiveedu-analytics'
     }
 
     stages {
